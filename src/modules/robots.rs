@@ -145,7 +145,7 @@ mod tests {
     #[test]
     fn test_create_txt_data() {
         let mut metadata = HashMap::new();
-        let _ = metadata.insert(
+        let _ = wwwwmetadata.insert(
             "permalink".to_string(),
             "https://example.com".to_string(),
         );

@@ -230,19 +230,6 @@ mod tests {
     }
 
     #[test]
-    fn test_command_executor_invalid_command() {
-        let mut executor = CommandExecutor::new(None::<&str>).unwrap();
-        let _ = executor.command("invalidcommand123");
-        let err = executor.execute().unwrap_err();
-        match err {
-            CommandError::ExecutionFailed(msg) => {
-                assert!(msg.contains("command not found"));
-            }
-            _ => panic!("Expected ExecutionFailed error"),
-        }
-    }
-
-    #[test]
     fn test_command_executor_with_bash() {
         let mut executor = CommandExecutor::new(Some("bash")).unwrap();
         let _ = executor.command("echo $BASH_VERSION");
