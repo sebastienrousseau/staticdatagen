@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["sanitize_path","validate_color","validate_date","validate_image_size","validate_language_code","validate_text_length","validate_twitter_handle","validate_url"]};

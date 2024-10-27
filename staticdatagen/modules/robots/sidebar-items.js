@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_txt_data","generate_txt_content"]};

@@ -1,0 +1,212 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `staticdatagen` crate."><title>staticdatagen - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-4ee5002b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="staticdatagen" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9b18a122f 2024-10-26)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../static.files/storage-59e33391.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-893ab5e7.css"></noscript><link rel="icon" href="https://kura.pro/staticdatagen/images/favicon.ico"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button><a class="logo-container" href="../staticdatagen/index.html"><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../staticdatagen/index.html"><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt="logo"></a><h2><a href="../staticdatagen/index.html">staticdatagen</a><span class="version">0.0.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#staticdatagen" title="StaticDataGen">StaticDataGen</a><ul><li><a href="#overview-" title="Overview 🚀">Overview 🚀</a></li><li><a href="#features-" title="Features ✨">Features ✨</a></li><li><a href="#installation-" title="Installation 📦">Installation 📦</a></li><li><a href="#directory-structure-" title="Directory Structure 📁">Directory Structure 📁</a></li><li><a href="#usage-" title="Usage 💻">Usage 💻</a></li><li><a href="#generated-files-" title="Generated Files 📄">Generated Files 📄</a></li><li><a href="#error-handling-" title="Error Handling 🛠️">Error Handling 🛠️</a></li><li><a href="#performance-" title="Performance 🚀">Performance 🚀</a></li><li><a href="#documentation-" title="Documentation 📚">Documentation 📚</a></li><li><a href="#examples-" title="Examples 🎯">Examples 🎯</a></li><li><a href="#contributing-" title="Contributing 🤝">Contributing 🤝</a></li><li><a href="#license-" title="License 📜">License 📜</a></li><li><a href="#acknowledgements-" title="Acknowledgements 💝">Acknowledgements 💝</a></li></ul></li></ul><h3><a href="#reexports">Crate Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>staticdatagen</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/staticdatagen/lib.rs.html#6-103">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><!-- markdownlint-disable MD033 MD041 -->
+<p><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg"
+alt="StaticDataGen logo" height="66" align="right" /></p>
+<!-- markdownlint-enable MD033 MD041 -->
+<h2 id="staticdatagen"><a class="doc-anchor" href="#staticdatagen">§</a>StaticDataGen</h2>
+<p>A fast, secure, and comprehensive static site structured data generator library written in Rust.</p>
+<!-- markdownlint-disable MD033 MD041 -->
+<center>
+<!-- markdownlint-enable MD033 MD041 -->
+<p><a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-f04041?style=for-the-badge&amp;labelColor=c0282d&amp;logo=rust" alt="Made With Love" /></a> <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/MSRV-1.56.0-blue.svg?style=for-the-badge" alt="MSRV" /></a> <a href="https://crates.io/crates/staticdatagen"><img src="https://img.shields.io/crates/v/staticdatagen.svg?style=for-the-badge&amp;color=fc8d62&amp;logo=rust" alt="Crates.io" /></a> <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.1-orange.svg?style=for-the-badge" alt="lib.rs" /></a> <a href="https://docs.rs/staticdatagen"><img src="https://img.shields.io/badge/docs.rs-staticdatagen-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logo=docs.rs" alt="Docs.rs" /></a> <a href="https://codecov.io/gh/sebastienrousseau/staticdatagen"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/staticdatagen?style=for-the-badge&amp;token=yGOBUANPm3&amp;logo=codecov" alt="Codecov" /></a> <a href="https://github.com/sebastienrousseau/staticdatagen/actions?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/staticdatagen/release.yml?branch=main&amp;style=for-the-badge&amp;logo=github" alt="Build Status" /></a> <a href="https://github.com/sebastienrousseau/staticdatagen"><img src="https://img.shields.io/badge/github-sebastienrousseau/staticdatagen-8da0cb?style=for-the-badge&amp;labelColor=555555&amp;logo=github" alt="GitHub" /></a></p>
+<p>• <a href="https://staticdatagen.com">Website</a> • <a href="https://docs.rs/staticdatagen">Documentation</a> • <a href="https://github.com/sebastienrousseau/staticdatagen/issues">Report Bug</a> • <a href="https://github.com/sebastienrousseau/staticdatagen/issues">Request Feature</a> • <a href="https://github.com/sebastienrousseau/staticdatagen/blob/main/CONTRIBUTING.md">Contributing Guidelines</a></p>
+<!-- markdownlint-disable MD033 MD041 -->
+</center>
+<!-- markdownlint-enable MD033 MD041 -->
+<h3 id="overview-"><a class="doc-anchor" href="#overview-">§</a>Overview 🚀</h3>
+<p><code>staticdatagen</code> is a robust Rust library that streamlines the generation of structured data and metadata for static sites. It provides a comprehensive suite of tools for creating HTML files, RSS feeds, sitemaps, and SEO-friendly metadata, with built-in security features and multi-language support.</p>
+<h3 id="features-"><a class="doc-anchor" href="#features-">§</a>Features ✨</h3><h4 id="content-generation--processing"><a class="doc-anchor" href="#content-generation--processing">§</a>Content Generation &amp; Processing</h4>
+<ul>
+<li>
+<p><strong>Markdown to HTML Conversion</strong></p>
+<ul>
+<li>Clean, semantic HTML output</li>
+<li>Syntax highlighting support</li>
+<li>Custom template integration</li>
+<li>Content minification</li>
+</ul>
+</li>
+<li>
+<p><strong>Metadata Generation</strong></p>
+<ul>
+<li>OpenGraph and Twitter Card meta tags</li>
+<li>JSON-LD support for rich snippets</li>
+<li>Automatic metadata extraction</li>
+<li>SEO optimization</li>
+</ul>
+</li>
+</ul>
+<h4 id="site-structure--navigation"><a class="doc-anchor" href="#site-structure--navigation">§</a>Site Structure &amp; Navigation</h4>
+<ul>
+<li>
+<p><strong>Navigation System</strong></p>
+<ul>
+<li>Automatic menu generation</li>
+<li>Hierarchical structure support</li>
+<li>Accessibility-compliant markup</li>
+<li>Customizable formatting</li>
+</ul>
+</li>
+<li>
+<p><strong>Multi-language Support</strong></p>
+<ul>
+<li>Built-in support for English, French, and German</li>
+<li>Extensible translation system</li>
+<li>Language-specific templates</li>
+<li>i18n content management</li>
+</ul>
+</li>
+</ul>
+<h4 id="data-format-support"><a class="doc-anchor" href="#data-format-support">§</a>Data Format Support</h4>
+<ul>
+<li>
+<p><strong>Sitemaps</strong></p>
+<ul>
+<li>Standard XML sitemaps</li>
+<li>Google News sitemaps</li>
+<li>Automatic URL generation</li>
+<li>Change frequency tracking</li>
+</ul>
+</li>
+<li>
+<p><strong>Feed Generation</strong></p>
+<ul>
+<li>RSS 2.0 support</li>
+<li>Atom feed generation</li>
+<li>Custom feed templates</li>
+<li>Auto-updating timestamps</li>
+</ul>
+</li>
+</ul>
+<h4 id="security--validation"><a class="doc-anchor" href="#security--validation">§</a>Security &amp; Validation</h4>
+<ul>
+<li>
+<p><strong>Security Features</strong></p>
+<ul>
+<li>Path traversal prevention</li>
+<li>Input sanitization</li>
+<li>URL validation</li>
+<li>Security.txt generation (RFC 9116)</li>
+</ul>
+</li>
+<li>
+<p><strong>Data Validation</strong></p>
+<ul>
+<li>Metadata verification</li>
+<li>URL structure checking</li>
+<li>Language code validation</li>
+<li>Content integrity checks</li>
+</ul>
+</li>
+</ul>
+<h4 id="developer-experience"><a class="doc-anchor" href="#developer-experience">§</a>Developer Experience</h4>
+<ul>
+<li>
+<p><strong>Error Handling</strong></p>
+<ul>
+<li>Comprehensive error types</li>
+<li>Detailed error messages</li>
+<li>Context-aware failures</li>
+<li>Recovery suggestions</li>
+</ul>
+</li>
+<li>
+<p><strong>Performance</strong></p>
+<ul>
+<li>Efficient file processing</li>
+<li>HTML minification</li>
+<li>Parallel processing where possible</li>
+<li>Memory-efficient operations</li>
+</ul>
+</li>
+</ul>
+<h3 id="installation-"><a class="doc-anchor" href="#installation-">§</a>Installation 📦</h3>
+<p>Add <code>staticdatagen</code> to your <code>Cargo.toml</code>:</p>
+<div class="example-wrap"><pre class="language-toml"><code>[dependencies]
+staticdatagen = &quot;0.0.1&quot;</code></pre></div><h3 id="directory-structure-"><a class="doc-anchor" href="#directory-structure-">§</a>Directory Structure 📁</h3>
+<p>Create the following directory structure for your project:</p>
+<div class="example-wrap"><pre class="language-bash"><code>your-project/
+├── content/         # Your Markdown content
+├── templates/       # HTML templates
+├── build/          # Temporary build directory
+└── site/           # Final output directory</code></pre></div><h3 id="usage-"><a class="doc-anchor" href="#usage-">§</a>Usage 💻</h3><h4 id="basic-example"><a class="doc-anchor" href="#basic-example">§</a>Basic Example</h4>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>staticdatagen::compiler::service::compile;
+<span class="kw">use </span>std::path::Path;
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+    <span class="comment">// Define paths for your static site
+    </span><span class="kw">let </span>build_dir = Path::new(<span class="string">"examples/build"</span>);            <span class="comment">// Temporary build directory
+    </span><span class="kw">let </span>content_dir = Path::new(<span class="string">"examples/content"</span>);        <span class="comment">// Source content directory
+    </span><span class="kw">let </span>site_dir = Path::new(<span class="string">"examples/site"</span>);              <span class="comment">// Output directory
+    </span><span class="kw">let </span>template_dir = Path::new(<span class="string">"examples/templates"</span>);     <span class="comment">// HTML templates directory
+
+    // Compile the static site
+    </span>compile(
+        build_dir,
+        content_dir,
+        site_dir,
+        template_dir,
+    )<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<h3 id="generated-files-"><a class="doc-anchor" href="#generated-files-">§</a>Generated Files 📄</h3>
+<p>The library generates the following files:</p>
+<ul>
+<li>
+<p><strong>HTML Files</strong></p>
+<ul>
+<li>Minified and optimized</li>
+<li>Accessibility-compliant</li>
+<li>SEO-friendly structure</li>
+</ul>
+</li>
+<li>
+<p><strong>Metadata Files</strong></p>
+<ul>
+<li><code>security.txt</code> - Security policy (RFC 9116)</li>
+<li><code>humans.txt</code> - Site credits and information</li>
+<li><code>robots.txt</code> - Crawler instructions</li>
+<li><code>manifest.json</code> - PWA manifest</li>
+</ul>
+</li>
+<li>
+<p><strong>SEO Files</strong></p>
+<ul>
+<li><code>sitemap.xml</code> - Standard sitemap</li>
+<li><code>news-sitemap.xml</code> - Google News sitemap</li>
+<li><code>rss.xml</code> - Content syndication feed</li>
+</ul>
+</li>
+</ul>
+<h3 id="error-handling-"><a class="doc-anchor" href="#error-handling-">§</a>Error Handling 🛠️</h3>
+<p>The library uses the <code>anyhow</code> crate for error handling, providing detailed error messages and context. All public functions return <code>Result</code> types with comprehensive error information:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>anyhow::Result;
+
+<span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="comment">// Your code here
+    </span><span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+<h3 id="performance-"><a class="doc-anchor" href="#performance-">§</a>Performance 🚀</h3>
+<ul>
+<li><strong>File Processing</strong>: Efficient streaming for large files</li>
+<li><strong>Minification</strong>: Optimized HTML output</li>
+<li><strong>Caching</strong>: Template and content caching</li>
+<li><strong>Memory Usage</strong>: Minimal memory footprint</li>
+</ul>
+<h3 id="documentation-"><a class="doc-anchor" href="#documentation-">§</a>Documentation 📚</h3>
+<p>For full API documentation, please visit <a href="https://docs.rs/staticdatagen">docs.rs/staticdatagen</a>.</p>
+<h3 id="examples-"><a class="doc-anchor" href="#examples-">§</a>Examples 🎯</h3>
+<p>To explore more examples, clone the repository and run the following command:</p>
+<div class="example-wrap"><pre class="language-shell"><code>cargo run --example example_name</code></pre></div><h3 id="contributing-"><a class="doc-anchor" href="#contributing-">§</a>Contributing 🤝</h3>
+<p>Contributions are welcome! Please feel free to submit a Pull Request.</p>
+<h3 id="license-"><a class="doc-anchor" href="#license-">§</a>License 📜</h3>
+<p>This project is licensed under either of</p>
+<ul>
+<li><a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
+<li><a href="https://opensource.org/licenses/MIT">MIT license</a></li>
+</ul>
+<p>at your option.</p>
+<h3 id="acknowledgements-"><a class="doc-anchor" href="#acknowledgements-">§</a>Acknowledgements 💝</h3>
+<p>Special thanks to all contributors who have helped build the <code>staticdatagen</code> library.</p>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name" id="reexport.compile"><code>pub use compiler::service::<a class="fn" href="compiler/service/fn.compile.html" title="fn staticdatagen::compiler::service::compile">compile</a>;</code></div></li><li><div class="item-name" id="reexport.generate_unique_string"><code>pub use utilities::uuid::<a class="fn" href="utilities/uuid/fn.generate_unique_string.html" title="fn staticdatagen::utilities::uuid::generate_unique_string">generate_unique_string</a>;</code></div></li></ul><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="compiler/index.html" title="mod staticdatagen::compiler">compiler</a></div><div class="desc docblock-short">Compiler module for processing and generating static site content.</div></li><li><div class="item-name"><a class="mod" href="locales/index.html" title="mod staticdatagen::locales">locales</a></div><div class="desc docblock-short">Locales module for language-specific translations and templates.</div></li><li><div class="item-name"><a class="mod" href="macros/index.html" title="mod staticdatagen::macros">macros</a></div><div class="desc docblock-short">Macro definitions for common operations.</div></li><li><div class="item-name"><a class="mod" href="models/index.html" title="mod staticdatagen::models">models</a></div><div class="desc docblock-short">Data models and structures used throughout the crate.</div></li><li><div class="item-name"><a class="mod" href="modules/index.html" title="mod staticdatagen::modules">modules</a></div><div class="desc docblock-short">Various modules for specific functionalities (e.g., HTML generation, RSS feeds).</div></li><li><div class="item-name"><a class="mod" href="utilities/index.html" title="mod staticdatagen::utilities">utilities</a></div><div class="desc docblock-short">Utility functions and helpers.</div></li></ul><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.macro_check_directory.html" title="macro staticdatagen::macro_check_directory">macro_<wbr>check_<wbr>directory</a></div><div class="desc docblock-short">Checks if a directory exists and creates it if necessary.</div></li><li><div class="item-name"><a class="macro" href="macro.macro_cleanup_directories.html" title="macro staticdatagen::macro_cleanup_directories">macro_<wbr>cleanup_<wbr>directories</a></div><div class="desc docblock-short">Cleans up (removes) multiple directories.</div></li><li><div class="item-name"><a class="macro" href="macro.macro_create_directories.html" title="macro staticdatagen::macro_create_directories">macro_<wbr>create_<wbr>directories</a></div><div class="desc docblock-short">Creates multiple directories at once.</div></li><li><div class="item-name"><a class="macro" href="macro.macro_execute_and_log.html" title="macro staticdatagen::macro_execute_and_log">macro_<wbr>execute_<wbr>and_<wbr>log</a></div><div class="desc docblock-short">Macro for executing a shell command with logging</div></li><li><div class="item-name"><a class="macro" href="macro.macro_get_args.html" title="macro staticdatagen::macro_get_args">macro_<wbr>get_<wbr>args</a></div><div class="desc docblock-short"><code>macro_get_args</code> Macro</div></li><li><div class="item-name"><a class="macro" href="macro.macro_log_complete.html" title="macro staticdatagen::macro_log_complete">macro_<wbr>log_<wbr>complete</a></div><div class="desc docblock-short">Macro for logging the completion of an operation</div></li><li><div class="item-name"><a class="macro" href="macro.macro_log_error.html" title="macro staticdatagen::macro_log_error">macro_<wbr>log_<wbr>error</a></div><div class="desc docblock-short">Macro for logging an error</div></li><li><div class="item-name"><a class="macro" href="macro.macro_log_info.html" title="macro staticdatagen::macro_log_info">macro_<wbr>log_<wbr>info</a></div><div class="desc docblock-short">Custom logging macro for various log levels and formats.</div></li><li><div class="item-name"><a class="macro" href="macro.macro_log_start.html" title="macro staticdatagen::macro_log_start">macro_<wbr>log_<wbr>start</a></div><div class="desc docblock-short">Macro for logging the start of an operation</div></li><li><div class="item-name"><a class="macro" href="macro.macro_metadata_option.html" title="macro staticdatagen::macro_metadata_option">macro_<wbr>metadata_<wbr>option</a></div><div class="desc docblock-short"><code>macro_metadata_option</code> Macro</div></li><li><div class="item-name"><a class="macro" href="macro.macro_render_layout.html" title="macro staticdatagen::macro_render_layout">macro_<wbr>render_<wbr>layout</a></div><div class="desc docblock-short"><code>macro_render_layout</code> Macro</div></li><li><div class="item-name"><a class="macro" href="macro.macro_serve.html" title="macro staticdatagen::macro_serve">macro_<wbr>serve</a></div><div class="desc docblock-short"><code>macro_serve</code> Macro</div></li></ul><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Server.html" title="struct staticdatagen::Server">Server</a></div><div class="desc docblock-short">Represents the Http Handle and its configuration.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.Error.html" title="enum staticdatagen::Error">Error</a></div><div class="desc docblock-short">Custom error type for the shokunin library</div></li></ul><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="constant" href="constant.VERSION.html" title="constant staticdatagen::VERSION">VERSION</a></div><div class="desc docblock-short">Version of the staticdatagen library.</div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.Result.html" title="type staticdatagen::Result">Result</a></div><div class="desc docblock-short">Error type for the shokunin library</div></li></ul></section></div></main></body></html>

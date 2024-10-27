@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["cleanup_directory","create_comrak_options","create_directory","directory","extract_front_matter","find_html_files","format_header_with_id_class","move_output_directory","to_title_case","truncate","update_class_attributes"]};

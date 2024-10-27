@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The `plaintext` module contains functions for generating plaintext. Plain Text Generation Module"><title>staticdatagen::modules::plaintext - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-4ee5002b.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="staticdatagen" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (9b18a122f 2024-10-26)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="icon" href="https://kura.pro/staticdatagen/images/favicon.ico"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button><a class="logo-container" href="../../../staticdatagen/index.html"><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../../../staticdatagen/index.html"><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt="logo"></a><h2><a href="../../../staticdatagen/index.html">staticdatagen</a><span class="version">0.0.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module plaintext</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#features" title="Features">Features</a></li><li><a href="#example" title="Example">Example</a></li><li><a href="#security" title="Security">Security</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In staticdatagen::<wbr>modules</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../../index.html">staticdatagen</a>::<wbr><a href="../index.html">modules</a></span><h1>Module <span>plaintext</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/staticdatagen/modules/plaintext.rs.html#4-355">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The <code>plaintext</code> module contains functions for generating plaintext.
+Plain Text Generation Module</p>
+<p>This module provides functionality for converting HTML and Markdown content to plain text
+while maintaining readability and content structure. It includes robust handling of
+various text formats, character sets, and security considerations.</p>
+<h2 id="features"><a class="doc-anchor" href="#features">§</a>Features</h2>
+<ul>
+<li>HTML and Markdown to plain text conversion</li>
+<li>Secure content sanitization</li>
+<li>Unicode and RTL text support</li>
+<li>Structured content preservation</li>
+<li>Metadata handling</li>
+<li>Comprehensive error handling</li>
+</ul>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>staticdatagen::modules::plaintext::{generate_plain_text, PlainTextConfig};
+
+<span class="kw">let </span>config = PlainTextConfig::default();
+<span class="kw">let </span>result = generate_plain_text(
+    <span class="string">"# Hello World\n\nThis is **bold** text."</span>,
+    <span class="string">"Title"</span>,
+    <span class="string">"Description"</span>,
+    <span class="string">"Author"</span>,
+    <span class="string">"Creator"</span>,
+    <span class="string">"keywords"</span>,
+).unwrap();</code></pre></div>
+<h2 id="security"><a class="doc-anchor" href="#security">§</a>Security</h2>
+<p>This module implements several security measures:</p>
+<ul>
+<li>HTML tag stripping</li>
+<li>Script injection prevention</li>
+<li>Control character filtering</li>
+<li>Unicode character validation</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.PlainTextConfig.html" title="struct staticdatagen::modules::plaintext::PlainTextConfig">Plain<wbr>Text<wbr>Config</a></div><div class="desc docblock-short">Configuration options for plain text generation</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.PlainTextError.html" title="enum staticdatagen::modules::plaintext::PlainTextError">Plain<wbr>Text<wbr>Error</a></div><div class="desc docblock-short">Errors that can occur during plain text generation</div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.generate_plain_text.html" title="fn staticdatagen::modules::plaintext::generate_plain_text">generate_<wbr>plain_<wbr>text</a></div><div class="desc docblock-short">Generates plain text content from HTML/Markdown input.</div></li></ul></section></div></main></body></html>

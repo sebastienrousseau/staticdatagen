@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["write_files_to_build_directory"]};

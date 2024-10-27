@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["PlainTextError"],"fn":["generate_plain_text"],"struct":["PlainTextConfig"]};

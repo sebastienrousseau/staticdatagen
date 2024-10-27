@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_human_data","generate_humans_content"]};

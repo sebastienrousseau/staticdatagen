@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["de","en","fr","template"]};
