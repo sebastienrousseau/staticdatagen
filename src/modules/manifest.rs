@@ -129,8 +129,9 @@ mod tests {
     #[test]
     fn test_create_manifest_data() {
         let mut metadata = HashMap::new();
-        metadata.insert("name".to_string(), "Test App".to_string());
-        metadata.insert(
+        let _ =
+            metadata.insert("name".to_string(), "Test App".to_string());
+        let _ = metadata.insert(
             "description".to_string(),
             "Test Description".to_string(),
         );
@@ -146,7 +147,8 @@ mod tests {
     #[test]
     fn test_manifest_with_icon() {
         let mut metadata = HashMap::new();
-        metadata.insert("icon".to_string(), "/icon.svg".to_string());
+        let _ = metadata
+            .insert("icon".to_string(), "/icon.svg".to_string());
 
         let manifest = create_manifest_data(&metadata);
 
@@ -203,7 +205,7 @@ mod tests {
     #[test]
     fn test_theme_color() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "theme-color".to_string(),
             "255,255,255".to_string(),
         );

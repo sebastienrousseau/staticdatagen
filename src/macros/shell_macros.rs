@@ -78,7 +78,7 @@ impl CommandExecutor {
             interpreter.as_ref().map(AsRef::as_ref).unwrap_or("sh");
 
         let mut command = Command::new(shell);
-        command.arg("-c");
+        let _ = command.arg("-c"); // Discard the result of `arg`
 
         Ok(CommandExecutor {
             command,
@@ -89,7 +89,7 @@ impl CommandExecutor {
     /// Sets the shell command to execute
     pub fn command<S: AsRef<str>>(&mut self, cmd: S) -> &mut Self {
         self.command_str = cmd.as_ref().to_string();
-        self.command.arg(cmd.as_ref());
+        let _ = self.command.arg(cmd.as_ref()); // Discard the result of `arg`
         self
     }
 
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn test_command_executor_echo() {
         let mut executor = CommandExecutor::new(None::<&str>).unwrap();
-        executor.command("echo 'test'");
+        let _ = executor.command("echo 'test'");
         let output = executor.execute().unwrap();
         assert_eq!(
             str::from_utf8(&output.stdout).unwrap().trim(),
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_command_executor_invalid_command() {
         let mut executor = CommandExecutor::new(None::<&str>).unwrap();
-        executor.command("invalidcommand123");
+        let _ = executor.command("invalidcommand123");
         let err = executor.execute().unwrap_err();
         match err {
             CommandError::ExecutionFailed(msg) => {
@@ -245,14 +245,14 @@ mod tests {
     #[test]
     fn test_command_executor_with_bash() {
         let mut executor = CommandExecutor::new(Some("bash")).unwrap();
-        executor.command("echo $BASH_VERSION");
+        let _ = executor.command("echo $BASH_VERSION");
         assert!(executor.execute().is_ok());
     }
 
     #[test]
     fn test_command_executor_with_stderr() {
         let mut executor = CommandExecutor::new(None::<&str>).unwrap();
-        executor.command("ls nonexistentfile");
+        let _ = executor.command("ls nonexistentfile");
         let err = executor.execute().unwrap_err();
         match err {
             CommandError::ExecutionFailed(msg) => {

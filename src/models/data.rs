@@ -134,7 +134,7 @@ pub mod validation {
             return Ok(());
         }
 
-        Url::parse(url).map_err(|e| {
+        let _ = Url::parse(url).map_err(|e| {
             DataError::InvalidUrl(format!("Invalid URL: {}", e))
         })?;
 
@@ -158,7 +158,7 @@ pub mod validation {
             return Ok(());
         }
 
-        OffsetDateTime::parse(date, &Rfc3339).map_err(|e| {
+        let _ = OffsetDateTime::parse(date, &Rfc3339).map_err(|e| {
             DataError::InvalidDate(format!(
                 "Invalid date format: {}",
                 e
@@ -593,7 +593,7 @@ impl FileData {
         }
 
         // Sanitize and validate the file path
-        validation::sanitize_path(&self.name)?;
+        let _ = validation::sanitize_path(&self.name)?;
 
         validation::validate_text_length(
             &self.name,
@@ -627,8 +627,9 @@ impl FileData {
 
         // Validate JSON if present
         if !self.json.is_empty() {
-            serde_json::from_str::<serde_json::Value>(&self.json)
-                .map_err(|e| {
+            let _ =
+                serde_json::from_str::<serde_json::Value>(&self.json)
+                    .map_err(|e| {
                     DataError::InvalidContent(format!(
                         "Invalid JSON: {}",
                         e
@@ -1573,7 +1574,7 @@ impl RssData {
 
         // Validate TTL if present
         if !self.ttl.is_empty() {
-            self.ttl.parse::<u32>().map_err(|_| {
+            let _ = self.ttl.parse::<u32>().map_err(|_| {
                 DataError::InvalidMetadata(
                     "Invalid TTL value".to_string(),
                 )

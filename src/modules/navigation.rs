@@ -98,7 +98,7 @@ impl NavigationGenerator {
 
         for file in files {
             if let Some(nav_item) = Self::process_file(file) {
-                nav_items.insert(nav_item.0, nav_item.1);
+                let _ = nav_items.insert(nav_item.0, nav_item.1);
             }
         }
 

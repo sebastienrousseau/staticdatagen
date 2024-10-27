@@ -69,11 +69,11 @@ fn contact_methods_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert(
+    let _ = metadata.insert(
         "security_contact".to_string(),
         "https://example.com/security, mailto:security@example.com, tel:+1-201-555-0123".to_string(),
     );
-    metadata.insert(
+    let _ = metadata.insert(
         "security_expires".to_string(),
         "2024-12-31T23:59:59Z".to_string(),
     );

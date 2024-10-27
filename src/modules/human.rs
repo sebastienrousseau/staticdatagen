@@ -266,12 +266,13 @@ mod tests {
     #[test]
     fn test_create_human_data() {
         let mut metadata = HashMap::new();
-        metadata.insert("author".to_string(), "John Doe".to_string());
-        metadata.insert(
+        let _ = metadata
+            .insert("author".to_string(), "John Doe".to_string());
+        let _ = metadata.insert(
             "author_website".to_string(),
             "https://example.com".to_string(),
         );
-        metadata.insert(
+        let _ = metadata.insert(
             "author_twitter".to_string(),
             "@johndoe".to_string(),
         );

@@ -46,16 +46,17 @@ fn basic_news_sitemap_example() -> Result<(), Box<dyn std::error::Error>>
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert(
+    let _ = metadata.insert(
         "news_title".to_string(),
         "Breaking News Story".to_string(),
     );
-    metadata.insert(
+    let _ = metadata.insert(
         "news_publication_name".to_string(),
         "Example News".to_string(),
     );
-    metadata.insert("news_language".to_string(), "en".to_string());
-    metadata.insert(
+    let _ =
+        metadata.insert("news_language".to_string(), "en".to_string());
+    let _ = metadata.insert(
         "news_publication_date".to_string(),
         "2024-02-20T12:00:00+00:00".to_string(),
     );
@@ -213,7 +214,7 @@ fn publication_dates_example() -> Result<(), Box<dyn std::error::Error>>
     println!("\n🦀 Publication Dates Example");
     println!("---------------------------------------------");
 
-    let dates = vec![
+    let dates = [
         "2024-02-20T09:00:00+00:00",
         "2024-02-20T12:30:00+00:00",
         "2024-02-20T15:45:00+00:00",

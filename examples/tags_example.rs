@@ -50,9 +50,12 @@ fn basic_tags_example() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     let mut metadata = HashMap::new();
-    metadata.insert("tags".to_string(), "rust, web".to_string());
-    metadata.insert("title".to_string(), "Learning Rust".to_string());
-    metadata.insert("date".to_string(), "2024-02-20".to_string());
+    let _ =
+        metadata.insert("tags".to_string(), "rust, web".to_string());
+    let _ = metadata
+        .insert("title".to_string(), "Learning Rust".to_string());
+    let _ =
+        metadata.insert("date".to_string(), "2024-02-20".to_string());
 
     let tags = generate_tags(&file, &metadata);
     match TagsData::new(
@@ -104,9 +107,10 @@ fn multiple_tags_example() -> Result<(), Box<dyn std::error::Error>> {
 
     for (title, tags, permalink) in posts {
         let mut metadata = HashMap::new();
-        metadata.insert("title".to_string(), title.to_string());
-        metadata.insert("tags".to_string(), tags.to_string());
-        metadata.insert("permalink".to_string(), permalink.to_string());
+        let _ = metadata.insert("title".to_string(), title.to_string());
+        let _ = metadata.insert("tags".to_string(), tags.to_string());
+        let _ = metadata
+            .insert("permalink".to_string(), permalink.to_string());
 
         let page_data = PageData::new(
             title.to_string(),
@@ -139,7 +143,7 @@ fn tag_page_example() -> Result<(), Box<dyn std::error::Error>> {
     let mut tag_pages: HashMap<String, Vec<PageData>> = HashMap::new();
 
     // Add some sample pages for a tag
-    tag_pages.insert(
+    let _ = tag_pages.insert(
         "rust".to_string(),
         vec![
             PageData::new(
@@ -179,7 +183,8 @@ fn hierarchical_tags_example() -> Result<(), Box<dyn std::error::Error>>
 
     for tag_path in hierarchical_tags {
         let mut metadata = HashMap::new();
-        metadata.insert("tags".to_string(), tag_path.to_string());
+        let _ =
+            metadata.insert("tags".to_string(), tag_path.to_string());
 
         let tags_data = create_tags_data(&metadata);
         println!("    ✅ Processed tag path: {}", tag_path);
@@ -197,10 +202,10 @@ fn tag_cloud_example() -> Result<(), Box<dyn std::error::Error>> {
     let mut tag_counts: HashMap<String, usize> = HashMap::new();
 
     // Sample tag frequencies
-    tag_counts.insert("rust".to_string(), 15);
-    tag_counts.insert("web".to_string(), 10);
-    tag_counts.insert("programming".to_string(), 8);
-    tag_counts.insert("tutorial".to_string(), 5);
+    let _ = tag_counts.insert("rust".to_string(), 15);
+    let _ = tag_counts.insert("web".to_string(), 10);
+    let _ = tag_counts.insert("programming".to_string(), 8);
+    let _ = tag_counts.insert("tutorial".to_string(), 5);
 
     println!("    ✅ Tag cloud weights:");
     for (tag, count) in &tag_counts {
@@ -269,7 +274,7 @@ fn tag_filtering_example() -> Result<(), Box<dyn std::error::Error>> {
         ),
     ];
 
-    tag_pages.insert("rust".to_string(), rust_pages);
+    let _ = tag_pages.insert("rust".to_string(), rust_pages);
 
     println!("    ✅ Filtered and sorted pages:");
     for (tag, mut pages) in tag_pages {

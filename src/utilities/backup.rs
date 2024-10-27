@@ -25,6 +25,6 @@ use std::{
 ///
 pub fn backup_file(file_path: &Path) -> io::Result<PathBuf> {
     let backup_path = file_path.with_extension("src.html");
-    fs::copy(file_path, &backup_path)?;
+    let _ = fs::copy(file_path, &backup_path)?;
     Ok(backup_path)
 }

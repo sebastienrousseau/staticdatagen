@@ -9,6 +9,7 @@
 
 use anyhow::{Context, Result};
 use html_generator::{generate_html, HtmlConfig};
+use rlg::log_format::LogFormat;
 use rlg::log_level::LogLevel;
 use rss_gen::{
     data::{RssData, RssItem},

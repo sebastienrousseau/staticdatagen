@@ -11,12 +11,12 @@ use langweave::error::I18nError;
 lazy_static! {
     static ref TRANSLATIONS: HashMap<&'static str, &'static str> = {
         let mut m = HashMap::new();
-        m.insert("Hello", "Bonjour");
-        m.insert("Goodbye", "Au revoir");
-        m.insert("main_logger_msg", "\nVeuillez lancer `ssg --help` pour plus d'informations.\n");
-        m.insert("lib_banner_log_msg", "Bannière imprimée avec succès");
-        m.insert("lib_args_log_msg", "Arguments traités avec succès");
-        m.insert("lib_server_log_msg", "Serveur démarré avec succès");
+        let _ = m.insert("Hello", "Bonjour");
+        let _ = m.insert("Goodbye", "Au revoir");
+        let _ = m.insert("main_logger_msg", "\nVeuillez lancer `ssg --help` pour plus d'informations.\n");
+        let _ = m.insert("lib_banner_log_msg", "Bannière imprimée avec succès");
+        let _ = m.insert("lib_args_log_msg", "Arguments traités avec succès");
+        let _ = m.insert("lib_server_log_msg", "Serveur démarré avec succès");
         // Add more translations here as needed
         m
     };
