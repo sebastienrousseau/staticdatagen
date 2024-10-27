@@ -79,3 +79,121 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
 
     Ok(files)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::add;
+    use std::fs::{self, File};
+    use std::io::{self, Write};
+    use std::path::Path;
+    use tempfile::tempdir;
+
+    /// Tests that `add` reads all valid files in the directory and excludes invalid files.
+    #[test]
+    fn test_add_valid_files() -> io::Result<()> {
+        let dir = tempdir()?;
+        let file1_path = dir.path().join("test1.txt");
+        let file2_path = dir.path().join("test2.txt");
+        let ds_store_path = dir.path().join(".DS_Store");
+
+        // Create test files with content
+        File::create(&file1_path)?.write_all(b"Content for file 1")?;
+        File::create(&file2_path)?.write_all(b"Content for file 2")?;
+        let _ = File::create(&ds_store_path)?; // .DS_Store file should be ignored
+
+        // Run the `add` function
+        let files = add(dir.path())?;
+
+        // Verify the correct files are read
+        assert_eq!(files.len(), 2);
+        assert!(files.iter().any(|file| file.name == "test1.txt"));
+        assert!(files.iter().any(|file| file.name == "test2.txt"));
+
+        Ok(())
+    }
+
+    /// Tests that `add` handles an empty directory correctly.
+    #[test]
+    fn test_add_empty_directory() -> io::Result<()> {
+        let dir = tempdir()?;
+
+        // Run the `add` function on an empty directory
+        let files = add(dir.path())?;
+
+        // Verify that no files are found
+        assert!(files.is_empty());
+
+        Ok(())
+    }
+
+    /// Tests that `add` returns an error when given a nonexistent directory.
+    #[test]
+    fn test_add_nonexistent_directory() {
+        let nonexistent_dir = Path::new("nonexistent_directory");
+
+        // Run the `add` function on a nonexistent directory
+        let result = add(nonexistent_dir);
+
+        // Verify that an error is returned
+        assert!(result.is_err());
+    }
+
+    /// Tests that `add` correctly escapes special characters in file content.
+    #[test]
+    fn test_add_escapes_special_characters() -> io::Result<()> {
+        let dir = tempdir()?;
+        let special_chars_file_path = dir.path().join("special_chars.txt");
+
+        // Create a file with special characters
+        File::create(&special_chars_file_path)?.write_all(b"Content with < & > characters")?;
+
+        // Run the `add` function
+        let files = add(dir.path())?;
+
+        // Verify that the content is properly escaped
+        let file_data = files.iter().find(|f| f.name == "special_chars.txt").unwrap();
+        assert_eq!(file_data.rss, "Content with &lt; &amp; &gt; characters");
+
+        Ok(())
+    }
+
+    /// Tests that `add` correctly serializes file content to JSON.
+    #[test]
+    fn test_add_serializes_to_json() -> io::Result<()> {
+        let dir = tempdir()?;
+        let json_file_path = dir.path().join("json_file.txt");
+
+        // Create a file with simple text content
+        File::create(&json_file_path)?.write_all(b"JSON content test")?;
+
+        // Run the `add` function
+        let files = add(dir.path())?;
+
+        // Verify that the content is correctly serialized to JSON
+        let file_data = files.iter().find(|f| f.name == "json_file.txt").unwrap();
+        assert_eq!(file_data.json, "\"JSON content test\"");
+
+        Ok(())
+    }
+
+    /// Tests that `add` skips over non-file entries (e.g., subdirectories).
+    #[test]
+    fn test_add_skips_directories() -> io::Result<()> {
+        let dir = tempdir()?;
+        let subdir_path = dir.path().join("subdir");
+        let file_path = dir.path().join("test_file.txt");
+
+        // Create a subdirectory and a test file in the main directory
+        fs::create_dir(&subdir_path)?;
+        File::create(&file_path)?.write_all(b"Content in file")?;
+
+        // Run the `add` function
+        let files = add(dir.path())?;
+
+        // Verify that only the file is read, and the subdirectory is ignored
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].name, "test_file.txt");
+
+        Ok(())
+    }
+}

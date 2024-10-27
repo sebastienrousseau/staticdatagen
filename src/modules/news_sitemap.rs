@@ -213,9 +213,9 @@ mod tests {
     #[test]
     fn test_create_news_site_map_data() {
         let mut metadata = HashMap::new();
-        metadata
+        let _ = metadata
             .insert("news_title".to_string(), "Test News".to_string());
-        metadata.insert(
+        let _ = metadata.insert(
             "news_publication_date".to_string(),
             "Tue, 20 Feb 2024 15:15:15 GMT".to_string(),
         );

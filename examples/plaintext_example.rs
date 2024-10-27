@@ -339,8 +339,10 @@ Here's another paragraph with a long line that needs to be wrapped. The wrapping
     let configs = vec![(40, "Narrow"), (60, "Medium"), (80, "Wide")];
 
     for (width, desc) in configs {
-        let mut config = PlainTextConfig::default();
-        config.max_line_length = width;
+        let _config = PlainTextConfig {
+            max_line_length: width,
+            ..Default::default()
+        };
 
         println!("\n    {} Format ({})", desc, width);
         println!("    {}", "-".repeat(40));

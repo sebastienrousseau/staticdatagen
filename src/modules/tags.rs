@@ -89,7 +89,8 @@ pub fn generate_tags(
             ];
             for key in &metadata_keys {
                 if let Some(value) = metadata.get(*key) {
-                    tags_data.insert((*key).to_string(), value.clone());
+                    let _ = tags_data
+                        .insert((*key).to_string(), value.clone());
                 }
             }
 
@@ -280,7 +281,7 @@ pub fn write_tags_html_to_file(
     // Read the existing HTML content from the file
     let mut file = fs::File::open(&file_path)?;
     let mut base_html = String::new();
-    file.read_to_string(&mut base_html)?;
+    let _ = file.read_to_string(&mut base_html)?;
 
     // Replace [[content]] with the generated HTML content
     base_html = base_html.replace("[[content]]", html_content);

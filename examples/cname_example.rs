@@ -95,7 +95,8 @@ fn multiple_domain_example() -> Result<(), Box<dyn std::error::Error>> {
 
     for domain in domains {
         let mut metadata = HashMap::new();
-        metadata.insert("cname".to_string(), domain.to_string());
+        let _ =
+            metadata.insert("cname".to_string(), domain.to_string());
 
         let cname_data = create_cname_data(&metadata);
         match cname_data.validate() {
@@ -162,12 +163,13 @@ fn metadata_generation_example(
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert(
+    let _ = metadata.insert(
         "cname".to_string(),
         "metadata-example.com".to_string(),
     );
-    metadata.insert("title".to_string(), "Example Site".to_string());
-    metadata.insert(
+    let _ = metadata
+        .insert("title".to_string(), "Example Site".to_string());
+    let _ = metadata.insert(
         "description".to_string(),
         "A site using CNAME".to_string(),
     );

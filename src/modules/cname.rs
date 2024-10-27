@@ -162,7 +162,8 @@ mod tests {
     #[test]
     fn test_create_cname_data() {
         let mut metadata = HashMap::new();
-        metadata.insert("cname".to_string(), "example.com".to_string());
+        let _ = metadata
+            .insert("cname".to_string(), "example.com".to_string());
 
         let data = create_cname_data(&metadata);
         assert_eq!(data.cname, "example.com");
@@ -239,7 +240,7 @@ mod tests {
     #[test]
     fn test_cname_data_with_invalid_domain() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "cname".to_string(),
             "invalid!@#domain.com".to_string(),
         );

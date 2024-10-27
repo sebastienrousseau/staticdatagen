@@ -287,11 +287,11 @@ mod tests {
     #[test]
     fn test_create_security_data() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "security_contact".to_string(),
             "https://example.com/security".to_string(),
         );
-        metadata.insert(
+        let _ = metadata.insert(
             "security_expires".to_string(),
             "2024-12-31T23:59:59Z".to_string(),
         );
@@ -394,7 +394,7 @@ mod tests {
     #[test]
     fn test_multiple_contacts() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "security_contact".to_string(),
             "https://example.com/security, mailto:security@example.com"
                 .to_string(),

@@ -62,14 +62,17 @@ fn metadata_generation_example(
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("title".to_string(), "My Blog Post".to_string());
-    metadata.insert("author".to_string(), "Jane Doe".to_string());
-    metadata.insert(
+    let _ = metadata
+        .insert("title".to_string(), "My Blog Post".to_string());
+    let _ =
+        metadata.insert("author".to_string(), "Jane Doe".to_string());
+    let _ = metadata.insert(
         "description".to_string(),
         "A sample blog post".to_string(),
     );
-    metadata.insert("date".to_string(), "2024-02-20".to_string());
-    metadata
+    let _ =
+        metadata.insert("date".to_string(), "2024-02-20".to_string());
+    let _ = metadata
         .insert("tags".to_string(), "rust,web,tutorial".to_string());
 
     let sample_file = FileData::new(
@@ -123,14 +126,14 @@ fn rss_feed_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("title".to_string(), "My Blog".to_string());
-    metadata.insert(
+    let _ = metadata.insert("title".to_string(), "My Blog".to_string());
+    let _ = metadata.insert(
         "description".to_string(),
         "A blog about Rust".to_string(),
     );
-    metadata
+    let _ = metadata
         .insert("link".to_string(), "https://example.com".to_string());
-    metadata.insert("language".to_string(), "en".to_string());
+    let _ = metadata.insert("language".to_string(), "en".to_string());
 
     println!("    ✅ Generated RSS feed");
     println!("    📝 Feed URL: {}", metadata["link"]);
@@ -145,12 +148,13 @@ fn sitemap_generation_example() -> Result<(), Box<dyn std::error::Error>>
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert(
+    let _ = metadata.insert(
         "baseurl".to_string(),
         "https://example.com".to_string(),
     );
-    metadata.insert("changefreq".to_string(), "weekly".to_string());
-    metadata.insert("priority".to_string(), "0.8".to_string());
+    let _ =
+        metadata.insert("changefreq".to_string(), "weekly".to_string());
+    let _ = metadata.insert("priority".to_string(), "0.8".to_string());
 
     println!("    ✅ Generated sitemap");
     println!("    📝 Base URL: {}", metadata["baseurl"]);
@@ -185,7 +189,7 @@ fn error_handling_example() -> Result<(), Box<dyn std::error::Error>> {
 
     // Test invalid metadata
     let mut invalid_metadata = HashMap::new();
-    invalid_metadata
+    let _ = invalid_metadata
         .insert("date".to_string(), "invalid-date".to_string());
 
     let invalid_file = FileData::new(

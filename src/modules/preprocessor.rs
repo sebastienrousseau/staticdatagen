@@ -33,7 +33,7 @@ pub fn preprocess_content(
 
     // Trim trailing newlines
     while result.ends_with('\n') {
-        result.pop();
+        let _ = result.pop();
     }
 
     Ok(result)

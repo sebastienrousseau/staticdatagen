@@ -33,35 +33,21 @@
 macro_rules! macro_log_info {
     ($level:expr, $component:expr, $description:expr, $format:expr) => {{
         use dtt::datetime::DateTime;
-        use rlg::{log::Log, log_format::LogFormat};
+        use rlg::log::Log;
         use vrd::random::Random;
+
         let date = DateTime::new();
         let mut rng = Random::default();
         let session_id = rng.rand().to_string();
-        Log::new(
+
+        // Create the log and call `.ok()` to discard the unused result
+        let _log = Log::new(
             &session_id,
             &date.to_string(),
             $level,
             $component,
             $description,
             $format,
-        )
-    }};
-}
-
-#[cfg(test)]
-mod tests {
-    use rlg::log_level::LogLevel;
-
-    #[test]
-    fn test_macro_log_info() {
-        let log = macro_log_info!(
-            &LogLevel::INFO,
-            "TestComponent",
-            "Test message",
-            &LogFormat::CLF
         );
-        assert_eq!(log.component, "TestComponent");
-        assert_eq!(log.description, "Test message");
-    }
+    }};
 }

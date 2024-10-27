@@ -163,7 +163,7 @@ fn copy_template_file(
     file_name: &str,
 ) -> Result<()> {
     let dest_path = dest_dir.join(file_name);
-    copy(template_path.join(file_name), dest_path)
+    let _ = copy(template_path.join(file_name), dest_path)
         .context("Failed to copy template file")?;
     Ok(())
 }

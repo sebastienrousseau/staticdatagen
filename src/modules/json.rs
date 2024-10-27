@@ -220,36 +220,40 @@ pub fn manifest(
     options: &ManifestData,
 ) -> Result<String, serde_json::Error> {
     let mut json_map = Map::new();
-    json_map.insert(
+    let _ = json_map.insert(
         "background_color".to_string(),
         json!(options.background_color),
     );
-    json_map
+    let _ = json_map
         .insert("description".to_string(), json!(options.description));
-    json_map.insert("display".to_string(), json!(options.display));
+    let _ =
+        json_map.insert("display".to_string(), json!(options.display));
 
     let mut icons_vec = vec![];
     for icon in &options.icons {
         let mut icon_map = Map::new();
-        icon_map.insert("src".to_string(), json!(icon.src));
-        icon_map.insert("sizes".to_string(), json!(icon.sizes));
+        let _ = icon_map.insert("src".to_string(), json!(icon.src));
+        let _ = icon_map.insert("sizes".to_string(), json!(icon.sizes));
         if let Some(icon_type) = &icon.icon_type {
-            icon_map.insert("type".to_string(), json!(icon_type));
+            let _ =
+                icon_map.insert("type".to_string(), json!(icon_type));
         }
         if let Some(purpose) = &icon.purpose {
-            icon_map.insert("purpose".to_string(), json!(purpose));
+            let _ =
+                icon_map.insert("purpose".to_string(), json!(purpose));
         }
         icons_vec.push(json!(icon_map));
     }
-    json_map.insert("icons".to_string(), json!(icons_vec));
-    json_map.insert("name".to_string(), json!(options.name));
-    json_map
+    let _ = json_map.insert("icons".to_string(), json!(icons_vec));
+    let _ = json_map.insert("name".to_string(), json!(options.name));
+    let _ = json_map
         .insert("orientation".to_string(), json!(options.orientation));
-    json_map.insert("scope".to_string(), json!(options.scope));
-    json_map
+    let _ = json_map.insert("scope".to_string(), json!(options.scope));
+    let _ = json_map
         .insert("short_name".to_string(), json!(options.short_name));
-    json_map.insert("start_url".to_string(), json!(options.start_url));
-    json_map
+    let _ = json_map
+        .insert("start_url".to_string(), json!(options.start_url));
+    let _ = json_map
         .insert("theme_color".to_string(), json!(options.theme_color));
 
     serde_json::to_string_pretty(&json_map)
