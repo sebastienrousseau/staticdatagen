@@ -25,20 +25,20 @@ build = "build.rs"                         # Path to the build script
 
 # Crates.io categories
 categories = [
-    "web-programming",
+    "command-line-utilities",
+    "data-structures",
     "development-tools",
-    "content-management",
     "text-processing",
-    "command-line-utilities"
+    "web-programming",
 ]
 
 # Keywords for easier discoverability on Crates.io
 keywords = [
+    "content-generation",
     "static-site",
+    "staticdatagen",
     "structured-data",
     "templating",
-    "content-generation",
-    "staticdatagen"
 ]
 
 # Excluding unnecessary files from the package
