@@ -184,8 +184,11 @@ pub fn create_directory(
 /// A `String` with the first letter of each word capitalized.
 pub fn to_title_case(s: &str) -> String {
     let re = Regex::new(r"(?:^|\s)(\p{L})").unwrap();
-    re.replace_all(s, |caps: &regex::Captures| caps[1].to_uppercase())
-        .into_owned()
+    re.replace_all(s, |caps: &regex::Captures| {
+        format!(" {}", &caps[1].to_uppercase())
+    })
+    .trim_start()
+    .to_string()
 }
 
 /// Formats a header string with an ID and class attribute.
@@ -340,15 +343,175 @@ pub fn truncate(path: &Path, length: usize) -> Option<String> {
     let components: Vec<_> =
         path.components().rev().take(length).collect();
     if components.len() == length {
-        Some(
-            components
-                .into_iter()
-                .rev()
-                .collect::<PathBuf>()
-                .to_string_lossy()
-                .into_owned(),
-        )
+        let truncated_path: PathBuf =
+            components.into_iter().rev().collect();
+        let truncated_path =
+            truncated_path.strip_prefix("/").unwrap_or(&truncated_path);
+        Some(truncated_path.to_string_lossy().into_owned())
     } else {
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use regex::Regex;
+    use std::{fs, io::Write, path::Path};
+
+    /// Tests creating a directory that doesn't exist.
+    #[test]
+    fn test_directory_creation_success() {
+        let dir = Path::new("test_dir");
+        let result = directory(dir, "test_dir");
+        assert!(result.is_ok());
+        assert!(dir.exists() && dir.is_dir());
+        fs::remove_dir_all(dir)
+            .expect("Failed to clean up test directory");
+    }
+
+    /// Tests handling of an existing directory.
+    #[test]
+    fn test_directory_exists() {
+        let dir = Path::new("existing_dir");
+        fs::create_dir_all(dir)
+            .expect("Failed to create test directory");
+        let result = directory(dir, "existing_dir");
+        assert!(result.is_ok());
+        assert!(dir.exists());
+        fs::remove_dir_all(dir)
+            .expect("Failed to clean up test directory");
+    }
+
+    /// Tests moving output directory to a public directory.
+    #[test]
+    fn test_move_output_directory() {
+        let out_dir = Path::new("test_output");
+        fs::create_dir_all(out_dir)
+            .expect("Failed to create test output directory");
+
+        let result = move_output_directory("test_site", out_dir);
+        assert!(result.is_ok());
+
+        let public_dir = Path::new("public/test_site");
+        assert!(public_dir.exists() && public_dir.is_dir());
+
+        fs::remove_dir_all("public")
+            .expect("Failed to clean up test public directory");
+    }
+
+    /// Tests finding HTML files in a directory with subdirectories.
+    #[test]
+    fn test_find_html_files() -> io::Result<()> {
+        let base_dir = Path::new("test_find_html_files");
+        fs::create_dir_all(base_dir)?;
+
+        let html_file = base_dir.join("file.html");
+        let mut file = fs::File::create(&html_file)?;
+        writeln!(file, "<html></html>")?;
+
+        let sub_dir = base_dir.join("sub_dir");
+        fs::create_dir_all(&sub_dir)?;
+
+        let nested_html = sub_dir.join("nested.html");
+        let mut nested_file = fs::File::create(&nested_html)?;
+        writeln!(nested_file, "<html></html>")?;
+
+        let files = find_html_files(base_dir)?;
+        assert_eq!(files.len(), 2);
+        assert!(files.contains(&html_file));
+        assert!(files.contains(&nested_html));
+
+        fs::remove_dir_all(base_dir)?;
+        Ok(())
+    }
+
+    /// Tests cleaning up directories that exist.
+    #[test]
+    fn test_cleanup_directory() -> Result<(), Box<dyn Error>> {
+        let dirs =
+            vec![Path::new("cleanup_dir1"), Path::new("cleanup_dir2")];
+        for dir in &dirs {
+            fs::create_dir_all(dir)?;
+        }
+
+        cleanup_directory(&dirs)?;
+
+        for dir in &dirs {
+            assert!(!dir.exists());
+        }
+
+        Ok(())
+    }
+
+    /// Tests creating multiple directories.
+    #[test]
+    fn test_create_directory() -> Result<(), Box<dyn Error>> {
+        let dirs =
+            vec![Path::new("create_dir1"), Path::new("create_dir2")];
+
+        create_directory(&dirs)?;
+
+        for dir in &dirs {
+            assert!(dir.exists() && dir.is_dir());
+        }
+
+        for dir in &dirs {
+            fs::remove_dir_all(dir)?;
+        }
+
+        Ok(())
+    }
+
+    /// Tests converting a string to title case.
+    #[test]
+    fn test_to_title_case() {
+        let input = "hello world from rust";
+        let expected = "Hello World From Rust";
+        let result = to_title_case(input);
+        assert_eq!(result, expected);
+    }
+
+    /// Tests formatting a header with ID and class.
+    #[test]
+    fn test_format_header_with_id_class() {
+        let header = "<h1>My Header</h1>";
+        let id_regex = Regex::new(r"[^a-z0-9]+").unwrap();
+        let formatted = format_header_with_id_class(header, &id_regex);
+        assert!(formatted.contains("id=\"h1-my-header\""));
+        assert!(formatted.contains("class=\"my-header\""));
+    }
+
+    /// Tests extracting content without front matter.
+    #[test]
+    fn test_extract_front_matter() {
+        let content =
+            "---\ntitle: Test\n---\nContent without front matter";
+        let extracted = extract_front_matter(content);
+        assert_eq!(extracted, "Content without front matter");
+    }
+
+    /// Tests truncating a path with more components than specified length.
+    #[test]
+    fn test_truncate_path() {
+        let path = Path::new("/a/b/c/d/e");
+        let truncated = truncate(path, 3);
+
+        #[cfg(unix)]
+        let expected = Some("c/d/e".to_string());
+
+        #[cfg(windows)]
+        let expected = Some("c\\d\\e".to_string());
+
+        assert_eq!(truncated, expected);
+    }
+
+    /// Tests truncating a path with fewer components than specified length.
+    #[test]
+    fn test_truncate_short_path() {
+        let path = Path::new("/a/b");
+        let truncated = truncate(path, 2);
+        let expected = Some("a/b".to_string());
+        assert_eq!(truncated, expected);
     }
 }
