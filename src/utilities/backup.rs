@@ -34,6 +34,7 @@ mod tests {
     use super::backup_file;
     use std::fs::{self, File};
     use std::io::{self, Write};
+    use std::os::unix::fs::PermissionsExt;
     use std::path::Path;
     use tempfile::tempdir;
 
@@ -80,16 +81,16 @@ mod tests {
 
         // Set directory to read-only to simulate permission error.
         let mut permissions = fs::metadata(dir.path())?.permissions();
-        permissions.set_readonly(true);
+        permissions.set_mode(0o400); // Read-only for the user
         fs::set_permissions(dir.path(), permissions)?;
 
         // Expect the backup to fail due to lack of permissions.
         let result = backup_file(&original_file_path);
         assert!(result.is_err());
 
-        // Clean up by restoring write permissions.
+        // Clean up by restoring user write permissions.
         let mut permissions = fs::metadata(dir.path())?.permissions();
-        permissions.set_readonly(false);
+        permissions.set_mode(0o700); // Read-write-execute for the user
         fs::set_permissions(dir.path(), permissions)?;
 
         Ok(())
