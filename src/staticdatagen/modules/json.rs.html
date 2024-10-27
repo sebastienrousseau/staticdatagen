@@ -561,7 +561,11 @@
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
 <a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="doccomment">//! JSON and data file generation functionality
@@ -783,36 +787,40 @@
     options: <span class="kw-2">&amp;</span>ManifestData,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;String, serde_json::Error&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>json_map = Map::new();
-    json_map.insert(
+    <span class="kw">let _ </span>= json_map.insert(
         <span class="string">"background_color"</span>.to_string(),
         <span class="macro">json!</span>(options.background_color),
     );
-    json_map
+    <span class="kw">let _ </span>= json_map
         .insert(<span class="string">"description"</span>.to_string(), <span class="macro">json!</span>(options.description));
-    json_map.insert(<span class="string">"display"</span>.to_string(), <span class="macro">json!</span>(options.display));
+    <span class="kw">let _ </span>=
+        json_map.insert(<span class="string">"display"</span>.to_string(), <span class="macro">json!</span>(options.display));
 
     <span class="kw">let </span><span class="kw-2">mut </span>icons_vec = <span class="macro">vec!</span>[];
     <span class="kw">for </span>icon <span class="kw">in </span><span class="kw-2">&amp;</span>options.icons {
         <span class="kw">let </span><span class="kw-2">mut </span>icon_map = Map::new();
-        icon_map.insert(<span class="string">"src"</span>.to_string(), <span class="macro">json!</span>(icon.src));
-        icon_map.insert(<span class="string">"sizes"</span>.to_string(), <span class="macro">json!</span>(icon.sizes));
+        <span class="kw">let _ </span>= icon_map.insert(<span class="string">"src"</span>.to_string(), <span class="macro">json!</span>(icon.src));
+        <span class="kw">let _ </span>= icon_map.insert(<span class="string">"sizes"</span>.to_string(), <span class="macro">json!</span>(icon.sizes));
         <span class="kw">if let </span><span class="prelude-val">Some</span>(icon_type) = <span class="kw-2">&amp;</span>icon.icon_type {
-            icon_map.insert(<span class="string">"type"</span>.to_string(), <span class="macro">json!</span>(icon_type));
+            <span class="kw">let _ </span>=
+                icon_map.insert(<span class="string">"type"</span>.to_string(), <span class="macro">json!</span>(icon_type));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(purpose) = <span class="kw-2">&amp;</span>icon.purpose {
-            icon_map.insert(<span class="string">"purpose"</span>.to_string(), <span class="macro">json!</span>(purpose));
+            <span class="kw">let _ </span>=
+                icon_map.insert(<span class="string">"purpose"</span>.to_string(), <span class="macro">json!</span>(purpose));
         }
         icons_vec.push(<span class="macro">json!</span>(icon_map));
     }
-    json_map.insert(<span class="string">"icons"</span>.to_string(), <span class="macro">json!</span>(icons_vec));
-    json_map.insert(<span class="string">"name"</span>.to_string(), <span class="macro">json!</span>(options.name));
-    json_map
+    <span class="kw">let _ </span>= json_map.insert(<span class="string">"icons"</span>.to_string(), <span class="macro">json!</span>(icons_vec));
+    <span class="kw">let _ </span>= json_map.insert(<span class="string">"name"</span>.to_string(), <span class="macro">json!</span>(options.name));
+    <span class="kw">let _ </span>= json_map
         .insert(<span class="string">"orientation"</span>.to_string(), <span class="macro">json!</span>(options.orientation));
-    json_map.insert(<span class="string">"scope"</span>.to_string(), <span class="macro">json!</span>(options.scope));
-    json_map
+    <span class="kw">let _ </span>= json_map.insert(<span class="string">"scope"</span>.to_string(), <span class="macro">json!</span>(options.scope));
+    <span class="kw">let _ </span>= json_map
         .insert(<span class="string">"short_name"</span>.to_string(), <span class="macro">json!</span>(options.short_name));
-    json_map.insert(<span class="string">"start_url"</span>.to_string(), <span class="macro">json!</span>(options.start_url));
-    json_map
+    <span class="kw">let _ </span>= json_map
+        .insert(<span class="string">"start_url"</span>.to_string(), <span class="macro">json!</span>(options.start_url));
+    <span class="kw">let _ </span>= json_map
         .insert(<span class="string">"theme_color"</span>.to_string(), <span class="macro">json!</span>(options.theme_color));
 
     serde_json::to_string_pretty(<span class="kw-2">&amp;</span>json_map)

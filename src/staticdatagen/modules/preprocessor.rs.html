@@ -73,7 +73,7 @@
 
     <span class="comment">// Trim trailing newlines
     </span><span class="kw">while </span>result.ends_with(<span class="string">'\n'</span>) {
-        result.pop();
+        <span class="kw">let _ </span>= result.pop();
     }
 
     <span class="prelude-val">Ok</span>(result)

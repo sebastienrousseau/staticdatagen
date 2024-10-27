@@ -398,7 +398,7 @@
 
         <span class="kw">for </span>file <span class="kw">in </span>files {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(nav_item) = <span class="self">Self</span>::process_file(file) {
-                nav_items.insert(nav_item.<span class="number">0</span>, nav_item.<span class="number">1</span>);
+                <span class="kw">let _ </span>= nav_items.insert(nav_item.<span class="number">0</span>, nav_item.<span class="number">1</span>);
             }
         }
 

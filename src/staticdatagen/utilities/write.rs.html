@@ -450,7 +450,7 @@
     file_name: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>dest_path = dest_dir.join(file_name);
-    copy(template_path.join(file_name), dest_path)
+    <span class="kw">let _ </span>= copy(template_path.join(file_name), dest_path)
         .context(<span class="string">"Failed to copy template file"</span>)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }

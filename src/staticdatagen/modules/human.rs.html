@@ -356,7 +356,8 @@
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="doccomment">//! Humans.txt Generation Module
@@ -624,12 +625,13 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_create_human_data() {
         <span class="kw">let </span><span class="kw-2">mut </span>metadata = HashMap::new();
-        metadata.insert(<span class="string">"author"</span>.to_string(), <span class="string">"John Doe"</span>.to_string());
-        metadata.insert(
+        <span class="kw">let _ </span>= metadata
+            .insert(<span class="string">"author"</span>.to_string(), <span class="string">"John Doe"</span>.to_string());
+        <span class="kw">let _ </span>= metadata.insert(
             <span class="string">"author_website"</span>.to_string(),
             <span class="string">"https://example.com"</span>.to_string(),
         );
-        metadata.insert(
+        <span class="kw">let _ </span>= metadata.insert(
             <span class="string">"author_twitter"</span>.to_string(),
             <span class="string">"@johndoe"</span>.to_string(),
         );

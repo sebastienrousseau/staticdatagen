@@ -28,7 +28,75 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
-<a href="#30" id="30">30</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
+<a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
+<a href="#49" id="49">49</a>
+<a href="#50" id="50">50</a>
+<a href="#51" id="51">51</a>
+<a href="#52" id="52">52</a>
+<a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
+<a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="kw">use </span>std::{
@@ -55,7 +123,75 @@
 ///
 </span><span class="kw">pub fn </span>backup_file(file_path: <span class="kw-2">&amp;</span>Path) -&gt; io::Result&lt;PathBuf&gt; {
     <span class="kw">let </span>backup_path = file_path.with_extension(<span class="string">"src.html"</span>);
-    fs::copy(file_path, <span class="kw-2">&amp;</span>backup_path)<span class="question-mark">?</span>;
+    <span class="kw">let _ </span>= fs::copy(file_path, <span class="kw-2">&amp;</span>backup_path)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(backup_path)
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::backup_file;
+    <span class="kw">use </span>std::fs::{<span class="self">self</span>, File};
+    <span class="kw">use </span>std::io::{<span class="self">self</span>, Write};
+    <span class="kw">use </span>std::os::unix::fs::PermissionsExt;
+    <span class="kw">use </span>std::path::Path;
+    <span class="kw">use </span>tempfile::tempdir;
+
+    <span class="doccomment">/// Tests a successful backup creation.
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>test_backup_file_success() -&gt; io::Result&lt;()&gt; {
+        <span class="kw">let </span>dir = tempdir()<span class="question-mark">?</span>;
+        <span class="kw">let </span>original_file_path = dir.path().join(<span class="string">"test_file.txt"</span>);
+
+        <span class="comment">// Create an original file with some content.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>file = File::create(<span class="kw-2">&amp;</span>original_file_path)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(file, <span class="string">"This is a test file."</span>)<span class="question-mark">?</span>;
+
+        <span class="comment">// Perform the backup.
+        </span><span class="kw">let </span>backup_path = backup_file(<span class="kw-2">&amp;</span>original_file_path)<span class="question-mark">?</span>;
+
+        <span class="comment">// Check the backup file's existence and content.
+        </span><span class="macro">assert!</span>(backup_path.exists());
+        <span class="macro">assert!</span>(backup_path.ends_with(<span class="string">"test_file.src.html"</span>));
+
+        <span class="kw">let </span>original_content = fs::read_to_string(<span class="kw-2">&amp;</span>original_file_path)<span class="question-mark">?</span>;
+        <span class="kw">let </span>backup_content = fs::read_to_string(<span class="kw-2">&amp;</span>backup_path)<span class="question-mark">?</span>;
+        <span class="macro">assert_eq!</span>(original_content, backup_content);
+
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Tests backup creation failure when the file does not exist.
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>test_backup_file_nonexistent_file() {
+        <span class="kw">let </span>nonexistent_path = Path::new(<span class="string">"nonexistent_file.txt"</span>);
+        <span class="kw">let </span>result = backup_file(nonexistent_path);
+        <span class="macro">assert!</span>(result.is_err());
+    }
+
+    <span class="doccomment">/// Tests backup creation failure due to lack of write permissions.
+    </span><span class="attr">#[test]
+    </span><span class="kw">fn </span>test_backup_file_no_permission() -&gt; io::Result&lt;()&gt; {
+        <span class="kw">let </span>dir = tempdir()<span class="question-mark">?</span>;
+        <span class="kw">let </span>original_file_path = dir.path().join(<span class="string">"test_file.txt"</span>);
+
+        <span class="comment">// Create an original file to test permissions.
+        </span><span class="kw">let _ </span>= File::create(<span class="kw-2">&amp;</span>original_file_path);
+
+        <span class="comment">// Set directory to read-only to simulate permission error.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>permissions = fs::metadata(dir.path())<span class="question-mark">?</span>.permissions();
+        permissions.set_mode(<span class="number">0o400</span>); <span class="comment">// Read-only for the user
+        </span>fs::set_permissions(dir.path(), permissions)<span class="question-mark">?</span>;
+
+        <span class="comment">// Expect the backup to fail due to lack of permissions.
+        </span><span class="kw">let </span>result = backup_file(<span class="kw-2">&amp;</span>original_file_path);
+        <span class="macro">assert!</span>(result.is_err());
+
+        <span class="comment">// Clean up by restoring user write permissions.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>permissions = fs::metadata(dir.path())<span class="question-mark">?</span>.permissions();
+        permissions.set_mode(<span class="number">0o700</span>); <span class="comment">// Read-write-execute for the user
+        </span>fs::set_permissions(dir.path(), permissions)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 </code></pre></div></section></main></body></html>

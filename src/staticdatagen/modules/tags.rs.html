@@ -291,7 +291,8 @@
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="kw">use </span><span class="kw">crate</span>::models::data::{FileData, PageData, TagsData};
@@ -382,7 +383,8 @@
             ];
             <span class="kw">for </span>key <span class="kw">in </span><span class="kw-2">&amp;</span>metadata_keys {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = metadata.get(<span class="kw-2">*</span>key) {
-                    tags_data.insert((<span class="kw-2">*</span>key).to_string(), value.clone());
+                    <span class="kw">let _ </span>= tags_data
+                        .insert((<span class="kw-2">*</span>key).to_string(), value.clone());
                 }
             }
 
@@ -573,7 +575,7 @@
     <span class="comment">// Read the existing HTML content from the file
     </span><span class="kw">let </span><span class="kw-2">mut </span>file = fs::File::open(<span class="kw-2">&amp;</span>file_path)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>base_html = String::new();
-    file.read_to_string(<span class="kw-2">&amp;mut </span>base_html)<span class="question-mark">?</span>;
+    <span class="kw">let _ </span>= file.read_to_string(<span class="kw-2">&amp;mut </span>base_html)<span class="question-mark">?</span>;
 
     <span class="comment">// Replace [[content]] with the generated HTML content
     </span>base_html = base_html.replace(<span class="string">"[[content]]"</span>, html_content);

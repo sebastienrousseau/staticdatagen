@@ -57,12 +57,12 @@
 <span class="macro">lazy_static!</span> {
     <span class="kw">static </span><span class="kw-2">ref </span>TRANSLATIONS: HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; = {
         <span class="kw">let </span><span class="kw-2">mut </span>m = HashMap::new();
-        m.insert(<span class="string">"Hello"</span>, <span class="string">"Bonjour"</span>);
-        m.insert(<span class="string">"Goodbye"</span>, <span class="string">"Au revoir"</span>);
-        m.insert(<span class="string">"main_logger_msg"</span>, <span class="string">"\nVeuillez lancer `ssg --help` pour plus d'informations.\n"</span>);
-        m.insert(<span class="string">"lib_banner_log_msg"</span>, <span class="string">"Bannière imprimée avec succès"</span>);
-        m.insert(<span class="string">"lib_args_log_msg"</span>, <span class="string">"Arguments traités avec succès"</span>);
-        m.insert(<span class="string">"lib_server_log_msg"</span>, <span class="string">"Serveur démarré avec succès"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"Hello"</span>, <span class="string">"Bonjour"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"Goodbye"</span>, <span class="string">"Au revoir"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"main_logger_msg"</span>, <span class="string">"\nVeuillez lancer `ssg --help` pour plus d'informations.\n"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"lib_banner_log_msg"</span>, <span class="string">"Bannière imprimée avec succès"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"lib_args_log_msg"</span>, <span class="string">"Arguments traités avec succès"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"lib_server_log_msg"</span>, <span class="string">"Serveur démarré avec succès"</span>);
         <span class="comment">// Add more translations here as needed
         </span>m
     };

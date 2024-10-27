@@ -479,7 +479,8 @@
 <a href="#478" id="478">478</a>
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="doccomment">//! Compilation service for static site generation
@@ -490,6 +491,7 @@
 
 </span><span class="kw">use </span>anyhow::{Context, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>html_generator::{generate_html, HtmlConfig};
+<span class="kw">use </span>rlg::log_format::LogFormat;
 <span class="kw">use </span>rlg::log_level::LogLevel;
 <span class="kw">use </span>rss_gen::{
     data::{RssData, RssItem},
@@ -925,19 +927,19 @@
                 <span class="string">"tag1"</span>.to_string(),
                 <span class="macro">vec!</span>[{
                     <span class="kw">let </span><span class="kw-2">mut </span>page_data = HashMap::new();
-                    page_data.insert(
+                    <span class="kw">let _ </span>= page_data.insert(
                         <span class="string">"title"</span>.to_string(),
                         <span class="string">"Test Title"</span>.to_string(),
                     );
-                    page_data.insert(
+                    <span class="kw">let _ </span>= page_data.insert(
                         <span class="string">"description"</span>.to_string(),
                         <span class="string">"Test Description"</span>.to_string(),
                     );
-                    page_data.insert(
+                    <span class="kw">let _ </span>= page_data.insert(
                         <span class="string">"permalink"</span>.to_string(),
                         <span class="string">"test_permalink"</span>.to_string(),
                     );
-                    page_data.insert(
+                    <span class="kw">let _ </span>= page_data.insert(
                         <span class="string">"date"</span>.to_string(),
                         <span class="string">"2024-01-01"</span>.to_string(),
                     );

@@ -212,7 +212,9 @@
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
 <a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="doccomment">//! Web App Manifest Generation Module
@@ -343,8 +345,9 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_create_manifest_data() {
         <span class="kw">let </span><span class="kw-2">mut </span>metadata = HashMap::new();
-        metadata.insert(<span class="string">"name"</span>.to_string(), <span class="string">"Test App"</span>.to_string());
-        metadata.insert(
+        <span class="kw">let _ </span>=
+            metadata.insert(<span class="string">"name"</span>.to_string(), <span class="string">"Test App"</span>.to_string());
+        <span class="kw">let _ </span>= metadata.insert(
             <span class="string">"description"</span>.to_string(),
             <span class="string">"Test Description"</span>.to_string(),
         );
@@ -360,7 +363,8 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_manifest_with_icon() {
         <span class="kw">let </span><span class="kw-2">mut </span>metadata = HashMap::new();
-        metadata.insert(<span class="string">"icon"</span>.to_string(), <span class="string">"/icon.svg"</span>.to_string());
+        <span class="kw">let _ </span>= metadata
+            .insert(<span class="string">"icon"</span>.to_string(), <span class="string">"/icon.svg"</span>.to_string());
 
         <span class="kw">let </span>manifest = create_manifest_data(<span class="kw-2">&amp;</span>metadata);
 
@@ -417,7 +421,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_theme_color() {
         <span class="kw">let </span><span class="kw-2">mut </span>metadata = HashMap::new();
-        metadata.insert(
+        <span class="kw">let _ </span>= metadata.insert(
             <span class="string">"theme-color"</span>.to_string(),
             <span class="string">"255,255,255"</span>.to_string(),
         );

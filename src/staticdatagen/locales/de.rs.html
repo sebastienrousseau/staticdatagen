@@ -57,12 +57,12 @@
 <span class="macro">lazy_static!</span> {
     <span class="kw">static </span><span class="kw-2">ref </span>TRANSLATIONS: HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; = {
         <span class="kw">let </span><span class="kw-2">mut </span>m = HashMap::new();
-        m.insert(<span class="string">"Hello"</span>, <span class="string">"Hallo"</span>);
-        m.insert(<span class="string">"Goodbye"</span>, <span class="string">"Auf Wiedersehen"</span>);
-        m.insert(<span class="string">"main_logger_msg"</span>, <span class="string">"\nFür weitere Informationen führen Sie bitte `ssg --help` aus.\n"</span>);
-        m.insert(<span class="string">"lib_banner_log_msg"</span>, <span class="string">"Banner erfolgreich gedruckt"</span>);
-        m.insert(<span class="string">"lib_args_log_msg"</span>, <span class="string">"Argumente erfolgreich verarbeitet"</span>);
-        m.insert(<span class="string">"lib_server_log_msg"</span>, <span class="string">"Server erfolgreich gestartet"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"Hello"</span>, <span class="string">"Hallo"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"Goodbye"</span>, <span class="string">"Auf Wiedersehen"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"main_logger_msg"</span>, <span class="string">"\nFür weitere Informationen führen Sie bitte `ssg --help` aus.\n"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"lib_banner_log_msg"</span>, <span class="string">"Banner erfolgreich gedruckt"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"lib_args_log_msg"</span>, <span class="string">"Argumente erfolgreich verarbeitet"</span>);
+        <span class="kw">let _ </span>= m.insert(<span class="string">"lib_server_log_msg"</span>, <span class="string">"Server erfolgreich gestartet"</span>);
         <span class="comment">// Add more translations here as needed
         </span>m
     };

@@ -525,9 +525,9 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_create_news_site_map_data() {
         <span class="kw">let </span><span class="kw-2">mut </span>metadata = HashMap::new();
-        metadata
+        <span class="kw">let _ </span>= metadata
             .insert(<span class="string">"news_title"</span>.to_string(), <span class="string">"Test News"</span>.to_string());
-        metadata.insert(
+        <span class="kw">let _ </span>= metadata.insert(
             <span class="string">"news_publication_date"</span>.to_string(),
             <span class="string">"Tue, 20 Feb 2024 15:15:15 GMT"</span>.to_string(),
         );
