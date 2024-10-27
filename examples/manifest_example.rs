@@ -240,15 +240,17 @@ fn metadata_based_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("name".to_string(), "Metadata App".to_string());
-    metadata.insert("short_name".to_string(), "MetaApp".to_string());
-    metadata.insert(
+    let _ = metadata.insert("name".to_string(), "Metadata App".to_string());
+    let _ = metadata.insert("short_name".to_string(), "MetaApp".to_string());
+    let _ = metadata.insert(
         "description".to_string(),
         "App from metadata".to_string(),
     );
-    metadata.insert("theme-color".to_string(), "blue".to_string());
-    metadata
-        .insert("background-color".to_string(), "white".to_string());
+    let _ = metadata.insert("theme-color".to_string(), "blue".to_string());
+    let _ = metadata.insert(
+        "background-color".to_string(),
+        "white".to_string(),
+    );
 
     let manifest = create_manifest_data(&metadata);
 
