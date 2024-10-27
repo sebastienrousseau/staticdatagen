@@ -59,12 +59,16 @@ fn basic_robots_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates custom crawling directives.
-fn custom_directives_example() -> Result<(), Box<dyn std::error::Error>> {
+fn custom_directives_example() -> Result<(), Box<dyn std::error::Error>>
+{
     println!("\n🦀 Custom Directives Example");
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("permalink".to_string(), "https://example.com".to_string());
+    metadata.insert(
+        "permalink".to_string(),
+        "https://example.com".to_string(),
+    );
     metadata.insert("allow".to_string(), "/blog/".to_string());
     metadata.insert("disallow".to_string(), "/admin/".to_string());
 
@@ -84,13 +88,20 @@ fn custom_directives_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates sitemap reference addition.
-fn sitemap_reference_example() -> Result<(), Box<dyn std::error::Error>> {
+fn sitemap_reference_example() -> Result<(), Box<dyn std::error::Error>>
+{
     println!("\n🦀 Sitemap Reference Example");
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("permalink".to_string(), "https://example.com".to_string());
-    metadata.insert("sitemap".to_string(), "https://example.com/sitemap.xml".to_string());
+    metadata.insert(
+        "permalink".to_string(),
+        "https://example.com".to_string(),
+    );
+    metadata.insert(
+        "sitemap".to_string(),
+        "https://example.com/sitemap.xml".to_string(),
+    );
 
     let txt_data = create_txt_data(&metadata);
     match txt_data.validate() {
@@ -106,14 +117,20 @@ fn sitemap_reference_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates subdirectory crawling rules.
-fn subdirectory_rules_example() -> Result<(), Box<dyn std::error::Error>> {
+fn subdirectory_rules_example() -> Result<(), Box<dyn std::error::Error>>
+{
     println!("\n🦀 Subdirectory Rules Example");
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("permalink".to_string(), "https://example.com".to_string());
-    metadata.insert("disallow_paths".to_string(),
-        "/private/*,/tmp/*,/admin/*".to_string());
+    metadata.insert(
+        "permalink".to_string(),
+        "https://example.com".to_string(),
+    );
+    metadata.insert(
+        "disallow_paths".to_string(),
+        "/private/*,/tmp/*,/admin/*".to_string(),
+    );
 
     let txt_data = create_txt_data(&metadata);
     match txt_data.validate() {
@@ -134,15 +151,22 @@ fn multi_sitemap_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("permalink".to_string(), "https://example.com".to_string());
-    metadata.insert("sitemaps".to_string(),
-        "sitemap.xml,news-sitemap.xml,images-sitemap.xml".to_string());
+    metadata.insert(
+        "permalink".to_string(),
+        "https://example.com".to_string(),
+    );
+    metadata.insert(
+        "sitemaps".to_string(),
+        "sitemap.xml,news-sitemap.xml,images-sitemap.xml".to_string(),
+    );
 
     let txt_data = create_txt_data(&metadata);
     match txt_data.validate() {
         Ok(_) => {
             let content = generate_txt_content(&txt_data);
-            println!("    ✅ Generated content with multiple sitemaps:");
+            println!(
+                "    ✅ Generated content with multiple sitemaps:"
+            );
             println!("{}", content);
         }
         Err(e) => println!("    ❌ Validation error: {:?}", e),
@@ -157,7 +181,10 @@ fn crawl_delay_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    metadata.insert("permalink".to_string(), "https://example.com".to_string());
+    metadata.insert(
+        "permalink".to_string(),
+        "https://example.com".to_string(),
+    );
     metadata.insert("crawl_delay".to_string(), "10".to_string());
 
     let txt_data = create_txt_data(&metadata);
@@ -186,7 +213,10 @@ fn user_agent_example() -> Result<(), Box<dyn std::error::Error>> {
 
     for (agent, rules) in agents {
         let mut metadata = HashMap::new();
-        metadata.insert("permalink".to_string(), "https://example.com".to_string());
+        metadata.insert(
+            "permalink".to_string(),
+            "https://example.com".to_string(),
+        );
         metadata.insert("user_agent".to_string(), agent.to_string());
         metadata.insert("rules".to_string(), rules.to_string());
 
@@ -208,11 +238,7 @@ fn validation_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let test_cases = vec![
-        (
-            TxtData::new("".to_string()),
-            false,
-            "Empty permalink",
-        ),
+        (TxtData::new("".to_string()), false, "Empty permalink"),
         (
             TxtData::new("https://example.com".to_string()),
             true,

@@ -96,7 +96,8 @@ fn contact_methods_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates security policy documentation.
-fn policy_documentation_example() -> Result<(), Box<dyn std::error::Error>> {
+fn policy_documentation_example(
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🦀 Policy Documentation Example");
     println!("---------------------------------------------");
 
@@ -105,8 +106,10 @@ fn policy_documentation_example() -> Result<(), Box<dyn std::error::Error>> {
         "2024-12-31T23:59:59Z".to_string(),
     );
 
-    security_data.policy = "https://example.com/security-policy".to_string();
-    security_data.canonical = "https://example.com/.well-known/security.txt".to_string();
+    security_data.policy =
+        "https://example.com/security-policy".to_string();
+    security_data.canonical =
+        "https://example.com/.well-known/security.txt".to_string();
 
     match security_data.validate() {
         Ok(_) => {
@@ -121,7 +124,8 @@ fn policy_documentation_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates expiration date handling.
-fn expiration_handling_example() -> Result<(), Box<dyn std::error::Error>> {
+fn expiration_handling_example(
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🦀 Expiration Handling Example");
     println!("---------------------------------------------");
 
@@ -141,7 +145,10 @@ fn expiration_handling_example() -> Result<(), Box<dyn std::error::Error>> {
             Ok(_) => {
                 println!("    ✅ Valid expiration date: {}", date);
                 println!("    Generated content:");
-                println!("{}", generate_security_content(&security_data));
+                println!(
+                    "{}",
+                    generate_security_content(&security_data)
+                );
             }
             Err(e) => println!("    ❌ Error for {}: {:?}", date, e),
         }
@@ -165,7 +172,9 @@ fn languages_example() -> Result<(), Box<dyn std::error::Error>> {
     match security_data.validate() {
         Ok(_) => {
             let content = generate_security_content(&security_data);
-            println!("    ✅ Generated content with language preferences:");
+            println!(
+                "    ✅ Generated content with language preferences:"
+            );
             println!("{}", content);
         }
         Err(e) => println!("    ❌ Validation error: {:?}", e),
@@ -184,7 +193,8 @@ fn encryption_example() -> Result<(), Box<dyn std::error::Error>> {
         "2024-12-31T23:59:59Z".to_string(),
     );
 
-    security_data.encryption = "https://example.com/pgp-key.txt".to_string();
+    security_data.encryption =
+        "https://example.com/pgp-key.txt".to_string();
 
     match security_data.validate() {
         Ok(_) => {
@@ -208,7 +218,8 @@ fn acknowledgments_example() -> Result<(), Box<dyn std::error::Error>> {
         "2024-12-31T23:59:59Z".to_string(),
     );
 
-    security_data.acknowledgments = "https://example.com/hall-of-fame".to_string();
+    security_data.acknowledgments =
+        "https://example.com/hall-of-fame".to_string();
 
     match security_data.validate() {
         Ok(_) => {
@@ -232,12 +243,15 @@ fn hiring_info_example() -> Result<(), Box<dyn std::error::Error>> {
         "2024-12-31T23:59:59Z".to_string(),
     );
 
-    security_data.hiring = "https://example.com/security-jobs".to_string();
+    security_data.hiring =
+        "https://example.com/security-jobs".to_string();
 
     match security_data.validate() {
         Ok(_) => {
             let content = generate_security_content(&security_data);
-            println!("    ✅ Generated content with hiring information:");
+            println!(
+                "    ✅ Generated content with hiring information:"
+            );
             println!("{}", content);
         }
         Err(e) => println!("    ❌ Validation error: {:?}", e),
@@ -247,7 +261,8 @@ fn hiring_info_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates full security.txt configuration.
-fn full_configuration_example() -> Result<(), Box<dyn std::error::Error>> {
+fn full_configuration_example() -> Result<(), Box<dyn std::error::Error>>
+{
     println!("\n🦀 Full Configuration Example");
     println!("---------------------------------------------");
 
@@ -259,7 +274,8 @@ fn full_configuration_example() -> Result<(), Box<dyn std::error::Error>> {
         expires: "2024-12-31T23:59:59Z".to_string(),
         acknowledgments: "https://example.com/thanks".to_string(),
         preferred_languages: "en, fr, de".to_string(),
-        canonical: "https://example.com/.well-known/security.txt".to_string(),
+        canonical: "https://example.com/.well-known/security.txt"
+            .to_string(),
         policy: "https://example.com/security-policy".to_string(),
         hiring: "https://example.com/security-jobs".to_string(),
         encryption: "https://example.com/pgp-key.txt".to_string(),
@@ -268,7 +284,9 @@ fn full_configuration_example() -> Result<(), Box<dyn std::error::Error>> {
     match security_data.validate() {
         Ok(_) => {
             let content = generate_security_content(&security_data);
-            println!("    ✅ Generated complete security.txt configuration:");
+            println!(
+                "    ✅ Generated complete security.txt configuration:"
+            );
             println!("{}", content);
         }
         Err(e) => println!("    ❌ Validation error: {:?}", e),
@@ -284,7 +302,10 @@ fn validation_example() -> Result<(), Box<dyn std::error::Error>> {
 
     let test_cases = vec![
         (
-            SecurityData::new(vec![], "2024-12-31T23:59:59Z".to_string()),
+            SecurityData::new(
+                vec![],
+                "2024-12-31T23:59:59Z".to_string(),
+            ),
             false,
             "Empty contacts",
         ),

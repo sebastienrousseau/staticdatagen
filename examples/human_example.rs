@@ -67,12 +67,14 @@ fn team_credits_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    let _ = metadata.insert("author".to_string(), "Jane Smith".to_string());
+    let _ =
+        metadata.insert("author".to_string(), "Jane Smith".to_string());
     let _ = metadata.insert(
         "author_website".to_string(),
         "https://janesmith.dev".to_string(),
     );
-    let _ = metadata.insert("author_twitter".to_string(), "@janesmith".to_string());
+    let _ = metadata
+        .insert("author_twitter".to_string(), "@janesmith".to_string());
     let _ = metadata.insert(
         "author_location".to_string(),
         "San Francisco, CA".to_string(),
@@ -177,7 +179,8 @@ fn social_media_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("---------------------------------------------");
 
     let mut metadata = HashMap::new();
-    let _ = metadata.insert("author".to_string(), "Team Social".to_string());
+    let _ = metadata
+        .insert("author".to_string(), "Team Social".to_string());
     let _ = metadata.insert(
         "author_twitter".to_string(),
         "@teamhandle".to_string(),

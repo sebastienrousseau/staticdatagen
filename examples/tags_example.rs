@@ -61,7 +61,9 @@ fn basic_tags_example() -> Result<(), Box<dyn std::error::Error>> {
         "A post about Rust".to_string(),
         "/blog/learning-rust".to_string(),
         "rust, web".to_string(),
-    ).validate() {
+    )
+    .validate()
+    {
         Ok(_) => {
             println!("    ✅ Generated tags:");
             for (tag, pages) in &tags {
@@ -97,7 +99,8 @@ fn multiple_tags_example() -> Result<(), Box<dyn std::error::Error>> {
         ),
     ];
 
-    let mut global_tags_data: HashMap<String, Vec<PageData>> = HashMap::new();
+    let mut global_tags_data: HashMap<String, Vec<PageData>> =
+        HashMap::new();
 
     for (title, tags, permalink) in posts {
         let mut metadata = HashMap::new();
@@ -162,7 +165,8 @@ fn tag_page_example() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Demonstrates hierarchical tag organization.
-fn hierarchical_tags_example() -> Result<(), Box<dyn std::error::Error>> {
+fn hierarchical_tags_example() -> Result<(), Box<dyn std::error::Error>>
+{
     println!("\n🦀 Hierarchical Tags Example");
     println!("---------------------------------------------");
 
@@ -231,7 +235,10 @@ fn tag_metadata_example() -> Result<(), Box<dyn std::error::Error>> {
             println!("    📝 Title: {}", tags_data.titles);
             println!("    🔗 Permalink: {}", tags_data.permalinks);
             println!("    🏷️ Keywords: {}", tags_data.keywords);
-            println!("    Keywords list: {:?}", tags_data.keywords_list());
+            println!(
+                "    Keywords list: {:?}",
+                tags_data.keywords_list()
+            );
         }
         Err(e) => println!("    ❌ Validation error: {:?}", e),
     }
@@ -344,7 +351,10 @@ fn validation_example() -> Result<(), Box<dyn std::error::Error>> {
             }
             Err(e) => {
                 if !should_be_valid {
-                    println!("    ✅ Expected validation failure: {}", case);
+                    println!(
+                        "    ✅ Expected validation failure: {}",
+                        case
+                    );
                 } else {
                     println!(
                         "    ❌ Unexpected validation error for {}: {:?}",
