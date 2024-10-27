@@ -34,7 +34,7 @@ categories = [
 
 # Keywords for easier discoverability on Crates.io
 keywords = [
-    "static-site-generator",
+    "static-site",
     "structured-data",
     "templating",
     "content-generation",
