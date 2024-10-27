@@ -444,19 +444,19 @@ mod tests {
                 "tag1".to_string(),
                 vec![{
                     let mut page_data = HashMap::new();
-                    page_data.insert(
+                    let _ = page_data.insert(
                         "title".to_string(),
                         "Test Title".to_string(),
                     );
-                    page_data.insert(
+                    let _ = page_data.insert(
                         "description".to_string(),
                         "Test Description".to_string(),
                     );
-                    page_data.insert(
+                    let _ = page_data.insert(
                         "permalink".to_string(),
                         "test_permalink".to_string(),
                     );
-                    page_data.insert(
+                    let _ = page_data.insert(
                         "date".to_string(),
                         "2024-01-01".to_string(),
                     );
