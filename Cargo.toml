@@ -98,7 +98,7 @@ log = { version = "0.4", features = ["std"] }
 metadata-gen = "0.0.1"
 minify-html = "0.15"
 pulldown-cmark = "0.12"
-quick-xml = "0.36"
+quick-xml = "0.37"
 regex = "1.11"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
 rlg = "0.0.6"
