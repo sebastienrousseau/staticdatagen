@@ -18,14 +18,14 @@ use rss_gen::{
 use sitemap_gen::create_site_map_data;
 use std::time::Duration;
 
+use crate::generators::cname::{CnameConfig, CnameGenerator};
 use crate::{
     macro_cleanup_directories, macro_create_directories,
     macro_log_info, macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
-        cname::create_cname_data,
         human::create_human_data,
-        json::{cname, human, news_sitemap, security, sitemap, txt},
+        json::{human, news_sitemap, security, sitemap, txt},
         manifest::create_manifest_data,
         navigation::NavigationGenerator,
         news_sitemap::create_news_site_map_data,
@@ -163,6 +163,10 @@ fn process_file(
         minify_output: false,
         add_aria_attributes: true,
         generate_structured_data: true,
+        generate_toc: false,
+        language: "en".to_string(),
+        max_input_size: usize::MAX,
+        syntax_theme: None,
     };
 
     let html_content = generate_html(&file.content, &config)
@@ -230,7 +234,13 @@ fn process_file(
     let rss = generate_rss(&rss_data)?;
 
     let json = create_manifest_data(&metadata);
-    let cname_options = create_cname_data(&metadata);
+
+    let cname_content = metadata
+        .get("cname")
+        .and_then(|domain| CnameConfig::new(domain, None, None).ok())
+        .map(|config| CnameGenerator::new(config).generate())
+        .unwrap_or_default();
+
     let human_options = create_human_data(&metadata);
     let security_options = create_security_data(&metadata);
     let sitemap_options = create_site_map_data(&metadata);
@@ -242,7 +252,6 @@ fn process_file(
     let txt_options = create_txt_data(&metadata);
 
     let txt_data = txt(&txt_options);
-    let cname_data = cname(&cname_options);
     let human_data = human(&human_options);
     let security_data = security(&security_options);
     let sitemap_data = sitemap(sitemap_options?, site_path);
@@ -253,7 +262,7 @@ fn process_file(
     });
 
     Ok(FileData {
-        cname: cname_data,
+        cname: cname_content,
         content,
         keyword: keywords.join(", "),
         human: human_data,

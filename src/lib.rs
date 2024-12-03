@@ -10,6 +10,12 @@
     html_root_url = "https://docs.rs/staticdatagen"
 )]
 
+/// Generator modules for creating static content.
+pub mod generators {
+    /// CNAME Record Generation Module
+    pub mod cname;
+}
+
 /// Compiler module for processing and generating static site content.
 pub mod compiler;
 

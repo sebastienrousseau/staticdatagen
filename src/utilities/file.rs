@@ -142,17 +142,25 @@ mod tests {
     #[test]
     fn test_add_escapes_special_characters() -> io::Result<()> {
         let dir = tempdir()?;
-        let special_chars_file_path = dir.path().join("special_chars.txt");
+        let special_chars_file_path =
+            dir.path().join("special_chars.txt");
 
         // Create a file with special characters
-        File::create(&special_chars_file_path)?.write_all(b"Content with < & > characters")?;
+        File::create(&special_chars_file_path)?
+            .write_all(b"Content with < & > characters")?;
 
         // Run the `add` function
         let files = add(dir.path())?;
 
         // Verify that the content is properly escaped
-        let file_data = files.iter().find(|f| f.name == "special_chars.txt").unwrap();
-        assert_eq!(file_data.rss, "Content with &lt; &amp; &gt; characters");
+        let file_data = files
+            .iter()
+            .find(|f| f.name == "special_chars.txt")
+            .unwrap();
+        assert_eq!(
+            file_data.rss,
+            "Content with &lt; &amp; &gt; characters"
+        );
 
         Ok(())
     }
@@ -164,13 +172,15 @@ mod tests {
         let json_file_path = dir.path().join("json_file.txt");
 
         // Create a file with simple text content
-        File::create(&json_file_path)?.write_all(b"JSON content test")?;
+        File::create(&json_file_path)?
+            .write_all(b"JSON content test")?;
 
         // Run the `add` function
         let files = add(dir.path())?;
 
         // Verify that the content is correctly serialized to JSON
-        let file_data = files.iter().find(|f| f.name == "json_file.txt").unwrap();
+        let file_data =
+            files.iter().find(|f| f.name == "json_file.txt").unwrap();
         assert_eq!(file_data.json, "\"JSON content test\"");
 
         Ok(())

@@ -1,8 +1,8 @@
 // Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-/// The `cname` module generates the CNAME content.
-pub mod cname;
+// The `cname` module generates the CNAME content.
+// pub mod cname;
 
 /// The `human` module contains functions for generating human-readable
 pub mod human;

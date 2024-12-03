@@ -71,50 +71,55 @@ async = []                                  # Placeholder for future asynchronou
 # -----------------------------------------------------------------------------
 [build-dependencies]
 # Dependencies for the build script, used for pre-compilation tasks.
-version_check = "0.9"                       # Ensures that a compatible Rust version is used
+version_check = "0.9.5"                       # Ensures that a compatible Rust version is used
 
 # -----------------------------------------------------------------------------
 # Development Dependencies
 # -----------------------------------------------------------------------------
 [dev-dependencies]
 # Dependencies required for testing and development.
-criterion = "0.5"                           # Benchmarking library to test performance
+criterion = "0.5.1"                           # Benchmarking library to test performance
 
 # -----------------------------------------------------------------------------
 # Dependencies
 # -----------------------------------------------------------------------------
 [dependencies]
 # Required dependencies for building and running the project.
-anyhow = "1.0"
-clap = "4.5"
-comrak = "0.29"
+anyhow = "1.0.93"
+clap = "4.5.21"
+comrak = "0.31.0"
 dtt = "0.0.8"
-env_logger = "0.11"
-html-generator = "0.0.1"
+env_logger = "0.11.5"
+html-generator = "0.0.2"
 http-handle = "0.0.2"
 langweave = "0.0.1"
-lazy_static = "1.5"
-log = { version = "0.4", features = ["std"] }
+lazy_static = "1.5.0"
+log = { version = "0.4.22", features = ["std"] }
 metadata-gen = "0.0.1"
-minify-html = "0.15"
-pulldown-cmark = "0.12"
-quick-xml = "0.37"
-regex = "1.11"
-reqwest = { version = "0.12", features = ["blocking", "json"] }
+minify-html = "0.15.0"
+pulldown-cmark = "0.12.2"
+quick-xml = "0.37.1"
+regex = "1.11.1"
+reqwest = { version = "0.12.9", features = ["blocking", "json"] }
 rlg = "0.0.6"
 rss-gen = "0.0.3"
-serde = { version = "1.0.213", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1.0.215", features = ["derive"] }
+serde_json = "1.0.133"
 sitemap-gen = "0.0.1"
 staticweaver ="0.0.1"
-tempfile = "3.13"
-thiserror = "2.0"
-time = "0.3"
-toml = "0.8"
-url = "2.5"
-uuid = { version = "1.11", features = ["v4"] }
+tempfile = "3.14.0"
+thiserror = "2.0.3"
+time = "0.3.37"
+toml = "0.8.19"
+url = "2.5.4"
+uuid = { version = "1.11.0", features = ["v4"] }
 vrd = "0.0.8"
-yaml-rust2 = "0.9"
+yaml-rust2 = "0.9.0"
+
+
+# CNAME dependencies
+idna = "1.0.3"
+rayon = "1.10.0"
 
 # -----------------------------------------------------------------------------
 # Criterion Benchmark
