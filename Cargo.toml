@@ -85,10 +85,9 @@ criterion = "0.5.1"                           # Benchmarking library to test per
 # -----------------------------------------------------------------------------
 [dependencies]
 # Required dependencies for building and running the project.
-anyhow = "1.0.93"
-clap = "4.5.21"
+anyhow = "1.0.94"
+clap = "4.5.22"
 comrak = "0.31.0"
-dtt = "0.0.8"
 env_logger = "0.11.5"
 html-generator = "0.0.2"
 http-handle = "0.0.2"
@@ -108,7 +107,7 @@ serde_json = "1.0.133"
 sitemap-gen = "0.0.1"
 staticweaver ="0.0.1"
 tempfile = "3.14.0"
-thiserror = "2.0.3"
+thiserror = "2.0.4"
 time = "0.3.37"
 toml = "0.8.19"
 url = "2.5.4"
@@ -120,6 +119,9 @@ yaml-rust2 = "0.9.0"
 # CNAME dependencies
 idna = "1.0.3"
 rayon = "1.10.0"
+
+#Humans.txt dependencies
+dtt = "0.0.8"
 
 # -----------------------------------------------------------------------------
 # Criterion Benchmark

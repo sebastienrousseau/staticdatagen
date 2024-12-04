@@ -44,6 +44,7 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt;
 use thiserror::Error;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
@@ -1334,6 +1335,30 @@ impl HumansData {
             && self.site_standards.is_empty()
             && self.site_components.is_empty()
             && self.site_software.is_empty()
+    }
+
+    /// Converts `HumansData` into a `HashMap<String, String>`.
+    pub fn to_hashmap(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        _ = map.insert("author".to_string(), self.author.clone());
+        _ = map.insert("thanks".to_string(), self.thanks.clone());
+        _ = map.insert(
+            "author_location".to_string(),
+            self.author_location.clone(),
+        );
+        if !self.author_website.is_empty() {
+            _ = map.insert(
+                "author_website".to_string(),
+                self.author_website.clone(),
+            );
+        }
+        if !self.author_twitter.is_empty() {
+            _ = map.insert(
+                "author_twitter".to_string(),
+                self.author_twitter.clone(),
+            );
+        }
+        map
     }
 }
 

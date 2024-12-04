@@ -14,6 +14,8 @@
 pub mod generators {
     /// CNAME Record Generation Module
     pub mod cname;
+    /// Humans.txt Generation Module
+    pub mod humans;
 }
 
 /// Compiler module for processing and generating static site content.

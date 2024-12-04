@@ -4,8 +4,8 @@
 // The `cname` module generates the CNAME content.
 // pub mod cname;
 
-/// The `human` module contains functions for generating human-readable
-pub mod human;
+// The `human` module contains functions for generating human-readable
+// pub mod human;
 
 /// The `json` module generates the JSON content.
 pub mod json;

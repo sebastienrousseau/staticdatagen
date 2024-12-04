@@ -19,13 +19,13 @@ use sitemap_gen::create_site_map_data;
 use std::time::Duration;
 
 use crate::generators::cname::{CnameConfig, CnameGenerator};
+use crate::generators::humans::{HumansConfig, HumansGenerator};
 use crate::{
     macro_cleanup_directories, macro_create_directories,
     macro_log_info, macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
-        human::create_human_data,
-        json::{human, news_sitemap, security, sitemap, txt},
+        json::{news_sitemap, security, sitemap, txt},
         manifest::create_manifest_data,
         navigation::NavigationGenerator,
         news_sitemap::create_news_site_map_data,
@@ -241,7 +241,35 @@ fn process_file(
         .map(|config| CnameGenerator::new(config).generate())
         .unwrap_or_default();
 
-    let human_options = create_human_data(&metadata);
+    let humans_content = metadata
+        .get("humans")
+        .map(|humans| {
+            // Try parsing the "humans" string into a HashMap
+            let humans: HashMap<String, String> =
+                serde_json::from_str(humans)
+                    .context("Failed to parse humans metadata")
+                    .unwrap_or_else(|err| {
+                        eprintln!(
+                            "Error parsing humans metadata: {}",
+                            err
+                        );
+                        HashMap::new() // Default to an empty HashMap if parsing fails
+                    });
+
+            // Generate humans.txt content
+            match HumansConfig::from_metadata(&humans) {
+                Ok(humans_config) => {
+                    HumansGenerator::new(humans_config).generate()
+                }
+                Err(err) => {
+                    eprintln!("Error creating HumansConfig: {}", err);
+                    String::new() // Default to an empty string if creation fails
+                }
+            }
+        })
+        .unwrap_or_default();
+
+    // let human_options = create_human_data(&metadata);
     let security_options = create_security_data(&metadata);
     let sitemap_options = create_site_map_data(&metadata);
     let news_sitemap_options = create_news_site_map_data(&metadata);
@@ -252,7 +280,7 @@ fn process_file(
     let txt_options = create_txt_data(&metadata);
 
     let txt_data = txt(&txt_options);
-    let human_data = human(&human_options);
+    // let human_data = human(&human_options);
     let security_data = security(&security_options);
     let sitemap_data = sitemap(sitemap_options?, site_path);
     let news_sitemap_data = news_sitemap(news_sitemap_options);
@@ -265,7 +293,7 @@ fn process_file(
         cname: cname_content,
         content,
         keyword: keywords.join(", "),
-        human: human_data,
+        human: humans_content,
         json: json_data,
         name: file.name.clone(),
         rss,
