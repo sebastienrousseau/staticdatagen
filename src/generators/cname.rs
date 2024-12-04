@@ -62,7 +62,7 @@ pub enum CnameError {
 ///
 /// Represents the configuration needed to generate a CNAME record, including validation
 /// to ensure compliance with DNS standards.
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct CnameConfig {
     /// The domain name for the CNAME record.
     pub domain: String,
@@ -425,6 +425,7 @@ impl CnameGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::error::Error;
 
     #[test]
     fn test_valid_domain_names() {
@@ -946,5 +947,169 @@ mod tests {
                 "a.example.com 3600 IN CNAME www.a.example.com"
             ]
         );
+    }
+    #[test]
+    fn test_metadata_with_invalid_ttl() {
+        let mut metadata = HashMap::new();
+        _ = metadata
+            .insert("cname".to_string(), "example.com".to_string());
+        _ = metadata.insert("ttl".to_string(), "invalid".to_string());
+
+        let result = CnameGenerator::from_metadata(&metadata);
+        assert!(matches!(result, Err(CnameError::InvalidTtl(_))));
+    }
+
+    #[test]
+    fn test_custom_format_with_escapes() {
+        let config = CnameConfig::new(
+            "example.com",
+            Some(3600),
+            Some("\\{domain\\} {ttl}".to_string()),
+        )
+        .unwrap();
+        let generator = CnameGenerator::new(config);
+        let record = generator.generate();
+        assert_eq!(record, "\\{domain\\} 3600");
+    }
+
+    #[test]
+    fn test_error_display_variants() {
+        let errors = vec![
+            CnameError::EmptyDomain,
+            CnameError::InvalidCharacters("test".to_string()),
+            CnameError::LabelTooLong("test".to_string()),
+            CnameError::MalformedDomain("test".to_string()),
+            CnameError::InvalidHyphenUsage("test".to_string()),
+            CnameError::InvalidTtl("test".to_string()),
+            CnameError::ExcessiveDomainLength("test".to_string()),
+        ];
+
+        for err in errors {
+            assert!(!err.to_string().is_empty());
+        }
+    }
+
+    #[test]
+    fn test_batch_generate_empty_input() {
+        let records = CnameGenerator::batch_generate(vec![]);
+        assert!(records.is_empty());
+    }
+
+    #[test]
+fn test_export_batch_empty_input() {
+    let file_path = "test_empty.txt";
+
+    // Attempt to export an empty batch
+    let result = CnameGenerator::export_batch_to_file(vec![], file_path, "\n");
+    assert!(result.is_ok());
+
+    // Cleanup: Remove the file after the test
+    if std::fs::remove_file(file_path).is_ok() {
+        println!("🗑️ File '{}' removed after the test.", file_path);
+    } else {
+        println!("⚠️ Could not remove file '{}'.", file_path);
+    }
+}
+
+
+    #[test]
+    fn test_debug_implementation() {
+        let config =
+            CnameConfig::new("example.com", Some(3600), None).unwrap();
+        let generator = CnameGenerator::new(config);
+        assert!(!format!("{:?}", generator).is_empty());
+    }
+
+    #[test]
+    fn test_unicode_normalization() {
+        let configs = vec![
+            CnameConfig::new("café.com", Some(3600), None).unwrap(),
+            CnameConfig::new("cafe\u{0301}.com", Some(3600), None)
+                .unwrap(),
+        ];
+        let records = CnameGenerator::batch_generate(configs);
+        let results: Vec<_> =
+            records.into_iter().filter_map(Result::ok).collect();
+        assert_eq!(results[0], results[1]);
+    }
+
+    #[test]
+    fn test_non_utf8_domain() {
+        let domain = String::from_utf8(vec![0xFF]).unwrap_or_default();
+        let result = CnameConfig::new(domain, None, None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_metadata_with_custom_format() {
+        let mut metadata = HashMap::new();
+        _ = metadata
+            .insert("cname".to_string(), "example.com".to_string());
+        _ = metadata.insert(
+            "format".to_string(),
+            "{domain} CNAME {ttl}".to_string(),
+        );
+        let result = CnameGenerator::from_metadata(&metadata).unwrap();
+        assert!(result.contains("example.com CNAME 3600"));
+    }
+
+    #[test]
+    fn test_clone_and_eq() {
+        let config1 =
+            CnameConfig::new("example.com", Some(3600), None).unwrap();
+        let config2 = config1.clone();
+        assert_eq!(config1, config2);
+    }
+
+    #[test]
+    fn test_error_chain() {
+        let error = CnameError::InvalidTtl("test".into());
+        assert!(error.source().is_none());
+    }
+
+    #[test]
+    fn test_serialize_deserialize() {
+        let config =
+            CnameConfig::new("example.com", Some(3600), None).unwrap();
+        let serialized = serde_json::to_string(&config).unwrap();
+        let deserialized: CnameConfig =
+            serde_json::from_str(&serialized).unwrap();
+        assert_eq!(config, deserialized);
+    }
+
+    #[test]
+    fn test_generate_custom_empty_format() {
+        let config = CnameConfig::new(
+            "example.com",
+            Some(3600),
+            Some(String::new()),
+        )
+        .unwrap();
+        let generator = CnameGenerator::new(config);
+        let record = generator.generate();
+        assert!(record.is_empty());
+    }
+
+    #[test]
+    fn test_batch_generate_error_propagation() {
+        let configs = vec![
+            CnameConfig::new("example.com", Some(3600), None).unwrap(),
+            CnameConfig::new("invalid..domain", Some(3600), None)
+                .unwrap_or_default(),
+        ];
+        let results = CnameGenerator::batch_generate(configs);
+        assert_eq!(results.len(), 2);
+    }
+
+    #[test]
+    fn test_export_batch_to_file_io_error() {
+        let config =
+            CnameConfig::new("example.com", Some(3600), None).unwrap();
+        let result = CnameGenerator::export_batch_to_file(
+            vec![config],
+            "/nonexistent/path/file.txt",
+            "\n",
+        );
+        assert!(result.is_err());
     }
 }
