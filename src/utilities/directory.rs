@@ -276,7 +276,7 @@ pub fn extract_front_matter(content: &str) -> &str {
 /// # Returns
 ///
 /// A `comrak::ComrakOptions` instance with non-standard Markdown features enabled.
-pub fn create_comrak_options() -> comrak::ComrakOptions<'static> {
+pub fn create_comrak_options() -> comrak::ComrakOptions {
     let mut options = comrak::ComrakOptions::default();
     options.extension.autolink = true;
     options.extension.description_lists = true;
