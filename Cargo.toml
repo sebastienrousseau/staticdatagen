@@ -87,7 +87,7 @@ criterion = "0.5"                           # Benchmarking library to test perfo
 # Required dependencies for building and running the project.
 anyhow = "1.0"
 clap = "4.5"
-comrak = "0.29"
+comrak = "0.32"
 dtt = "0.0.8"
 env_logger = "0.11"
 html-generator = "0.0.1"
