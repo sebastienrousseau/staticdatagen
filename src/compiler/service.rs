@@ -355,7 +355,7 @@ fn update_global_tags_data(
 #[cfg(test)]
 mod tests {
     // Copyright © 2025 Static Data Gen.
-// All rights reserved.
+    // All rights reserved.
     // SPDX-License-Identifier: Apache-2.0 OR MIT
 
     //! Unit tests for the `compile` and `process_file` functions.

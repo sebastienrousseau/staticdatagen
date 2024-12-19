@@ -48,7 +48,10 @@ use std::{
 pub fn directory(dir: &Path, name: &str) -> Result<String, String> {
     if dir.exists() {
         if !dir.is_dir() {
-            return Err(format!("❌ Error: {} is not a directory.", name));
+            return Err(format!(
+                "❌ Error: {} is not a directory.",
+                name
+            ));
         }
     } else {
         fs::create_dir_all(dir).map_err(|e| {
@@ -96,11 +99,10 @@ pub fn move_output_directory(
     // Now rename `out_dir` into `new_project_dir`.
     // Because `new_project_dir` now exists, we need to move `out_dir` inside it.
     // We'll rename `out_dir` to `new_project_dir/out_dir`'s last component.
-    let target = new_project_dir.join(
-        out_dir
-            .file_name()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "Invalid out_dir"))?
-    );
+    let target =
+        new_project_dir.join(out_dir.file_name().ok_or_else(|| {
+            io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
+        })?);
 
     fs::rename(out_dir, &target)?;
 
@@ -108,7 +110,6 @@ pub fn move_output_directory(
 
     Ok(())
 }
-
 
 /// Finds all HTML files in a directory and its subdirectories.
 ///
@@ -252,7 +253,8 @@ pub fn format_header_with_id_class(
     id_regex: &Regex,
 ) -> String {
     // Match HTML header tags with a named capture group for the tag name and allow empty content.
-    let re = Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>").unwrap();
+    let re = Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>")
+        .unwrap();
 
     re.replace(header_str, |caps: &regex::Captures| {
         let tag = caps.name("tag").map_or("", |m| m.as_str());
@@ -295,11 +297,8 @@ pub fn format_header_with_id_class(
 ///
 /// If front matter is present but not properly closed, an empty string is returned.
 pub fn extract_front_matter(content: &str) -> &str {
-    let patterns = [
-        ("---\n", "\n---\n"),
-        ("+++\n", "\n+++\n"),
-        ("{\n", "\n}\n"),
-    ];
+    let patterns =
+        [("---\n", "\n---\n"), ("+++\n", "\n+++\n"), ("{\n", "\n}\n")];
 
     for (start, end) in patterns.iter() {
         if content.starts_with(start) {
@@ -397,9 +396,11 @@ pub fn truncate(path: &Path, length: usize) -> Option<String> {
         return None;
     }
 
-    let components: Vec<_> = path.components().rev().take(length).collect();
+    let components: Vec<_> =
+        path.components().rev().take(length).collect();
     if components.len() == length {
-        let truncated_path: PathBuf = components.into_iter().rev().collect();
+        let truncated_path: PathBuf =
+            components.into_iter().rev().collect();
         let truncated_path =
             truncated_path.strip_prefix("/").unwrap_or(&truncated_path);
         Some(truncated_path.to_string_lossy().into_owned())
@@ -421,25 +422,29 @@ mod tests {
         let result = directory(dir, "test_dir");
         assert!(result.is_ok());
         assert!(dir.exists() && dir.is_dir());
-        fs::remove_dir_all(dir).expect("Failed to clean up test directory");
+        fs::remove_dir_all(dir)
+            .expect("Failed to clean up test directory");
     }
 
     /// Tests handling of an existing directory.
     #[test]
     fn test_directory_exists() {
         let dir = Path::new("existing_dir");
-        fs::create_dir_all(dir).expect("Failed to create test directory");
+        fs::create_dir_all(dir)
+            .expect("Failed to create test directory");
         let result = directory(dir, "existing_dir");
         assert!(result.is_ok());
         assert!(dir.exists());
-        fs::remove_dir_all(dir).expect("Failed to clean up test directory");
+        fs::remove_dir_all(dir)
+            .expect("Failed to clean up test directory");
     }
 
     /// Tests moving output directory to a public directory.
     #[test]
     fn test_move_output_directory() {
         let out_dir = Path::new("test_output");
-        fs::create_dir_all(out_dir).expect("Failed to create test output directory");
+        fs::create_dir_all(out_dir)
+            .expect("Failed to create test output directory");
 
         let result = move_output_directory("test_site", out_dir);
         assert!(result.is_ok());
@@ -447,7 +452,8 @@ mod tests {
         let public_dir = Path::new("public/test_site");
         assert!(public_dir.exists() && public_dir.is_dir());
 
-        fs::remove_dir_all("public").expect("Failed to clean up test public directory");
+        fs::remove_dir_all("public")
+            .expect("Failed to clean up test public directory");
     }
 
     /// Tests finding HTML files in a directory with subdirectories.
@@ -483,7 +489,8 @@ mod tests {
     /// Tests cleaning up directories that exist.
     #[test]
     fn test_cleanup_directory() -> Result<(), Box<dyn Error>> {
-        let dirs = vec![Path::new("cleanup_dir1"), Path::new("cleanup_dir2")];
+        let dirs =
+            vec![Path::new("cleanup_dir1"), Path::new("cleanup_dir2")];
         for dir in &dirs {
             fs::create_dir_all(dir)?;
         }
@@ -500,7 +507,8 @@ mod tests {
     /// Tests creating multiple directories.
     #[test]
     fn test_create_directory() -> Result<(), Box<dyn Error>> {
-        let dirs = vec![Path::new("create_dir1"), Path::new("create_dir2")];
+        let dirs =
+            vec![Path::new("create_dir1"), Path::new("create_dir2")];
 
         create_directory(&dirs)?;
 
@@ -537,7 +545,8 @@ mod tests {
     /// Tests extracting content without front matter.
     #[test]
     fn test_extract_front_matter() {
-        let content = "---\ntitle: Test\n---\nContent without front matter";
+        let content =
+            "---\ntitle: Test\n---\nContent without front matter";
         let extracted = extract_front_matter(content);
         assert_eq!(extracted, "Content without front matter");
     }
@@ -573,7 +582,10 @@ mod tests {
         assert!(options.extension.autolink);
         assert!(options.extension.description_lists);
         assert!(options.extension.footnotes);
-        assert_eq!(options.extension.front_matter_delimiter, Some("---".to_owned()));
+        assert_eq!(
+            options.extension.front_matter_delimiter,
+            Some("---".to_owned())
+        );
         assert!(options.extension.strikethrough);
         assert!(options.extension.superscript);
         assert!(options.extension.table);
@@ -589,21 +601,26 @@ mod tests {
     #[test]
     fn test_update_class_attributes_with_image() {
         let line = r#"<p class="text-center">Some content <img src="image.png" .class=&quot;my-img-class&quot; /></p>"#;
-        let class_regex = Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
         let img_regex = Regex::new(r"(<img[^>]*)(/>)").unwrap();
 
-        let updated_line = update_class_attributes(line, &class_regex, &img_regex);
+        let updated_line =
+            update_class_attributes(line, &class_regex, &img_regex);
         assert!(updated_line.contains(r#"class="my-img-class""#));
     }
 
     /// Tests updating class attributes in a line without an <img> tag.
     #[test]
     fn test_update_class_attributes_without_image() {
-        let line = r#"<p class="text-center">Some content without image</p>"#;
-        let class_regex = Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
+        let line =
+            r#"<p class="text-center">Some content without image</p>"#;
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
         let img_regex = Regex::new(r"(<img[^>]*)(/>)").unwrap();
 
-        let updated_line = update_class_attributes(line, &class_regex, &img_regex);
+        let updated_line =
+            update_class_attributes(line, &class_regex, &img_regex);
         assert_eq!(updated_line, line);
     }
 
@@ -611,13 +628,15 @@ mod tests {
     #[test]
     fn test_directory_error_when_file() {
         let file_path = Path::new("test_file");
-        fs::write(&file_path, "some content").expect("Failed to create test file");
+        fs::write(&file_path, "some content")
+            .expect("Failed to create test file");
 
         let result = directory(file_path, "test_file");
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("is not a directory"));
 
-        fs::remove_file(file_path).expect("Failed to clean up test file");
+        fs::remove_file(file_path)
+            .expect("Failed to clean up test file");
     }
 
     /// Tests moving output directory when it does not exist.
@@ -626,7 +645,8 @@ mod tests {
         let out_dir = Path::new("non_existent_output");
         // Do not create out_dir
 
-        let result = move_output_directory("test_site_nonexistent", out_dir);
+        let result =
+            move_output_directory("test_site_nonexistent", out_dir);
         assert!(result.is_err());
     }
 
@@ -662,7 +682,8 @@ mod tests {
     /// Tests extracting front matter that's started but not properly closed.
     #[test]
     fn test_extract_front_matter_incomplete() {
-        let content = "---\ntitle: Test\nContent without proper closing";
+        let content =
+            "---\ntitle: Test\nContent without proper closing";
         let extracted = extract_front_matter(content);
         assert_eq!(extracted, "");
     }
@@ -704,10 +725,14 @@ mod tests {
         assert_eq!(truncated, None);
     }
 
-        /// Tests cleaning up directories that do not exist.
+    /// Tests cleaning up directories that do not exist.
     #[test]
-    fn test_cleanup_directory_non_existent() -> Result<(), Box<dyn Error>> {
-        let dirs = vec![Path::new("non_existent_dir1"), Path::new("non_existent_dir2")];
+    fn test_cleanup_directory_non_existent(
+    ) -> Result<(), Box<dyn Error>> {
+        let dirs = vec![
+            Path::new("non_existent_dir1"),
+            Path::new("non_existent_dir2"),
+        ];
 
         // They do not exist, but cleanup should still succeed and do nothing.
         cleanup_directory(&dirs)?;
@@ -720,7 +745,8 @@ mod tests {
 
     /// Tests creating directories that already exist.
     #[test]
-    fn test_create_directory_already_exists() -> Result<(), Box<dyn Error>> {
+    fn test_create_directory_already_exists(
+    ) -> Result<(), Box<dyn Error>> {
         let dir = Path::new("already_exists_dir");
         fs::create_dir_all(&dir)?;
 
@@ -767,7 +793,8 @@ mod tests {
     /// Tests extracting front matter when no front matter is present at all.
     #[test]
     fn test_extract_front_matter_none() {
-        let content = "Just regular content with no front matter at all.";
+        let content =
+            "Just regular content with no front matter at all.";
         let extracted = extract_front_matter(content);
         // Should return the entire content unchanged.
         assert_eq!(extracted, content);
@@ -776,7 +803,8 @@ mod tests {
     /// Tests extracting front matter with `+++` but incomplete.
     #[test]
     fn test_extract_front_matter_incomplete_plusplus() {
-        let content = "+++\ntitle: Test\nContent without closing plusplus";
+        let content =
+            "+++\ntitle: Test\nContent without closing plusplus";
         let extracted = extract_front_matter(content);
         assert_eq!(extracted, "");
     }
@@ -785,10 +813,12 @@ mod tests {
     #[test]
     fn test_update_class_attributes_with_class_no_img() {
         let line = r#"<p class="text-center">Some content .class=&quot;my-img-class&quot; no img</p>"#;
-        let class_regex = Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
         let img_regex = Regex::new(r"(<img[^>]*)(/>)").unwrap();
 
-        let updated_line = update_class_attributes(line, &class_regex, &img_regex);
+        let updated_line =
+            update_class_attributes(line, &class_regex, &img_regex);
         // Should remain unchanged since no <img> tag is present.
         assert_eq!(updated_line, line);
     }
