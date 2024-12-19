@@ -94,7 +94,7 @@ pub fn move_output_directory(
     let new_project_dir = public_dir.join(site_name);
 
     // Ensure the target directory exists to avoid cross-platform rename issues.
-    fs::create_dir_all(&new_project_dir)?;
+    fs::create_dir_all(new_project_dir.clone())?;
 
     // Now rename `out_dir` into `new_project_dir`.
     // Because `new_project_dir` now exists, we need to move `out_dir` inside it.
@@ -469,7 +469,7 @@ mod tests {
         }
 
         let sub_dir = base_dir.join("sub_dir");
-        fs::create_dir_all(&sub_dir)?;
+        fs::create_dir_all(sub_dir.clone())?;
 
         let nested_html = sub_dir.join("nested.html");
         {
@@ -628,7 +628,7 @@ mod tests {
     #[test]
     fn test_directory_error_when_file() {
         let file_path = Path::new("test_file");
-        fs::write(&file_path, "some content")
+        fs::write(file_path, "some content")
             .expect("Failed to create test file");
 
         let result = directory(file_path, "test_file");
@@ -748,7 +748,7 @@ mod tests {
     fn test_create_directory_already_exists(
     ) -> Result<(), Box<dyn Error>> {
         let dir = Path::new("already_exists_dir");
-        fs::create_dir_all(&dir)?;
+        fs::create_dir_all(dir)?;
 
         // Should not error and should leave the directory intact.
         create_directory(&[dir])?;
