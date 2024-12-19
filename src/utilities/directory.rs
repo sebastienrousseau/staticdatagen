@@ -81,28 +81,48 @@ pub fn move_output_directory(
     out_dir: &Path,
 ) -> io::Result<()> {
     println!("❯ Moving output directory...");
+    eprintln!(
+        "DEBUG: site_name = '{}', out_dir = '{}'",
+        site_name,
+        out_dir.display()
+    );
 
     let public_dir = Path::new("public");
 
     if public_dir.exists() {
+        eprintln!(
+            "DEBUG: Removing existing public directory '{}'",
+            public_dir.display()
+        );
         fs::remove_dir_all(public_dir)?;
     }
 
     fs::create_dir(public_dir)?;
+    eprintln!(
+        "DEBUG: Created public directory '{}'",
+        public_dir.display()
+    );
 
     let site_name = site_name.replace(' ', "_");
-    let new_project_dir = public_dir.join(site_name);
+    let new_project_dir = public_dir.join(&site_name);
 
-    // Ensure the target directory exists to avoid cross-platform rename issues.
-    fs::create_dir_all(new_project_dir.clone())?;
+    eprintln!(
+        "DEBUG: new_project_dir = '{}'",
+        new_project_dir.display()
+    );
+    fs::create_dir_all(&new_project_dir)?;
 
-    // Now rename `out_dir` into `new_project_dir`.
-    // Because `new_project_dir` now exists, we need to move `out_dir` inside it.
-    // We'll rename `out_dir` to `new_project_dir/out_dir`'s last component.
-    let target =
-        new_project_dir.join(out_dir.file_name().ok_or_else(|| {
-            io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
-        })?);
+    let out_dir_name = out_dir.file_name().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
+    })?;
+
+    eprintln!(
+        "DEBUG: out_dir_name = '{}'",
+        out_dir_name.to_string_lossy()
+    );
+
+    let target = new_project_dir.join(out_dir_name);
+    eprintln!("DEBUG: Target = '{}'", target.display());
 
     fs::rename(out_dir, &target)?;
 
@@ -443,14 +463,45 @@ mod tests {
     #[test]
     fn test_move_output_directory() {
         let out_dir = Path::new("test_output");
+        let public_dir = Path::new("public");
+
+        // Ensure a clean environment before the test
+        if public_dir.exists() {
+            fs::remove_dir_all(public_dir)
+            .expect("Failed to remove existing 'public' directory before test");
+        }
+        if out_dir.exists() {
+            fs::remove_dir_all(out_dir)
+            .expect("Failed to remove existing 'test_output' directory before test");
+        }
+
+        // Create the output directory and a dummy file to ensure it's not empty
         fs::create_dir_all(out_dir)
             .expect("Failed to create test output directory");
+        fs::write(out_dir.join("dummy.txt"), b"test")
+            .expect("Failed to write dummy file to test_output");
+
+        eprintln!("DEBUG: out_dir = '{}'", out_dir.display());
 
         let result = move_output_directory("test_site", out_dir);
-        assert!(result.is_ok());
+        eprintln!("DEBUG: move_output_directory result = {:?}", result);
 
-        let public_dir = Path::new("public/test_site");
-        assert!(public_dir.exists() && public_dir.is_dir());
+        assert!(
+            result.is_ok(),
+            "The move_output_directory operation should succeed"
+        );
+
+        let public_test_site_dir = public_dir.join("test_site");
+        eprintln!(
+            "DEBUG: public_dir = '{}'",
+            public_test_site_dir.display()
+        );
+
+        assert!(
+            public_test_site_dir.exists()
+                && public_test_site_dir.is_dir(),
+            "The public/test_site directory should exist after moving"
+        );
 
         fs::remove_dir_all("public")
             .expect("Failed to clean up test public directory");
