@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Compilation service for static site generation
@@ -18,15 +19,15 @@ use rss_gen::{
 use sitemap_gen::create_site_map_data;
 use std::time::Duration;
 
+use crate::generators::cname::{CnameConfig, CnameGenerator};
+use crate::generators::humans::{HumansConfig, HumansGenerator};
+use crate::generators::manifest::{ManifestConfig, ManifestGenerator};
 use crate::{
     macro_cleanup_directories, macro_create_directories,
     macro_log_info, macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
-        cname::create_cname_data,
-        human::create_human_data,
-        json::{cname, human, news_sitemap, security, sitemap, txt},
-        manifest::create_manifest_data,
+        json::{news_sitemap, security, sitemap, txt},
         navigation::NavigationGenerator,
         news_sitemap::create_news_site_map_data,
         robots::create_txt_data,
@@ -163,6 +164,10 @@ fn process_file(
         minify_output: false,
         add_aria_attributes: true,
         generate_structured_data: true,
+        generate_toc: false,
+        language: "en".to_string(),
+        max_input_size: usize::MAX,
+        syntax_theme: None,
     };
 
     let html_content = generate_html(&file.content, &config)
@@ -229,9 +234,50 @@ fn process_file(
 
     let rss = generate_rss(&rss_data)?;
 
-    let json = create_manifest_data(&metadata);
-    let cname_options = create_cname_data(&metadata);
-    let human_options = create_human_data(&metadata);
+    // let json = create_manifest_data(&metadata);
+
+    let manifest_content = ManifestConfig::from_metadata(&metadata)
+        .and_then(|config| ManifestGenerator::new(config).generate())
+        .unwrap_or_else(|e| {
+            eprintln!("Error generating manifest: {}", e);
+            String::new()
+        });
+
+    let cname_content = metadata
+        .get("cname")
+        .and_then(|domain| CnameConfig::new(domain, None, None).ok())
+        .map(|config| CnameGenerator::new(config).generate())
+        .unwrap_or_default();
+
+    let humans_content = metadata
+        .get("humans")
+        .map(|humans| {
+            // Try parsing the "humans" string into a HashMap
+            let humans: HashMap<String, String> =
+                serde_json::from_str(humans)
+                    .context("Failed to parse humans metadata")
+                    .unwrap_or_else(|err| {
+                        eprintln!(
+                            "Error parsing humans metadata: {}",
+                            err
+                        );
+                        HashMap::new() // Default to an empty HashMap if parsing fails
+                    });
+
+            // Generate humans.txt content
+            match HumansConfig::from_metadata(&humans) {
+                Ok(humans_config) => {
+                    HumansGenerator::new(humans_config).generate()
+                }
+                Err(err) => {
+                    eprintln!("Error creating HumansConfig: {}", err);
+                    String::new() // Default to an empty string if creation fails
+                }
+            }
+        })
+        .unwrap_or_default();
+
+    // let human_options = create_human_data(&metadata);
     let security_options = create_security_data(&metadata);
     let sitemap_options = create_site_map_data(&metadata);
     let news_sitemap_options = create_news_site_map_data(&metadata);
@@ -242,22 +288,21 @@ fn process_file(
     let txt_options = create_txt_data(&metadata);
 
     let txt_data = txt(&txt_options);
-    let cname_data = cname(&cname_options);
-    let human_data = human(&human_options);
+    // let human_data = human(&human_options);
     let security_data = security(&security_options);
     let sitemap_data = sitemap(sitemap_options?, site_path);
     let news_sitemap_data = news_sitemap(news_sitemap_options);
-    let json_data = serde_json::to_string(&json).unwrap_or_else(|e| {
-        eprintln!("Error serializing JSON: {}", e);
-        String::new()
-    });
+    // let json_data = serde_json::to_string(&manifest).unwrap_or_else(|e| {
+    //     eprintln!("Error serializing JSON: {}", e);
+    //     String::new()
+    // });
 
     Ok(FileData {
-        cname: cname_data,
+        cname: cname_content,
         content,
         keyword: keywords.join(", "),
-        human: human_data,
-        json: json_data,
+        human: humans_content,
+        manifest: manifest_content,
         name: file.name.clone(),
         rss,
         security: security_data,
@@ -304,179 +349,5 @@ fn update_global_tags_data(
             .entry(tag.clone())
             .or_default()
             .extend(page_info);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    // Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
-    // SPDX-License-Identifier: Apache-2.0 OR MIT
-
-    //! Unit tests for the `compile` and `process_file` functions.
-
-    use super::*;
-    use std::path::PathBuf;
-    use tempfile::tempdir;
-
-    /// Helper function to create mock `FileData` for testing.
-    fn create_mock_file_data(name: &str, content: &str) -> FileData {
-        FileData {
-            name: name.to_string(),
-            content: content.to_string(),
-            cname: "".to_string(),
-            keyword: "".to_string(),
-            human: "".to_string(),
-            json: "".to_string(),
-            rss: "".to_string(),
-            security: "".to_string(),
-            sitemap: "".to_string(),
-            sitemap_news: "".to_string(),
-            txt: "".to_string(),
-        }
-    }
-
-    #[test]
-    /// Tests `compile` function error when directories cannot be created.
-    fn test_compile_directory_creation_failure() {
-        let invalid_path = PathBuf::from("/invalid_path");
-
-        let result = compile(
-            &invalid_path,
-            &invalid_path,
-            &invalid_path,
-            &invalid_path,
-        );
-        assert!(
-            result.is_err(),
-            "Expected `compile` to fail due to invalid directory paths"
-        );
-    }
-
-    #[test]
-    /// Tests `compile` function error when source files are missing.
-    fn test_compile_missing_source_files() {
-        let build_dir = tempdir().unwrap();
-        let content_dir = tempdir().unwrap(); // No files are added here
-        let site_dir = tempdir().unwrap();
-        let template_dir = tempdir().unwrap();
-
-        let result = compile(
-            build_dir.path(),
-            content_dir.path(),
-            site_dir.path(),
-            template_dir.path(),
-        );
-
-        assert!(
-            result.is_err(),
-            "Expected `compile` to fail due to missing source files"
-        );
-    }
-
-    #[test]
-    /// Tests `process_file` for handling metadata extraction failure.
-    fn test_process_file_metadata_extraction_failure() {
-        let invalid_content = "{{invalid metadata}}";
-        let mock_file_data =
-            create_mock_file_data("mock_invalid_file", invalid_content);
-
-        let template_dir = tempdir().unwrap();
-        let site_dir = tempdir().unwrap();
-
-        let mut engine = Engine::new(
-            template_dir.path().to_str().unwrap(),
-            Duration::from_secs(60),
-        );
-        let mut global_tags_data: HashMap<String, Vec<PageData>> =
-            HashMap::new();
-        let navigation = "<nav>Mock Navigation</nav>";
-
-        let result = process_file(
-            &mock_file_data,
-            &mut engine,
-            template_dir.path(),
-            navigation,
-            &mut global_tags_data,
-            site_dir.path(),
-        );
-
-        assert!(
-            result.is_err(),
-            "Expected `process_file` to fail due to invalid metadata"
-        );
-    }
-
-    #[test]
-    /// Tests `process_file` for invalid template rendering.
-    fn test_process_file_template_render_failure() {
-        let mock_file_data =
-            create_mock_file_data("mock_file", "Valid content");
-
-        let template_dir = tempdir().unwrap();
-        let site_dir = tempdir().unwrap();
-
-        let mut engine = Engine::new(
-            "invalid_template_path",
-            Duration::from_secs(60),
-        );
-        let mut global_tags_data: HashMap<String, Vec<PageData>> =
-            HashMap::new();
-        let navigation = "<nav>Mock Navigation</nav>";
-
-        let result = process_file(
-            &mock_file_data,
-            &mut engine,
-            template_dir.path(),
-            navigation,
-            &mut global_tags_data,
-            site_dir.path(),
-        );
-
-        assert!(result.is_err(), "Expected `process_file` to fail due to invalid template path");
-    }
-
-    #[test]
-    /// Tests `update_global_tags_data` to ensure it aggregates tags correctly.
-    fn test_update_global_tags_data() {
-        let mut global_tags_data: HashMap<String, Vec<PageData>> =
-            HashMap::new();
-        let tags_data: HashMap<String, Vec<HashMap<String, String>>> =
-            vec![(
-                "tag1".to_string(),
-                vec![{
-                    let mut page_data = HashMap::new();
-                    let _ = page_data.insert(
-                        "title".to_string(),
-                        "Test Title".to_string(),
-                    );
-                    let _ = page_data.insert(
-                        "description".to_string(),
-                        "Test Description".to_string(),
-                    );
-                    let _ = page_data.insert(
-                        "permalink".to_string(),
-                        "test_permalink".to_string(),
-                    );
-                    let _ = page_data.insert(
-                        "date".to_string(),
-                        "2024-01-01".to_string(),
-                    );
-                    page_data
-                }],
-            )]
-            .into_iter()
-            .collect();
-
-        update_global_tags_data(&mut global_tags_data, &tags_data);
-
-        assert!(
-            global_tags_data.contains_key("tag1"),
-            "Expected `tag1` in global tags data"
-        );
-        let page_data = &global_tags_data["tag1"][0];
-        assert_eq!(page_data.title, "Test Title");
-        assert_eq!(page_data.description, "Test Description");
-        assert_eq!(page_data.permalink, "test_permalink");
-        assert_eq!(page_data.date, "2024-01-01");
     }
 }

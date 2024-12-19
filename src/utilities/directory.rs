@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Utility functions for directory operations
@@ -70,25 +71,60 @@ pub fn directory(dir: &Path, name: &str) -> Result<String, String> {
 /// # Returns
 ///
 /// An `io::Result<()>` indicating success or failure.
+///
+/// # Behavior
+///
+/// If `public/` already exists, it will be removed before creating a fresh one.
+/// The output directory `out_dir` is then moved into `public/site_name`.
 pub fn move_output_directory(
     site_name: &str,
     out_dir: &Path,
 ) -> io::Result<()> {
     println!("❯ Moving output directory...");
+    eprintln!(
+        "DEBUG: site_name = '{}', out_dir = '{}'",
+        site_name,
+        out_dir.display()
+    );
 
     let public_dir = Path::new("public");
 
     if public_dir.exists() {
+        eprintln!(
+            "DEBUG: Removing existing public directory '{}'",
+            public_dir.display()
+        );
         fs::remove_dir_all(public_dir)?;
     }
 
     fs::create_dir(public_dir)?;
+    eprintln!(
+        "DEBUG: Created public directory '{}'",
+        public_dir.display()
+    );
 
     let site_name = site_name.replace(' ', "_");
-    let new_project_dir = public_dir.join(site_name);
+    let new_project_dir = public_dir.join(&site_name);
+
+    eprintln!(
+        "DEBUG: new_project_dir = '{}'",
+        new_project_dir.display()
+    );
     fs::create_dir_all(&new_project_dir)?;
 
-    fs::rename(out_dir, &new_project_dir)?;
+    let out_dir_name = out_dir.file_name().ok_or_else(|| {
+        io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
+    })?;
+
+    eprintln!(
+        "DEBUG: out_dir_name = '{}'",
+        out_dir_name.to_string_lossy()
+    );
+
+    let target = new_project_dir.join(out_dir_name);
+    eprintln!("DEBUG: Target = '{}'", target.display());
+
+    fs::rename(out_dir, &target)?;
 
     println!("  Done.\n");
 
@@ -104,6 +140,10 @@ pub fn move_output_directory(
 /// # Returns
 ///
 /// An `io::Result<Vec<PathBuf>>` containing paths to all HTML files found.
+///
+/// # Notes
+///
+/// This function recursively searches all subdirectories.
 pub fn find_html_files(dir: &Path) -> io::Result<Vec<PathBuf>> {
     let mut html_files = Vec::new();
 
@@ -132,6 +172,10 @@ pub fn find_html_files(dir: &Path) -> io::Result<Vec<PathBuf>> {
 /// # Returns
 ///
 /// A `Result<(), Box<dyn Error>>` indicating success or failure.
+///
+/// # Behavior
+///
+/// Any directories that exist in `directories` are removed, along with their contents.
 pub fn cleanup_directory(
     directories: &[&Path],
 ) -> Result<(), Box<dyn Error>> {
@@ -159,6 +203,10 @@ pub fn cleanup_directory(
 /// # Returns
 ///
 /// A `Result<(), Box<dyn Error>>` indicating success or failure.
+///
+/// # Behavior
+///
+/// Directories that already exist are skipped.
 pub fn create_directory(
     directories: &[&Path],
 ) -> Result<(), Box<dyn Error>> {
@@ -182,6 +230,13 @@ pub fn create_directory(
 /// # Returns
 ///
 /// A `String` with the first letter of each word capitalized.
+///
+/// # Examples
+///
+/// ```
+/// use staticdatagen::utilities::directory::to_title_case;
+/// assert_eq!(to_title_case("hello world"), "Hello World");
+/// ```
 pub fn to_title_case(s: &str) -> String {
     let re = Regex::new(r"(?:^|\s)(\p{L})").unwrap();
     re.replace_all(s, |caps: &regex::Captures| {
@@ -200,34 +255,31 @@ pub fn to_title_case(s: &str) -> String {
 ///
 /// # Returns
 ///
-/// A `String` containing the formatted header.
+/// A `String` containing the formatted header with `id` and `class` attributes added.
 ///
-/// # Example
+/// # Behavior
 ///
+/// If the header is `<h1>Content</h1>`, it becomes:
+///
+/// ```html
+/// <h1 id="h1-content" class="content" tabindex="0" aria-label="Content Heading" itemprop="headline">Content</h1>
 /// ```
-/// use regex::Regex;
-/// use staticdatagen::utilities::directory::format_header_with_id_class;
 ///
-/// let id_regex = Regex::new(r"[^a-z0-9]+").unwrap();
-/// let header = "<h1>Hello World</h1>";
-/// let formatted = format_header_with_id_class(header, &id_regex);
-/// assert!(formatted.contains("id=\"h1-hello-world\""));
-/// ```
+/// For other headers (like h2, h3, etc.), `itemprop="name"` is used instead of `headline`.
+///
+/// Empty headers are handled gracefully, resulting in an empty `class` and `id` ending with a hyphen.
 pub fn format_header_with_id_class(
     header_str: &str,
     id_regex: &Regex,
 ) -> String {
-    // Match HTML header tags with a named capture group for the tag name
-    let re = Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.+?)</\w+>")
+    // Match HTML header tags with a named capture group for the tag name and allow empty content.
+    let re = Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>")
         .unwrap();
 
     re.replace(header_str, |caps: &regex::Captures| {
-        let tag = caps.name("tag")
-            .map_or("", |m| m.as_str());
-        let attrs = caps.get(2)
-            .map_or("", |m| m.as_str());
-        let content = caps.name("content")
-            .map_or("", |m| m.as_str());
+        let tag = caps.name("tag").map_or("", |m| m.as_str());
+        let attrs = caps.get(2).map_or("", |m| m.as_str());
+        let content = caps.name("content").map_or("", |m| m.as_str());
 
         let binding = content.to_lowercase();
         let id = id_regex.replace_all(&binding, "-");
@@ -255,6 +307,15 @@ pub fn format_header_with_id_class(
 /// # Returns
 ///
 /// A `&str` slice containing the content without the front matter.
+///
+/// # Behavior
+///
+/// Supported front matter delimiters:
+/// - `---\n ... \n---\n`
+/// - `+++\n ... \n+++\n`
+/// - `{\n ... \n}\n`
+///
+/// If front matter is present but not properly closed, an empty string is returned.
 pub fn extract_front_matter(content: &str) -> &str {
     let patterns =
         [("---\n", "\n---\n"), ("+++\n", "\n+++\n"), ("{\n", "\n}\n")];
@@ -305,6 +366,11 @@ pub fn create_comrak_options() -> comrak::ComrakOptions<'static> {
 /// # Returns
 ///
 /// An updated `String` with class attributes properly placed.
+///
+/// # Behavior
+///
+/// If the line contains `.class=&quot;className&quot;` within an `<img>` tag,
+/// this attribute is removed from the line and added as a `class="className"` attribute on the `img` tag.
 pub fn update_class_attributes(
     line: &str,
     class_regex: &Regex,
@@ -335,6 +401,16 @@ pub fn update_class_attributes(
 /// # Returns
 ///
 /// An `Option<String>` containing the truncated path, or `None` if not truncated.
+///
+/// # Examples
+///
+/// ```
+/// use std::path::Path;
+/// use staticdatagen::utilities::directory::truncate;
+///
+/// let path = Path::new("/a/b/c/d/e");
+/// assert_eq!(truncate(path, 3), Some("c/d/e".to_string()));
+/// ```
 pub fn truncate(path: &Path, length: usize) -> Option<String> {
     if length == 0 {
         return None;
@@ -387,14 +463,45 @@ mod tests {
     #[test]
     fn test_move_output_directory() {
         let out_dir = Path::new("test_output");
+        let public_dir = Path::new("public");
+
+        // Ensure a clean environment before the test
+        if public_dir.exists() {
+            fs::remove_dir_all(public_dir)
+            .expect("Failed to remove existing 'public' directory before test");
+        }
+        if out_dir.exists() {
+            fs::remove_dir_all(out_dir)
+            .expect("Failed to remove existing 'test_output' directory before test");
+        }
+
+        // Create the output directory and a dummy file to ensure it's not empty
         fs::create_dir_all(out_dir)
             .expect("Failed to create test output directory");
+        fs::write(out_dir.join("dummy.txt"), b"test")
+            .expect("Failed to write dummy file to test_output");
+
+        eprintln!("DEBUG: out_dir = '{}'", out_dir.display());
 
         let result = move_output_directory("test_site", out_dir);
-        assert!(result.is_ok());
+        eprintln!("DEBUG: move_output_directory result = {:?}", result);
 
-        let public_dir = Path::new("public/test_site");
-        assert!(public_dir.exists() && public_dir.is_dir());
+        assert!(
+            result.is_ok(),
+            "The move_output_directory operation should succeed"
+        );
+
+        let public_test_site_dir = public_dir.join("test_site");
+        eprintln!(
+            "DEBUG: public_dir = '{}'",
+            public_test_site_dir.display()
+        );
+
+        assert!(
+            public_test_site_dir.exists()
+                && public_test_site_dir.is_dir(),
+            "The public/test_site directory should exist after moving"
+        );
 
         fs::remove_dir_all("public")
             .expect("Failed to clean up test public directory");
@@ -407,15 +514,19 @@ mod tests {
         fs::create_dir_all(base_dir)?;
 
         let html_file = base_dir.join("file.html");
-        let mut file = fs::File::create(&html_file)?;
-        writeln!(file, "<html></html>")?;
+        {
+            let mut file = fs::File::create(&html_file)?;
+            writeln!(file, "<html></html>")?;
+        }
 
         let sub_dir = base_dir.join("sub_dir");
-        fs::create_dir_all(&sub_dir)?;
+        fs::create_dir_all(sub_dir.clone())?;
 
         let nested_html = sub_dir.join("nested.html");
-        let mut nested_file = fs::File::create(&nested_html)?;
-        writeln!(nested_file, "<html></html>")?;
+        {
+            let mut nested_file = fs::File::create(&nested_html)?;
+            writeln!(nested_file, "<html></html>")?;
+        }
 
         let files = find_html_files(base_dir)?;
         assert_eq!(files.len(), 2);
@@ -472,7 +583,7 @@ mod tests {
         assert_eq!(result, expected);
     }
 
-    /// Tests formatting a header with ID and class.
+    /// Tests formatting a header with ID and class on a normal header.
     #[test]
     fn test_format_header_with_id_class() {
         let header = "<h1>My Header</h1>";
@@ -513,5 +624,262 @@ mod tests {
         let truncated = truncate(path, 2);
         let expected = Some("a/b".to_string());
         assert_eq!(truncated, expected);
+    }
+
+    /// Tests creating a comrak options configuration.
+    #[test]
+    fn test_create_comrak_options() {
+        let options = create_comrak_options();
+        assert!(options.extension.autolink);
+        assert!(options.extension.description_lists);
+        assert!(options.extension.footnotes);
+        assert_eq!(
+            options.extension.front_matter_delimiter,
+            Some("---".to_owned())
+        );
+        assert!(options.extension.strikethrough);
+        assert!(options.extension.superscript);
+        assert!(options.extension.table);
+        assert!(options.extension.tagfilter);
+        assert!(options.extension.tasklist);
+        assert!(options.parse.smart);
+        assert!(options.render.github_pre_lang);
+        assert!(!options.render.hardbreaks);
+        assert!(options.render.unsafe_);
+    }
+
+    /// Tests updating class attributes in a line containing an <img> tag.
+    #[test]
+    fn test_update_class_attributes_with_image() {
+        let line = r#"<p class="text-center">Some content <img src="image.png" .class=&quot;my-img-class&quot; /></p>"#;
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
+        let img_regex = Regex::new(r"(<img[^>]*)(/>)").unwrap();
+
+        let updated_line =
+            update_class_attributes(line, &class_regex, &img_regex);
+        assert!(updated_line.contains(r#"class="my-img-class""#));
+    }
+
+    /// Tests updating class attributes in a line without an <img> tag.
+    #[test]
+    fn test_update_class_attributes_without_image() {
+        let line =
+            r#"<p class="text-center">Some content without image</p>"#;
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
+        let img_regex = Regex::new(r"(<img[^>]*)(/>)").unwrap();
+
+        let updated_line =
+            update_class_attributes(line, &class_regex, &img_regex);
+        assert_eq!(updated_line, line);
+    }
+
+    /// Tests directory error when path is a file instead of a directory.
+    #[test]
+    fn test_directory_error_when_file() {
+        let file_path = Path::new("test_file");
+        fs::write(file_path, "some content")
+            .expect("Failed to create test file");
+
+        let result = directory(file_path, "test_file");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("is not a directory"));
+
+        fs::remove_file(file_path)
+            .expect("Failed to clean up test file");
+    }
+
+    /// Tests moving output directory when it does not exist.
+    #[test]
+    fn test_move_output_directory_nonexistent() {
+        let out_dir = Path::new("non_existent_output");
+        // Do not create out_dir
+
+        let result =
+            move_output_directory("test_site_nonexistent", out_dir);
+        assert!(result.is_err());
+    }
+
+    /// Tests finding HTML files in an empty directory.
+    #[test]
+    fn test_find_html_files_empty() -> io::Result<()> {
+        let base_dir = Path::new("test_find_html_empty");
+        fs::create_dir_all(base_dir)?;
+
+        let files = find_html_files(base_dir)?;
+        assert!(files.is_empty());
+
+        fs::remove_dir_all(base_dir)?;
+        Ok(())
+    }
+
+    /// Tests extracting front matter with `+++` delimiters.
+    #[test]
+    fn test_extract_front_matter_plusplusplus() {
+        let content = "+++\ntitle: Test\n+++\nContent goes here.";
+        let extracted = extract_front_matter(content);
+        assert_eq!(extracted, "Content goes here.");
+    }
+
+    /// Tests extracting front matter with `{` delimiters.
+    #[test]
+    fn test_extract_front_matter_braces() {
+        let content = "{\ntitle: Test\n}\nContent inside braces.";
+        let extracted = extract_front_matter(content);
+        assert_eq!(extracted, "Content inside braces.");
+    }
+
+    /// Tests extracting front matter that's started but not properly closed.
+    #[test]
+    fn test_extract_front_matter_incomplete() {
+        let content =
+            "---\ntitle: Test\nContent without proper closing";
+        let extracted = extract_front_matter(content);
+        assert_eq!(extracted, "");
+    }
+
+    /// Tests `to_title_case` with an empty string.
+    #[test]
+    fn test_to_title_case_empty() {
+        let input = "";
+        let expected = "";
+        let result = to_title_case(input);
+        assert_eq!(result, expected);
+    }
+
+    /// Tests `to_title_case` with punctuation.
+    #[test]
+    fn test_to_title_case_punctuation() {
+        let input = "hello, world! from-rust?";
+        let expected = "Hello, World! From-rust?";
+        let result = to_title_case(input);
+        assert_eq!(result, expected);
+    }
+
+    /// Tests formatting a header with no content (like `<h2></h2>`).
+    #[test]
+    fn test_format_header_with_id_class_no_content() {
+        let header = "<h2></h2>";
+        let id_regex = Regex::new(r"[^a-z0-9]+").unwrap();
+        let formatted = format_header_with_id_class(header, &id_regex);
+        // Checking for the expected ID and class even with empty content.
+        assert!(formatted.contains("id=\"h2-\""));
+        assert!(formatted.contains("class=\"\""));
+    }
+
+    /// Tests truncating a path with length = 0.
+    #[test]
+    fn test_truncate_zero_length() {
+        let path = Path::new("/a/b/c");
+        let truncated = truncate(path, 0);
+        assert_eq!(truncated, None);
+    }
+
+    /// Tests cleaning up directories that do not exist.
+    #[test]
+    fn test_cleanup_directory_non_existent(
+    ) -> Result<(), Box<dyn Error>> {
+        let dirs = vec![
+            Path::new("non_existent_dir1"),
+            Path::new("non_existent_dir2"),
+        ];
+
+        // They do not exist, but cleanup should still succeed and do nothing.
+        cleanup_directory(&dirs)?;
+        for dir in &dirs {
+            assert!(!dir.exists());
+        }
+
+        Ok(())
+    }
+
+    /// Tests creating directories that already exist.
+    #[test]
+    fn test_create_directory_already_exists(
+    ) -> Result<(), Box<dyn Error>> {
+        let dir = Path::new("already_exists_dir");
+        fs::create_dir_all(dir)?;
+
+        // Should not error and should leave the directory intact.
+        create_directory(&[dir])?;
+        assert!(dir.exists());
+
+        fs::remove_dir_all(dir)?;
+        Ok(())
+    }
+
+    /// Tests `to_title_case` with no alphabetic characters.
+    #[test]
+    fn test_to_title_case_no_alphabetic() {
+        let input = "1234 !!! ???";
+        let result = to_title_case(input);
+        // No letters to capitalize, should remain the same.
+        assert_eq!(result, "1234 !!! ???");
+    }
+
+    /// Tests formatting a header with a different header level (like h2).
+    #[test]
+    fn test_format_header_with_id_class_h2() {
+        let header = "<h2>Another Header</h2>";
+        let id_regex = Regex::new(r"[^a-z0-9]+").unwrap();
+        let formatted = format_header_with_id_class(header, &id_regex);
+        assert!(formatted.contains("id=\"h2-another-header\""));
+        assert!(formatted.contains("class=\"another-header\""));
+        // h2 should use itemprop="name"
+        assert!(formatted.contains("itemprop=\"name\""));
+    }
+
+    /// Tests formatting a header with punctuation.
+    #[test]
+    fn test_format_header_with_id_class_punctuation() {
+        let header = "<h3>Hello, World!</h3>";
+        let id_regex = Regex::new(r"[^a-z0-9]+").unwrap();
+        let formatted = format_header_with_id_class(header, &id_regex);
+        // Punctuation should be turned into hyphens in the id and class.
+        assert!(formatted.contains("id=\"h3-hello-world-\""));
+        assert!(formatted.contains("class=\"hello-world-\""));
+    }
+
+    /// Tests extracting front matter when no front matter is present at all.
+    #[test]
+    fn test_extract_front_matter_none() {
+        let content =
+            "Just regular content with no front matter at all.";
+        let extracted = extract_front_matter(content);
+        // Should return the entire content unchanged.
+        assert_eq!(extracted, content);
+    }
+
+    /// Tests extracting front matter with `+++` but incomplete.
+    #[test]
+    fn test_extract_front_matter_incomplete_plusplus() {
+        let content =
+            "+++\ntitle: Test\nContent without closing plusplus";
+        let extracted = extract_front_matter(content);
+        assert_eq!(extracted, "");
+    }
+
+    /// Tests updating class attributes when `.class=` is present but no <img> tag.
+    #[test]
+    fn test_update_class_attributes_with_class_no_img() {
+        let line = r#"<p class="text-center">Some content .class=&quot;my-img-class&quot; no img</p>"#;
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]+)&quot;"#).unwrap();
+        let img_regex = Regex::new(r"(<img[^>]*)(/>)").unwrap();
+
+        let updated_line =
+            update_class_attributes(line, &class_regex, &img_regex);
+        // Should remain unchanged since no <img> tag is present.
+        assert_eq!(updated_line, line);
+    }
+
+    /// Tests truncating a path where more components are requested than available.
+    #[test]
+    fn test_truncate_not_enough_components() {
+        let path = Path::new("/a");
+        let truncated = truncate(path, 3);
+        // Only 1 component, can't get 3, should return None.
+        assert_eq!(truncated, None);
     }
 }

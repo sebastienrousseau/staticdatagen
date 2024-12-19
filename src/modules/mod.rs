@@ -1,11 +1,12 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-/// The `cname` module generates the CNAME content.
-pub mod cname;
+// The `cname` module generates the CNAME content.
+// pub mod cname;
 
-/// The `human` module contains functions for generating human-readable
-pub mod human;
+// The `human` module contains functions for generating human-readable
+// pub mod human;
 
 /// The `json` module generates the JSON content.
 pub mod json;
@@ -13,8 +14,8 @@ pub mod json;
 // The `keywords` module contains functions for extracting keywords.
 // pub mod keywords;
 
-/// The `manifest` module generates the manifest file.
-pub mod manifest;
+// The `manifest` module generates the manifest file.
+// pub mod manifest;
 
 // The `metatags` module contains functions for generating meta tags.
 // pub mod metatags;

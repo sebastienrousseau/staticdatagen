@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::models::data::FileData;
@@ -44,16 +45,9 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
         })
         .map(|(file_name, content)| {
             let rss = escape(&content).to_string();
-            let json =
-                serde_json::to_string(&content).unwrap_or_else(|e| {
-                    eprintln!(
-                        "Error serializing JSON for file {}: {}",
-                        file_name, e
-                    );
-                    String::new()
-                });
             let cname = escape(&content).to_string();
             let keyword = escape(&content).to_string();
+            let manifest = escape(&content).to_string();
             let human = content.clone();
             let security = content.clone();
             let sitemap = escape(&content).to_string();
@@ -63,7 +57,7 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
             FileData {
                 cname,
                 content,
-                json,
+                manifest,
                 human,
                 keyword,
                 name: file_name,
@@ -142,17 +136,25 @@ mod tests {
     #[test]
     fn test_add_escapes_special_characters() -> io::Result<()> {
         let dir = tempdir()?;
-        let special_chars_file_path = dir.path().join("special_chars.txt");
+        let special_chars_file_path =
+            dir.path().join("special_chars.txt");
 
         // Create a file with special characters
-        File::create(&special_chars_file_path)?.write_all(b"Content with < & > characters")?;
+        File::create(&special_chars_file_path)?
+            .write_all(b"Content with < & > characters")?;
 
         // Run the `add` function
         let files = add(dir.path())?;
 
         // Verify that the content is properly escaped
-        let file_data = files.iter().find(|f| f.name == "special_chars.txt").unwrap();
-        assert_eq!(file_data.rss, "Content with &lt; &amp; &gt; characters");
+        let file_data = files
+            .iter()
+            .find(|f| f.name == "special_chars.txt")
+            .unwrap();
+        assert_eq!(
+            file_data.rss,
+            "Content with &lt; &amp; &gt; characters"
+        );
 
         Ok(())
     }
@@ -161,17 +163,21 @@ mod tests {
     #[test]
     fn test_add_serializes_to_json() -> io::Result<()> {
         let dir = tempdir()?;
-        let json_file_path = dir.path().join("json_file.txt");
+        let json_file_path = dir.path().join("manifest_file.txt");
 
         // Create a file with simple text content
-        File::create(&json_file_path)?.write_all(b"JSON content test")?;
+        File::create(&json_file_path)?
+            .write_all(b"Manifest content test")?;
 
         // Run the `add` function
         let files = add(dir.path())?;
 
         // Verify that the content is correctly serialized to JSON
-        let file_data = files.iter().find(|f| f.name == "json_file.txt").unwrap();
-        assert_eq!(file_data.json, "\"JSON content test\"");
+        let file_data = files
+            .iter()
+            .find(|f| f.name == "manifest_file.txt")
+            .unwrap();
+        assert_eq!(file_data.manifest, "Manifest content test");
 
         Ok(())
     }
