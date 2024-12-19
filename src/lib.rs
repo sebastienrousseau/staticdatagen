@@ -46,10 +46,10 @@ pub use utilities::uuid::generate_unique_string;
 /// Version of the staticdatagen library.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Error type for the shokunin library
-pub type Result<T> = std::result::Result<T, Error>;
+/// Error type for the staticdatagen library
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-/// Custom error type for the shokunin library
+/// Custom error type for the staticdatagen library
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// IO operation errors
@@ -182,5 +182,319 @@ mod tests {
             source = err.source();
         }
         assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn test_version_components() {
+        let parts: Vec<&str> = VERSION.split('.').collect();
+        assert!(
+            parts.len() >= 2,
+            "Version should have at least major and minor components"
+        );
+        // Verify each component is a valid number
+        for part in parts {
+            assert!(
+                part.parse::<u32>().is_ok(),
+                "Version component should be a valid number"
+            );
+        }
+    }
+
+    #[test]
+    fn test_version_semver_format() {
+        let semver_regex = regex::Regex::new(r"^\d+\.\d+(\.\d+)?(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$").unwrap();
+        assert!(
+            semver_regex.is_match(VERSION),
+            "Version should follow semver format"
+        );
+    }
+
+    // Error Tests
+    #[test]
+    fn test_error_variants() {
+        let errors = vec![
+            Error::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "not found",
+            )),
+            Error::ContentProcessing("test error".to_string()),
+            Error::Template("template error".to_string()),
+            Error::Config("config error".to_string()),
+        ];
+
+        for error in errors {
+            // Check that display message is non-empty
+            assert!(
+                !error.to_string().is_empty(),
+                "Error should have a non-empty display message"
+            );
+
+            // Check debug format contains the variant name
+            let debug_str = format!("{:?}", error);
+            match error {
+                Error::Io(_) => assert!(debug_str.contains("Io")),
+                Error::ContentProcessing(_) => {
+                    assert!(debug_str.contains("ContentProcessing"))
+                }
+                Error::Template(_) => {
+                    assert!(debug_str.contains("Template"))
+                }
+                Error::Config(_) => {
+                    assert!(debug_str.contains("Config"))
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_error_nesting() {
+        let io_error = std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "root cause",
+        );
+        let error = Error::Io(io_error);
+
+        let mut source_opt = error.source();
+        let mut depth = 0;
+        while let Some(source) = source_opt {
+            depth += 1;
+            source_opt = source.source();
+        }
+        assert_eq!(
+            depth, 1,
+            "Error should have exactly one level of nesting"
+        );
+    }
+
+    #[test]
+    fn test_error_conversion_chain() {
+        let io_error = std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "base error",
+        );
+        let error: Error = io_error.into();
+
+        match error {
+            Error::Io(inner) => {
+                assert_eq!(inner.kind(), std::io::ErrorKind::Other);
+                assert_eq!(inner.to_string(), "base error");
+            }
+            _ => panic!("Expected Io error variant"),
+        }
+    }
+
+    // Result Type Tests
+    #[test]
+    fn test_result_type_mapping() {
+        let success: Result<i32, Error> = Ok(42);
+        let mapped = success.map(|x| x * 2);
+        assert_eq!(mapped.unwrap(), 84);
+
+        let failure: Result<(), Error> =
+            Err(Error::Config("test".into()));
+        let mapped_err = failure.map_err(|e| format!("Wrapped: {}", e));
+        assert!(mapped_err.is_err());
+    }
+
+    #[test]
+    fn test_result_type_composition() {
+        fn inner_operation() -> std::io::Result<i32> {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "inner error",
+            ))
+        }
+
+        fn outer_operation() -> Result<i32, std::io::Error> {
+            let result = inner_operation()?;
+            Ok(result)
+        }
+
+        assert!(matches!(outer_operation(), Err(_)));
+    }
+
+    #[test]
+    fn test_error_display_formatting() {
+        let errors = [
+            (
+                Error::Io(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "missing",
+                )),
+                "IO error: missing",
+            ),
+            (
+                Error::ContentProcessing("invalid".to_string()),
+                "Content processing error: invalid",
+            ),
+            (
+                Error::Template("bad template".to_string()),
+                "Template error: bad template",
+            ),
+            (
+                Error::Config("bad config".to_string()),
+                "Configuration error: bad config",
+            ),
+        ];
+
+        for (error, expected) in errors.iter() {
+            assert_eq!(error.to_string(), *expected);
+        }
+    }
+
+    #[test]
+    fn test_error_conversions() {
+        // Test From implementation for std::io::Error
+        let io_err =
+            std::io::Error::new(std::io::ErrorKind::Other, "io error");
+        let err: Error = Error::from(io_err);
+        assert!(matches!(err, Error::Io(_)));
+
+        // Test Into implementation
+        let io_err =
+            std::io::Error::new(std::io::ErrorKind::Other, "io error");
+        let err: Error = io_err.into();
+        assert!(matches!(err, Error::Io(_)));
+    }
+
+    #[test]
+    fn test_error_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<Error>();
+    }
+
+    // Test error message consistency
+    #[test]
+    fn test_error_message_consistency() {
+        let msg = "test message";
+        let errors = [
+            (
+                Error::ContentProcessing(msg.into()),
+                "Content processing error: test message",
+            ),
+            (
+                Error::Template(msg.into()),
+                "Template error: test message",
+            ),
+            (
+                Error::Config(msg.into()),
+                "Configuration error: test message",
+            ),
+        ];
+
+        for (error, expected) in errors {
+            assert_eq!(error.to_string(), expected);
+        }
+    }
+
+    // Test Result type combinators
+    #[test]
+    fn test_result_combinators() {
+        let mut ok_result: Result<_, Error> = Ok(42);
+        let err_result: Result<i32, _> =
+            Err(Error::Config("test".into()));
+
+        assert_eq!(*ok_result.as_mut().unwrap_or(&mut 0), 42);
+        assert_eq!(err_result.unwrap_or(0), 0);
+
+        let mapped = ok_result.and_then(|n| Ok(n * 2));
+        assert_eq!(mapped.unwrap(), 84);
+    }
+
+    // Test error downcasting
+    #[test]
+    fn test_error_downcasting() {
+        let io_err =
+            std::io::Error::new(std::io::ErrorKind::Other, "test");
+        let err = Error::Io(io_err);
+
+        let std_error: &dyn StdError = &err;
+        assert!(std_error.downcast_ref::<Error>().is_some());
+    }
+
+    // Test error cloning behavior with io::Error
+    #[test]
+    fn test_io_error_cloning() {
+        let io_err =
+            std::io::Error::new(std::io::ErrorKind::Other, "original");
+        let err = Error::Io(io_err);
+
+        // Convert to string and verify the content is preserved
+        let err_string = err.to_string();
+        assert!(err_string.contains("original"));
+    }
+
+    // Test error pattern matching
+    #[test]
+    fn test_error_pattern_matching() {
+        let errors = vec![
+            Error::Config("config".into()),
+            Error::Template("template".into()),
+            Error::ContentProcessing("content".into()),
+            Error::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "io",
+            )),
+        ];
+
+        let mut counts = (0, 0, 0, 0);
+        for err in errors {
+            match err {
+                Error::Config(_) => counts.0 += 1,
+                Error::Template(_) => counts.1 += 1,
+                Error::ContentProcessing(_) => counts.2 += 1,
+                Error::Io(_) => counts.3 += 1,
+            }
+        }
+
+        assert_eq!(counts, (1, 1, 1, 1));
+    }
+
+    // Test error context preservation
+    #[test]
+    fn test_error_context_preservation() {
+        let context = "important context";
+        let io_err =
+            std::io::Error::new(std::io::ErrorKind::Other, context);
+        let err = Error::Io(io_err);
+
+        assert!(err.to_string().contains(context));
+    }
+
+    #[test]
+    fn test_custom_error_conversion() {
+        // Test converting from String
+        let err = Error::ContentProcessing(String::from("test"));
+        assert_eq!(err.to_string(), "Content processing error: test");
+
+        // Test converting from &str
+        let err = Error::ContentProcessing("test".into());
+        assert_eq!(err.to_string(), "Content processing error: test");
+    }
+
+    #[test]
+    fn test_error_empty_messages() {
+        let err = Error::Config(String::new());
+        assert_eq!(err.to_string(), "Configuration error: ");
+
+        let err = Error::Template(String::new());
+        assert_eq!(err.to_string(), "Template error: ");
+    }
+
+    #[test]
+    fn test_error_composition() {
+        fn fallible_operation() -> Result<(), Error> {
+            Err(Error::Config("inner error".into()))
+        }
+
+        let result = fallible_operation().map_err(|e| {
+            Error::ContentProcessing(format!("outer: {}", e))
+        });
+
+        assert!(matches!(result, Err(Error::ContentProcessing(_))));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("inner error"));
     }
 }
