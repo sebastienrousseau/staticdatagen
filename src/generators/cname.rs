@@ -62,7 +62,9 @@ pub enum CnameError {
 ///
 /// Represents the configuration needed to generate a CNAME record, including validation
 /// to ensure compliance with DNS standards.
-#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize,
+)]
 pub struct CnameConfig {
     /// The domain name for the CNAME record.
     pub domain: String,
@@ -996,21 +998,24 @@ mod tests {
     }
 
     #[test]
-fn test_export_batch_empty_input() {
-    let file_path = "test_empty.txt";
+    fn test_export_batch_empty_input() {
+        let file_path = "test_empty.txt";
 
-    // Attempt to export an empty batch
-    let result = CnameGenerator::export_batch_to_file(vec![], file_path, "\n");
-    assert!(result.is_ok());
+        // Attempt to export an empty batch
+        let result = CnameGenerator::export_batch_to_file(
+            vec![],
+            file_path,
+            "\n",
+        );
+        assert!(result.is_ok());
 
-    // Cleanup: Remove the file after the test
-    if std::fs::remove_file(file_path).is_ok() {
-        println!("🗑️ File '{}' removed after the test.", file_path);
-    } else {
-        println!("⚠️ Could not remove file '{}'.", file_path);
+        // Cleanup: Remove the file after the test
+        if std::fs::remove_file(file_path).is_ok() {
+            println!("🗑️ File '{}' removed after the test.", file_path);
+        } else {
+            println!("⚠️ Could not remove file '{}'.", file_path);
+        }
     }
-}
-
 
     #[test]
     fn test_debug_implementation() {

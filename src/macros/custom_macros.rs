@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! This module provides several macros for common tasks such as retrieving arguments, extracting options from metadata,

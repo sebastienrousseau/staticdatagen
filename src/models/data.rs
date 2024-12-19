@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Core data models for the Shokunin Static Site Generator
@@ -527,8 +528,8 @@ pub struct FileData {
     pub content: String,
     /// The CNAME content, if applicable
     pub cname: String,
-    /// The JSON representation of the file content
-    pub json: String,
+    /// The manifest content
+    pub manifest: String,
     /// The human-readable metadata
     pub human: String,
     /// Keywords associated with the file content
@@ -569,7 +570,7 @@ impl FileData {
             name,
             content,
             cname: String::new(),
-            json: String::new(),
+            manifest: String::new(),
             human: String::new(),
             keyword: String::new(),
             rss: String::new(),
@@ -627,15 +628,16 @@ impl FileData {
         }
 
         // Validate JSON if present
-        if !self.json.is_empty() {
-            let _ =
-                serde_json::from_str::<serde_json::Value>(&self.json)
-                    .map_err(|e| {
-                    DataError::InvalidContent(format!(
-                        "Invalid JSON: {}",
-                        e
-                    ))
-                })?;
+        if !self.manifest.is_empty() {
+            let _ = serde_json::from_str::<serde_json::Value>(
+                &self.manifest,
+            )
+            .map_err(|e| {
+                DataError::InvalidContent(format!(
+                    "Invalid JSON: {}",
+                    e
+                ))
+            })?;
         }
 
         // Validate URLs in various fields

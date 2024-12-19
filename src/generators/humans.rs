@@ -532,7 +532,8 @@ mod tests {
     #[test]
     fn test_from_metadata_complete() {
         let mut metadata = HashMap::new();
-        _ = metadata.insert("author".to_string(), "John Doe".to_string());
+        _ = metadata
+            .insert("author".to_string(), "John Doe".to_string());
         _ = metadata.insert(
             "author_website".to_string(),
             "https://example.com".to_string(),
@@ -551,7 +552,7 @@ mod tests {
             "site_last_updated".to_string(),
             "2024-01-01T00:00:00Z".to_string(),
         );
-       _ =  metadata
+        _ = metadata
             .insert("site_standards".to_string(), "HTML5".to_string());
         _ = metadata.insert(
             "site_software".to_string(),
@@ -568,7 +569,8 @@ mod tests {
     #[test]
     fn test_from_metadata_invalid_website() {
         let mut metadata = HashMap::new();
-        _ = metadata.insert("author".to_string(), "John Doe".to_string());
+        _ = metadata
+            .insert("author".to_string(), "John Doe".to_string());
         _ = metadata.insert(
             "author_website".to_string(),
             "invalid-url".to_string(),
@@ -581,7 +583,8 @@ mod tests {
     #[test]
     fn test_from_metadata_invalid_date() {
         let mut metadata = HashMap::new();
-        _ = metadata.insert("author".to_string(), "John Doe".to_string());
+        _ = metadata
+            .insert("author".to_string(), "John Doe".to_string());
         _ = metadata.insert(
             "site_last_updated".to_string(),
             "invalid-date".to_string(),

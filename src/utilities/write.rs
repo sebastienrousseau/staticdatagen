@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! File writing utilities for the static site generator
@@ -172,7 +173,7 @@ fn copy_template_file(
 fn get_file_paths(file: &FileData) -> Vec<(&'static str, &str)> {
     vec![
         ("index.html", &file.content),
-        ("manifest.json", &file.json),
+        ("manifest.json", &file.manifest),
         ("robots.txt", &file.txt),
         ("rss.xml", &file.rss),
         ("sitemap.xml", &file.sitemap),
@@ -186,7 +187,7 @@ fn get_file_content(file: &FileData, file_name: &str) -> String {
         "CNAME" => file.cname.clone(),
         "humans.txt" => file.human.clone(),
         "index.html" => file.content.clone(),
-        "manifest.json" => file.json.clone(),
+        "manifest.json" => file.manifest.clone(),
         "robots.txt" => file.txt.clone(),
         "rss.xml" => file.rss.clone(),
         "security.txt" => file.security.clone(),

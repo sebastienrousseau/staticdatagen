@@ -1,4 +1,5 @@
-// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Compilation service for static site generation
@@ -20,13 +21,13 @@ use std::time::Duration;
 
 use crate::generators::cname::{CnameConfig, CnameGenerator};
 use crate::generators::humans::{HumansConfig, HumansGenerator};
+use crate::generators::manifest::{ManifestConfig, ManifestGenerator};
 use crate::{
     macro_cleanup_directories, macro_create_directories,
     macro_log_info, macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
         json::{news_sitemap, security, sitemap, txt},
-        manifest::create_manifest_data,
         navigation::NavigationGenerator,
         news_sitemap::create_news_site_map_data,
         robots::create_txt_data,
@@ -233,7 +234,14 @@ fn process_file(
 
     let rss = generate_rss(&rss_data)?;
 
-    let json = create_manifest_data(&metadata);
+    // let json = create_manifest_data(&metadata);
+
+    let manifest_content = ManifestConfig::from_metadata(&metadata)
+        .and_then(|config| ManifestGenerator::new(config).generate())
+        .unwrap_or_else(|e| {
+            eprintln!("Error generating manifest: {}", e);
+            String::new()
+        });
 
     let cname_content = metadata
         .get("cname")
@@ -284,17 +292,17 @@ fn process_file(
     let security_data = security(&security_options);
     let sitemap_data = sitemap(sitemap_options?, site_path);
     let news_sitemap_data = news_sitemap(news_sitemap_options);
-    let json_data = serde_json::to_string(&json).unwrap_or_else(|e| {
-        eprintln!("Error serializing JSON: {}", e);
-        String::new()
-    });
+    // let json_data = serde_json::to_string(&manifest).unwrap_or_else(|e| {
+    //     eprintln!("Error serializing JSON: {}", e);
+    //     String::new()
+    // });
 
     Ok(FileData {
         cname: cname_content,
         content,
         keyword: keywords.join(", "),
         human: humans_content,
-        json: json_data,
+        manifest: manifest_content,
         name: file.name.clone(),
         rss,
         security: security_data,
@@ -346,7 +354,8 @@ fn update_global_tags_data(
 
 #[cfg(test)]
 mod tests {
-    // Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+    // Copyright © 2025 Static Data Gen.
+// All rights reserved.
     // SPDX-License-Identifier: Apache-2.0 OR MIT
 
     //! Unit tests for the `compile` and `process_file` functions.
@@ -363,7 +372,7 @@ mod tests {
             cname: "".to_string(),
             keyword: "".to_string(),
             human: "".to_string(),
-            json: "".to_string(),
+            manifest: "".to_string(),
             rss: "".to_string(),
             security: "".to_string(),
             sitemap: "".to_string(),

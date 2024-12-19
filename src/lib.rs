@@ -16,6 +16,8 @@ pub mod generators {
     pub mod cname;
     /// Humans.txt Generation Module
     pub mod humans;
+    /// Manifest Generation Module
+    pub mod manifest;
 }
 
 /// Compiler module for processing and generating static site content.
