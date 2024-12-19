@@ -310,7 +310,7 @@ mod tests {
             Ok(result)
         }
 
-        assert!(matches!(outer_operation(), Err(_)));
+        assert!(outer_operation().is_err());
     }
 
     #[test]
@@ -391,13 +391,12 @@ mod tests {
     #[test]
     fn test_result_combinators() {
         let mut ok_result: Result<_, Error> = Ok(42);
-        let err_result: Result<i32, _> =
-            Err(Error::Config("test".into()));
+        let err_result = Error::Config("test".into());
 
         assert_eq!(*ok_result.as_mut().unwrap_or(&mut 0), 42);
-        assert_eq!(err_result.unwrap_or(0), 0);
+        assert_eq!(err_result.to_string(), "Configuration error: test");
 
-        let mapped = ok_result.and_then(|n| Ok(n * 2));
+        let mapped = ok_result.map(|n| n * 2);
         assert_eq!(mapped.unwrap(), 84);
     }
 
