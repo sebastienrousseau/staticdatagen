@@ -2776,7 +2776,35 @@
 <a href="#2775" id="2775">2775</a>
 <a href="#2776" id="2776">2776</a>
 <a href="#2777" id="2777">2777</a>
-<a href="#2778" id="2778">2778</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#2778" id="2778">2778</a>
+<a href="#2779" id="2779">2779</a>
+<a href="#2780" id="2780">2780</a>
+<a href="#2781" id="2781">2781</a>
+<a href="#2782" id="2782">2782</a>
+<a href="#2783" id="2783">2783</a>
+<a href="#2784" id="2784">2784</a>
+<a href="#2785" id="2785">2785</a>
+<a href="#2786" id="2786">2786</a>
+<a href="#2787" id="2787">2787</a>
+<a href="#2788" id="2788">2788</a>
+<a href="#2789" id="2789">2789</a>
+<a href="#2790" id="2790">2790</a>
+<a href="#2791" id="2791">2791</a>
+<a href="#2792" id="2792">2792</a>
+<a href="#2793" id="2793">2793</a>
+<a href="#2794" id="2794">2794</a>
+<a href="#2795" id="2795">2795</a>
+<a href="#2796" id="2796">2796</a>
+<a href="#2797" id="2797">2797</a>
+<a href="#2798" id="2798">2798</a>
+<a href="#2799" id="2799">2799</a>
+<a href="#2800" id="2800">2800</a>
+<a href="#2801" id="2801">2801</a>
+<a href="#2802" id="2802">2802</a>
+<a href="#2803" id="2803">2803</a>
+<a href="#2804" id="2804">2804</a>
+<a href="#2805" id="2805">2805</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="doccomment">//! Core data models for the Shokunin Static Site Generator
@@ -2822,6 +2850,7 @@
 //! ```
 
 </span><span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt;
 <span class="kw">use </span>thiserror::Error;
 <span class="kw">use </span>time::{format_description::well_known::Rfc3339, OffsetDateTime};
@@ -3304,8 +3333,8 @@
     </span><span class="kw">pub </span>content: String,
     <span class="doccomment">/// The CNAME content, if applicable
     </span><span class="kw">pub </span>cname: String,
-    <span class="doccomment">/// The JSON representation of the file content
-    </span><span class="kw">pub </span>json: String,
+    <span class="doccomment">/// The manifest content
+    </span><span class="kw">pub </span>manifest: String,
     <span class="doccomment">/// The human-readable metadata
     </span><span class="kw">pub </span>human: String,
     <span class="doccomment">/// Keywords associated with the file content
@@ -3346,7 +3375,7 @@
             name,
             content,
             cname: String::new(),
-            json: String::new(),
+            manifest: String::new(),
             human: String::new(),
             keyword: String::new(),
             rss: String::new(),
@@ -3404,15 +3433,16 @@
         }
 
         <span class="comment">// Validate JSON if present
-        </span><span class="kw">if </span>!<span class="self">self</span>.json.is_empty() {
-            <span class="kw">let _ </span>=
-                serde_json::from_str::&lt;serde_json::Value&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.json)
-                    .map_err(|e| {
-                    DataError::InvalidContent(<span class="macro">format!</span>(
-                        <span class="string">"Invalid JSON: {}"</span>,
-                        e
-                    ))
-                })<span class="question-mark">?</span>;
+        </span><span class="kw">if </span>!<span class="self">self</span>.manifest.is_empty() {
+            <span class="kw">let _ </span>= serde_json::from_str::&lt;serde_json::Value&gt;(
+                <span class="kw-2">&amp;</span><span class="self">self</span>.manifest,
+            )
+            .map_err(|e| {
+                DataError::InvalidContent(<span class="macro">format!</span>(
+                    <span class="string">"Invalid JSON: {}"</span>,
+                    e
+                ))
+            })<span class="question-mark">?</span>;
         }
 
         <span class="comment">// Validate URLs in various fields
@@ -4112,6 +4142,30 @@
             &amp;&amp; <span class="self">self</span>.site_standards.is_empty()
             &amp;&amp; <span class="self">self</span>.site_components.is_empty()
             &amp;&amp; <span class="self">self</span>.site_software.is_empty()
+    }
+
+    <span class="doccomment">/// Converts `HumansData` into a `HashMap&lt;String, String&gt;`.
+    </span><span class="kw">pub fn </span>to_hashmap(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; HashMap&lt;String, String&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>map = HashMap::new();
+        <span class="kw">_ </span>= map.insert(<span class="string">"author"</span>.to_string(), <span class="self">self</span>.author.clone());
+        <span class="kw">_ </span>= map.insert(<span class="string">"thanks"</span>.to_string(), <span class="self">self</span>.thanks.clone());
+        <span class="kw">_ </span>= map.insert(
+            <span class="string">"author_location"</span>.to_string(),
+            <span class="self">self</span>.author_location.clone(),
+        );
+        <span class="kw">if </span>!<span class="self">self</span>.author_website.is_empty() {
+            <span class="kw">_ </span>= map.insert(
+                <span class="string">"author_website"</span>.to_string(),
+                <span class="self">self</span>.author_website.clone(),
+            );
+        }
+        <span class="kw">if </span>!<span class="self">self</span>.author_twitter.is_empty() {
+            <span class="kw">_ </span>= map.insert(
+                <span class="string">"author_twitter"</span>.to_string(),
+                <span class="self">self</span>.author_twitter.clone(),
+            );
+        }
+        map
     }
 }
 

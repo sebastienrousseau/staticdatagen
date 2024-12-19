@@ -197,7 +197,14 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 Shokunin Static Site Generator. All rights reserved.
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2025 Static Data Gen.
+// All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="kw">use </span><span class="kw">crate</span>::models::data::FileData;
@@ -243,16 +250,9 @@
         })
         .map(|(file_name, content)| {
             <span class="kw">let </span>rss = escape(<span class="kw-2">&amp;</span>content).to_string();
-            <span class="kw">let </span>json =
-                serde_json::to_string(<span class="kw-2">&amp;</span>content).unwrap_or_else(|e| {
-                    <span class="macro">eprintln!</span>(
-                        <span class="string">"Error serializing JSON for file {}: {}"</span>,
-                        file_name, e
-                    );
-                    String::new()
-                });
             <span class="kw">let </span>cname = escape(<span class="kw-2">&amp;</span>content).to_string();
             <span class="kw">let </span>keyword = escape(<span class="kw-2">&amp;</span>content).to_string();
+            <span class="kw">let </span>manifest = escape(<span class="kw-2">&amp;</span>content).to_string();
             <span class="kw">let </span>human = content.clone();
             <span class="kw">let </span>security = content.clone();
             <span class="kw">let </span>sitemap = escape(<span class="kw-2">&amp;</span>content).to_string();
@@ -262,7 +262,7 @@
             FileData {
                 cname,
                 content,
-                json,
+                manifest,
                 human,
                 keyword,
                 name: file_name,
@@ -341,17 +341,25 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>test_add_escapes_special_characters() -&gt; io::Result&lt;()&gt; {
         <span class="kw">let </span>dir = tempdir()<span class="question-mark">?</span>;
-        <span class="kw">let </span>special_chars_file_path = dir.path().join(<span class="string">"special_chars.txt"</span>);
+        <span class="kw">let </span>special_chars_file_path =
+            dir.path().join(<span class="string">"special_chars.txt"</span>);
 
         <span class="comment">// Create a file with special characters
-        </span>File::create(<span class="kw-2">&amp;</span>special_chars_file_path)<span class="question-mark">?</span>.write_all(<span class="string">b"Content with &lt; &amp; &gt; characters"</span>)<span class="question-mark">?</span>;
+        </span>File::create(<span class="kw-2">&amp;</span>special_chars_file_path)<span class="question-mark">?
+            </span>.write_all(<span class="string">b"Content with &lt; &amp; &gt; characters"</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// Run the `add` function
         </span><span class="kw">let </span>files = add(dir.path())<span class="question-mark">?</span>;
 
         <span class="comment">// Verify that the content is properly escaped
-        </span><span class="kw">let </span>file_data = files.iter().find(|f| f.name == <span class="string">"special_chars.txt"</span>).unwrap();
-        <span class="macro">assert_eq!</span>(file_data.rss, <span class="string">"Content with &amp;lt; &amp;amp; &amp;gt; characters"</span>);
+        </span><span class="kw">let </span>file_data = files
+            .iter()
+            .find(|f| f.name == <span class="string">"special_chars.txt"</span>)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(
+            file_data.rss,
+            <span class="string">"Content with &amp;lt; &amp;amp; &amp;gt; characters"
+        </span>);
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -360,17 +368,21 @@
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>test_add_serializes_to_json() -&gt; io::Result&lt;()&gt; {
         <span class="kw">let </span>dir = tempdir()<span class="question-mark">?</span>;
-        <span class="kw">let </span>json_file_path = dir.path().join(<span class="string">"json_file.txt"</span>);
+        <span class="kw">let </span>json_file_path = dir.path().join(<span class="string">"manifest_file.txt"</span>);
 
         <span class="comment">// Create a file with simple text content
-        </span>File::create(<span class="kw-2">&amp;</span>json_file_path)<span class="question-mark">?</span>.write_all(<span class="string">b"JSON content test"</span>)<span class="question-mark">?</span>;
+        </span>File::create(<span class="kw-2">&amp;</span>json_file_path)<span class="question-mark">?
+            </span>.write_all(<span class="string">b"Manifest content test"</span>)<span class="question-mark">?</span>;
 
         <span class="comment">// Run the `add` function
         </span><span class="kw">let </span>files = add(dir.path())<span class="question-mark">?</span>;
 
         <span class="comment">// Verify that the content is correctly serialized to JSON
-        </span><span class="kw">let </span>file_data = files.iter().find(|f| f.name == <span class="string">"json_file.txt"</span>).unwrap();
-        <span class="macro">assert_eq!</span>(file_data.json, <span class="string">"\"JSON content test\""</span>);
+        </span><span class="kw">let </span>file_data = files
+            .iter()
+            .find(|f| f.name == <span class="string">"manifest_file.txt"</span>)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(file_data.manifest, <span class="string">"Manifest content test"</span>);
 
         <span class="prelude-val">Ok</span>(())
     }

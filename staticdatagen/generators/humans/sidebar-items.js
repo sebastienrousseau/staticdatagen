@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HumansError"],"struct":["HumansConfig","HumansConfigBuilder","HumansGenerator"]};

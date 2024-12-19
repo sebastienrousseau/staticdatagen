@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ManifestError"],"fn":["sanitize_color","sanitize_text"],"mod":["defaults"],"struct":["IconConfig","ManifestConfig","ManifestConfigBuilder","ManifestGenerator"]};
