@@ -580,7 +580,7 @@ mod tests {
     #[test]
     fn test_to_news_data_missing_keys() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "news_title".to_string(),
             "Sample News".to_string(),
         );
@@ -603,21 +603,24 @@ mod tests {
     #[test]
     fn test_to_news_data_invalid_metadata() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "news_title".to_string(),
             "Invalid\nTitle".to_string(),
         );
-        metadata
+        let _ = metadata
             .insert("news_loc".to_string(), "invalid-url".to_string());
-        metadata.insert(
+        let _ = metadata.insert(
             "news_language".to_string(),
             "invalid-lang".to_string(),
         );
-        metadata.insert(
+        let _ = metadata.insert(
             "news_genres".to_string(),
             "InvalidGenre".to_string(),
         );
-        metadata.insert("news_keywords".to_string(), "key1, key2, key3, key4, key5, key6, key7, key8, key9, key10, key11".to_string());
+        let _ = metadata.insert(
+        "news_keywords".to_string(),
+        "key1, key2, key3, key4, key5, key6, key7, key8, key9, key10, key11".to_string(),
+    );
 
         let config = NewsSiteMapConfig::new(metadata);
         let news_data = config.to_news_data();
@@ -634,7 +637,8 @@ mod tests {
     fn test_max_length_input() {
         let long_title = "a".repeat(1000); // Max length
         let mut metadata = HashMap::new();
-        metadata.insert("news_title".to_string(), long_title.clone());
+        let _ = metadata
+            .insert("news_title".to_string(), long_title.clone());
 
         let config = NewsSiteMapConfig::new(metadata);
         let news_data = config.to_news_data();
@@ -645,20 +649,21 @@ mod tests {
     #[test]
     fn test_generate_xml_edge_cases() {
         let mut metadata = HashMap::new();
-        metadata.insert(
+        let _ = metadata.insert(
             "news_title".to_string(),
             "Edge Case News".to_string(),
         );
-        metadata.insert(
+        let _ = metadata.insert(
             "news_publication_date".to_string(),
             "Tue, 20 Feb 2024 15:15:15 GMT".to_string(),
         );
-        metadata.insert(
+        let _ = metadata.insert(
             "news_loc".to_string(),
             "https://example.com".to_string(),
         );
-        metadata.insert("news_language".to_string(), "fr".to_string());
-        metadata.insert(
+        let _ = metadata
+            .insert("news_language".to_string(), "fr".to_string());
+        let _ = metadata.insert(
             "news_publication_name".to_string(),
             "Edge Publication".to_string(),
         );
