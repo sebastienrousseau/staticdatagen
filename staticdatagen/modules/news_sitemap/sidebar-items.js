@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["convert_date_format","create_news_site_map_data"]};

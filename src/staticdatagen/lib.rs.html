@@ -493,11 +493,7 @@
 <a href="#492" id="492">492</a>
 <a href="#493" id="493">493</a>
 <a href="#494" id="494">494</a>
-<a href="#495" id="495">495</a>
-<a href="#496" id="496">496</a>
-<a href="#497" id="497">497</a>
-<a href="#498" id="498">498</a>
-<a href="#499" id="499">499</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2024 StaticDataGen. All rights reserved.
+<a href="#495" id="495">495</a></pre></div><pre class="rust"><code><span class="comment">// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 // src/lib.rs
@@ -509,24 +505,13 @@
     html_root_url = <span class="string">"https://docs.rs/staticdatagen"
 </span>)]
 
-</span><span class="doccomment">/// Generator modules for creating static content.
-</span><span class="kw">pub mod </span>generators {
-    <span class="doccomment">/// CNAME Record Generation Module
-    </span><span class="kw">pub mod </span>cname;
-    <span class="doccomment">/// Humans.txt Generation Module
-    </span><span class="kw">pub mod </span>humans;
-    <span class="doccomment">/// Manifest Generation Module
-    </span><span class="kw">pub mod </span>manifest;
-}
+</span><span class="comment">// Core functionality
 
-<span class="doccomment">/// Compiler module for processing and generating static site content.
+</span><span class="doccomment">/// Compiler module for processing and generating static site content.
 </span><span class="kw">pub mod </span>compiler;
 
-<span class="doccomment">/// Locales module for language-specific translations and templates.
-</span><span class="kw">pub mod </span>locales;
-
-<span class="doccomment">/// Macro definitions for common operations.
-</span><span class="kw">pub mod </span>macros;
+<span class="doccomment">/// Generator modules for creating static content.
+</span><span class="kw">pub mod </span>generators;
 
 <span class="doccomment">/// Data models and structures used throughout the crate.
 </span><span class="kw">pub mod </span>models;
@@ -536,6 +521,13 @@
 
 <span class="doccomment">/// Utility functions and helpers.
 </span><span class="kw">pub mod </span>utilities;
+
+<span class="doccomment">/// Locales module for language-specific translations and templates.
+</span><span class="kw">pub mod </span>locales;
+
+<span class="doccomment">/// Macro definitions for common operations.
+</span><span class="attr">#[macro_use]
+</span><span class="kw">pub mod </span>macros;
 
 <span class="comment">// Re-export commonly used items for easier access
 </span><span class="kw">pub use </span>compiler::service::compile;
