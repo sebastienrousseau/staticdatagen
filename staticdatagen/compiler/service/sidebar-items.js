@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["compile"]};
+window.SIDEBAR_ITEMS = {"fn":["compile","split_frontmatter_and_body"]};
