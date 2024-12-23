@@ -86,7 +86,7 @@ fn basic_news_sitemap_example() -> Result<(), Box<dyn std::error::Error>>
     let config = NewsSiteMapConfig::new(metadata);
     let generator = NewsSiteMapGenerator::new(config);
 
-    let news_data = generator.generate();
+    let news_data = generator.generate_xml();
     let sitemap =
         serde_json::to_string_pretty(&news_data).map_err(|e| {
             eprintln!("Critical error serializing news sitemap: {}", e);
@@ -126,7 +126,7 @@ fn multiple_articles_example() -> Result<(), Box<dyn std::error::Error>>
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
 
-        let news_data = generator.generate();
+        let news_data = generator.generate_xml();
         let sitemap = serde_json::to_string_pretty(&news_data)
             .map_err(|e| {
                 eprintln!(
@@ -175,7 +175,7 @@ fn news_genres_example() -> Result<(), Box<dyn std::error::Error>> {
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
 
-        let news_data = generator.generate();
+        let news_data = generator.generate_xml();
         let sitemap = serde_json::to_string_pretty(&news_data)
             .map_err(|e| {
                 eprintln!(
@@ -219,7 +219,7 @@ fn multilingual_news_example() -> Result<(), Box<dyn std::error::Error>>
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
 
-        let news_data = generator.generate();
+        let news_data = generator.generate_xml();
         let sitemap = serde_json::to_string_pretty(&news_data)
             .map_err(|e| {
                 eprintln!(
@@ -283,7 +283,7 @@ fn image_handling_example() -> Result<(), Box<dyn std::error::Error>> {
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
 
-        let news_data = generator.generate();
+        let news_data = generator.generate_xml();
         let sitemap = serde_json::to_string_pretty(&news_data)
             .map_err(|e| {
                 eprintln!(
@@ -337,7 +337,7 @@ fn keyword_handling_example() -> Result<(), Box<dyn std::error::Error>>
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
 
-        let news_data = generator.generate();
+        let news_data = generator.generate_xml();
         let sitemap = serde_json::to_string_pretty(&news_data)
             .map_err(|e| {
                 eprintln!(
@@ -398,7 +398,7 @@ fn validation_example() -> Result<(), Box<dyn std::error::Error>> {
     for (metadata, should_be_valid, case) in test_cases {
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
-        let news_data = generator.generate();
+        let news_data = generator.config.to_news_data();
 
         let sitemap = serde_json::to_string_pretty(&news_data)
             .unwrap_or_else(|e| {

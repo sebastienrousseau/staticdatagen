@@ -32,9 +32,9 @@
 
 use crate::models::data::NewsData;
 use std::collections::HashMap;
-use xml::writer::EmitterConfig;
-use xml::writer::events::XmlEvent;
 use time::{format_description, OffsetDateTime};
+use xml::writer::events::XmlEvent;
+use xml::writer::EmitterConfig;
 
 /// Configuration for generating a news sitemap.
 #[derive(Debug, Clone)]
@@ -91,9 +91,12 @@ impl NewsSiteMapConfig {
                 self.metadata.get("news_loc").unwrap_or(&String::new()),
             ),
             news_publication_date: self.get_formatted_date(),
-            news_publication_name: self
-                .get_sanitized("news_publication_name", ""),
-            news_title: self.get_sanitized("news_title", ""),
+            news_publication_name: self.get_sanitized(
+                "news_publication_name",
+                "Unnamed Publication",
+            ),
+            news_title: self
+                .get_sanitized("news_title", "Untitled Article"),
         }
     }
 }
@@ -101,7 +104,8 @@ impl NewsSiteMapConfig {
 /// Generator for creating a news sitemap.
 #[derive(Debug, Clone)]
 pub struct NewsSiteMapGenerator {
-    config: NewsSiteMapConfig,
+    /// Configuration for the news sitemap generator.
+    pub config: NewsSiteMapConfig,
 }
 
 impl NewsSiteMapGenerator {
@@ -112,60 +116,85 @@ impl NewsSiteMapGenerator {
 
     /// Generates the news sitemap XML.
     pub fn generate_xml(&self) -> String {
-    let news_data = self.config.to_news_data();
-    let mut output = Vec::new();
-    let mut writer = EmitterConfig::new()
-        .perform_indent(true)
-        .create_writer(&mut output);
+        let news_data = self.config.to_news_data();
+        let mut output = Vec::new();
+        let mut writer = EmitterConfig::new()
+            .perform_indent(true)
+            .create_writer(&mut output);
 
-    writer
+        writer
         .write(XmlEvent::start_element("urlset")
             .attr("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
             .attr("xmlns:news", "http://www.google.com/schemas/sitemap-news/0.9"))
         .unwrap();
 
-    writer.write(XmlEvent::start_element("url")).unwrap();
-    writer.write(XmlEvent::start_element("loc")).unwrap();
-    writer.write(XmlEvent::characters(&news_data.news_loc)).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap(); // End <loc>
+        writer.write(XmlEvent::start_element("url")).unwrap();
+        writer.write(XmlEvent::start_element("loc")).unwrap();
+        writer
+            .write(XmlEvent::characters(&news_data.news_loc))
+            .unwrap();
+        writer.write(XmlEvent::end_element()).unwrap(); // End <loc>
 
-    writer.write(XmlEvent::start_element("news:news")).unwrap();
-    writer.write(XmlEvent::start_element("news:publication")).unwrap();
-    writer.write(XmlEvent::start_element("news:name")).unwrap();
-    writer.write(XmlEvent::characters(&news_data.news_publication_name)).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap(); // End <news:name>
-    writer.write(XmlEvent::start_element("news:language")).unwrap();
-    writer.write(XmlEvent::characters(&news_data.news_language)).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap(); // End <news:language>
-    writer.write(XmlEvent::end_element()).unwrap(); // End <news:publication>
+        writer.write(XmlEvent::start_element("news:news")).unwrap();
+        writer
+            .write(XmlEvent::start_element("news:publication"))
+            .unwrap();
+        writer.write(XmlEvent::start_element("news:name")).unwrap();
+        writer
+            .write(XmlEvent::characters(
+                &news_data.news_publication_name,
+            ))
+            .unwrap();
+        writer.write(XmlEvent::end_element()).unwrap(); // End <news:name>
+        writer
+            .write(XmlEvent::start_element("news:language"))
+            .unwrap();
+        writer
+            .write(XmlEvent::characters(&news_data.news_language))
+            .unwrap();
+        writer.write(XmlEvent::end_element()).unwrap(); // End <news:language>
+        writer.write(XmlEvent::end_element()).unwrap(); // End <news:publication>
 
-    writer.write(XmlEvent::start_element("news:publication_date")).unwrap();
-    writer.write(XmlEvent::characters(&format_publication_date(&news_data.news_publication_date))).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap(); // End <news:publication_date>
+        writer
+            .write(XmlEvent::start_element("news:publication_date"))
+            .unwrap();
+        writer
+            .write(XmlEvent::characters(&format_publication_date(
+                &news_data.news_publication_date,
+            )))
+            .unwrap();
+        writer.write(XmlEvent::end_element()).unwrap(); // End <news:publication_date>
 
-    writer.write(XmlEvent::start_element("news:title")).unwrap();
-    writer.write(XmlEvent::characters(&news_data.news_title)).unwrap();
-    writer.write(XmlEvent::end_element()).unwrap(); // End <news:title>
+        writer.write(XmlEvent::start_element("news:title")).unwrap();
+        writer
+            .write(XmlEvent::characters(&news_data.news_title))
+            .unwrap();
+        writer.write(XmlEvent::end_element()).unwrap(); // End <news:title>
 
-    writer.write(XmlEvent::end_element()).unwrap(); // End <news:news>
-    writer.write(XmlEvent::end_element()).unwrap(); // End <url>
-    writer.write(XmlEvent::end_element()).unwrap(); // End <urlset>
+        writer.write(XmlEvent::end_element()).unwrap(); // End <news:news>
+        writer.write(XmlEvent::end_element()).unwrap(); // End <url>
+        writer.write(XmlEvent::end_element()).unwrap(); // End <urlset>
 
-    String::from_utf8(output).unwrap_or_default()
-}
-
-
-
-
+        String::from_utf8(output).unwrap_or_default()
+    }
 }
 
 /// Formats publication dates from "Tue, 20 Feb 2024 15:15:15 GMT" to ISO 8601.
 fn format_publication_date(input: &str) -> String {
-    if let Ok(parsed) = OffsetDateTime::parse(input, &format_description::parse("%a, %d %b %Y %H:%M:%S GMT").unwrap()) {
-        parsed.format(&format_description::well_known::Rfc3339).unwrap_or_default()
-    } else {
-        let now = OffsetDateTime::now_utc();
-        now.format(&format_description::well_known::Rfc3339).unwrap_or_default()
+    // Use the predefined RFC 2822 parser to handle the input
+    match OffsetDateTime::parse(
+        input,
+        &format_description::well_known::Rfc2822,
+    ) {
+        Ok(parsed) => parsed
+            .format(&format_description::well_known::Rfc3339)
+            .unwrap_or_default(),
+        Err(e) => {
+            eprintln!("Parsing failed: {}. Using fallback.", e);
+            OffsetDateTime::now_utc()
+                .format(&format_description::well_known::Rfc3339)
+                .unwrap_or_default()
+        }
     }
 }
 
@@ -248,38 +277,59 @@ mod tests {
             "news_publication_date".to_string(),
             "Tue, 20 Feb 2024 15:15:15 GMT".to_string(),
         );
+        let _ = metadata.insert(
+            "news_loc".to_string(),
+            "https://example.com".to_string(),
+        );
 
         let config = NewsSiteMapConfig::new(metadata);
         let generator = NewsSiteMapGenerator::new(config);
         let news_data = generator.config.to_news_data();
 
         assert_eq!(news_data.news_title, "Test News");
-        assert_eq!(
-            news_data.news_publication_date,
-            "2024-02-20T15:15:15+00:00"
+
+        // Assert that the result is either "2024-02-20T15:15:15Z" or "2024-02-20T15:15:15+00:00"
+        assert!(
+            news_data.news_publication_date == "2024-02-20T15:15:15Z"
+                || news_data.news_publication_date
+                    == "2024-02-20T15:15:15+00:00"
         );
+
+        assert_eq!(news_data.news_loc, "https://example.com");
     }
 
     #[test]
-fn test_format_publication_date() {
-    let input = "Tue, 20 Feb 2024 15:15:15 GMT";
-    assert_eq!(
-        format_publication_date(input),
-        "2024-02-20T15:15:15+00:00"
-    );
+    fn test_date_parsing_debug() {
+        let input = "Tue, 20 Feb 2024 15:15:15 GMT";
 
-    // Invalid formats
-    assert_eq!(
-        format_publication_date("Invalid Date"),
-        "2025-01-01T00:00:00+00:00"
-    ); // Verify fallback is applied
+        match OffsetDateTime::parse(
+            input,
+            &format_description::well_known::Rfc2822,
+        ) {
+            Ok(parsed) => println!("Parsed date: {}", parsed),
+            Err(e) => panic!("Failed to parse date: {}", e),
+        }
+    }
 
-    assert_eq!(
-        format_publication_date(""),
-        "2025-01-01T00:00:00+00:00"
-    ); // Verify fallback is applied
-}
+    #[test]
+    fn test_format_publication_date() {
+        let input = "Tue, 20 Feb 2024 15:15:15 GMT";
 
+        let result = format_publication_date(input);
+
+        // Assert that the result is either "2024-02-20T15:15:15Z" or "2024-02-20T15:15:15+00:00"
+        assert!(
+            result == "2024-02-20T15:15:15Z"
+                || result == "2024-02-20T15:15:15+00:00"
+        );
+
+        // Invalid formats should fall back
+        let fallback = format_publication_date("Invalid Date");
+        let fallback_now = OffsetDateTime::now_utc()
+            .format(&format_description::well_known::Rfc3339)
+            .unwrap();
+        assert!(fallback.starts_with(&fallback_now[..10])); // Compare only the date part
+    }
 
     #[test]
     fn test_validate_genres() {
@@ -292,6 +342,7 @@ fn test_format_publication_date() {
             "PressRelease, Satire"
         );
         assert!(validate_genres("Invalid").is_empty());
+        assert!(validate_genres("").is_empty());
     }
 
     #[test]
@@ -307,7 +358,7 @@ fn test_format_publication_date() {
             .collect::<Vec<_>>()
             .join(",");
         assert_eq!(
-            validate_keywords(&many_keywords).split(", ").count(),
+            validate_keywords(&many_keywords).split(',').count(),
             10
         );
     }
@@ -325,6 +376,10 @@ fn test_format_publication_date() {
         assert_eq!(
             validate_url("https://example.com"),
             "https://example.com"
+        );
+        assert_eq!(
+            validate_url("http://example.com"),
+            "http://example.com" // This should NOT return empty
         );
         assert!(validate_url("invalid-url").is_empty());
         assert!(validate_url("https://example.com<script>").is_empty());

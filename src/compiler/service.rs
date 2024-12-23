@@ -307,13 +307,14 @@ fn process_file(
     let news_sitemap_generator =
         NewsSiteMapGenerator::new(news_sitemap_config);
 
-   let news_sitemap_content = match news_sitemap_generator.generate_xml() {
-    xml if !xml.is_empty() => xml, // Use the generated XML string
-    _ => {
-        eprintln!("Error generating news sitemap XML.");
-        String::new() // Default to an empty string if XML generation fails
-    }
-};
+    let news_sitemap_content =
+        match news_sitemap_generator.generate_xml() {
+            xml if !xml.is_empty() => xml, // Use the generated XML string
+            _ => {
+                eprintln!("Error generating news sitemap XML.");
+                String::new() // Default to an empty string if XML generation fails
+            }
+        };
 
     let cname_content = metadata
         .get("cname")
