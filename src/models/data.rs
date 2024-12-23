@@ -1,8 +1,7 @@
-// Copyright © 2025 Static Data Gen.
-// All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! Core data models for the Shokunin Static Site Generator
+//! Core data models for the Static Data Gen - Structured data for static sites
 //!
 //! This module defines the fundamental data structures and validation logic used
 //! throughout the static site generator. It provides type-safe representations

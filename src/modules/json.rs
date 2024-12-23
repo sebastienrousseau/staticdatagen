@@ -1,5 +1,4 @@
-// Copyright © 2025 Static Data Gen.
-// All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! JSON and data file generation functionality
@@ -198,7 +197,7 @@ pub fn security(options: &SecurityData) -> String {
 ///     site_last_updated: "2024-01-01".to_string(),
 ///     site_standards: "HTML5, CSS3".to_string(),
 ///     site_components: "Rust, SSG".to_string(),
-///     site_software: "Shokunin".to_string(),
+///     site_software: "Static Data Gen".to_string(),
 /// };
 /// let content = human(&options);
 /// assert!(content.contains("TEAM"));

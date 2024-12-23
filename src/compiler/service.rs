@@ -1,5 +1,4 @@
-// Copyright © 2025 Static Data Gen.
-// All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Compilation service for static site generation
@@ -19,17 +18,20 @@ use rss_gen::{
 use sitemap_gen::create_site_map_data;
 use std::time::Duration;
 
-use crate::generators::cname::{CnameConfig, CnameGenerator};
-use crate::generators::humans::{HumansConfig, HumansGenerator};
-use crate::generators::manifest::{ManifestConfig, ManifestGenerator};
+use crate::generators::{
+    cname::{CnameConfig, CnameGenerator},
+    humans::{HumansConfig, HumansGenerator},
+    manifest::{ManifestConfig, ManifestGenerator},
+    news_sitemap::{NewsSiteMapConfig, NewsSiteMapGenerator},
+};
 use crate::{
     macro_cleanup_directories, macro_create_directories,
     macro_log_info, macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
-        json::{news_sitemap, security, sitemap, txt},
+        json::{security, sitemap, txt},
         navigation::NavigationGenerator,
-        news_sitemap::create_news_site_map_data,
+        // news_sitemap::create_news_site_map_data,
         robots::create_txt_data,
         security::create_security_data,
         tags::*,
@@ -207,9 +209,10 @@ fn process_file(
     site_path: &Path,
 ) -> Result<FileData> {
     // Preprocess to separate frontmatter and body
-    let (frontmatter, body) = split_frontmatter_and_body(&file.content);
+    let (_frontmatter, body) =
+        split_frontmatter_and_body(&file.content);
 
-    println!("Frontmatter: {}", frontmatter);
+    // println!("Frontmatter: {}", frontmatter);
 
     let (metadata, keywords, all_meta_tags) =
         extract_and_prepare_metadata(&file.content)
@@ -230,7 +233,7 @@ fn process_file(
     let html_content = generate_html(&body, &config)
         .context("Failed to generate HTML content")?;
 
-    println!("HTML Content: {}", html_content);
+    // println!("HTML Content: {}", html_content);
 
     let mut page_options = PageOptions::new();
     for (key, value) in metadata.iter() {
@@ -293,14 +296,24 @@ fn process_file(
 
     let rss = generate_rss(&rss_data)?;
 
-    // let json = create_manifest_data(&metadata);
-
     let manifest_content = ManifestConfig::from_metadata(&metadata)
         .and_then(|config| ManifestGenerator::new(config).generate())
         .unwrap_or_else(|e| {
             eprintln!("Error generating manifest: {}", e);
             String::new()
         });
+
+    let news_sitemap_config = NewsSiteMapConfig::new(metadata.clone());
+    let news_sitemap_generator =
+        NewsSiteMapGenerator::new(news_sitemap_config);
+
+   let news_sitemap_content = match news_sitemap_generator.generate_xml() {
+    xml if !xml.is_empty() => xml, // Use the generated XML string
+    _ => {
+        eprintln!("Error generating news sitemap XML.");
+        String::new() // Default to an empty string if XML generation fails
+    }
+};
 
     let cname_content = metadata
         .get("cname")
@@ -339,7 +352,8 @@ fn process_file(
     // let human_options = create_human_data(&metadata);
     let security_options = create_security_data(&metadata);
     let sitemap_options = create_site_map_data(&metadata);
-    let news_sitemap_options = create_news_site_map_data(&metadata);
+    // let news_sitemap_options = create_news_site_map_data(&metadata);
+
     let tags_data = generate_tags(file, &metadata);
 
     update_global_tags_data(global_tags_data, &tags_data);
@@ -350,11 +364,6 @@ fn process_file(
     // let human_data = human(&human_options);
     let security_data = security(&security_options);
     let sitemap_data = sitemap(sitemap_options?, site_path);
-    let news_sitemap_data = news_sitemap(news_sitemap_options);
-    // let json_data = serde_json::to_string(&manifest).unwrap_or_else(|e| {
-    //     eprintln!("Error serializing JSON: {}", e);
-    //     String::new()
-    // });
 
     Ok(FileData {
         cname: cname_content,
@@ -366,7 +375,7 @@ fn process_file(
         rss,
         security: security_data,
         sitemap: sitemap_data?,
-        sitemap_news: news_sitemap_data,
+        sitemap_news: news_sitemap_content,
         txt: txt_data,
     })
 }

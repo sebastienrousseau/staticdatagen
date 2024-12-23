@@ -1,4 +1,4 @@
-// Copyright © 2024 StaticDataGen. All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! # StaticDataGen Navigation Examples

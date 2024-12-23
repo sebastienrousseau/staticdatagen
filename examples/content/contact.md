@@ -61,7 +61,7 @@ news_title: "Contact Us" ## The title of the page. (max 64 characters)
 atom_link: https://kaishi.one/contact/rss.xml
 category: "Technology"
 docs: https://validator.w3.org/feed/docs/rss2.html
-generator: "Shokunin SSG (version 0.0.30)"
+generator: "Static Data Gen (version 0.0.4)"
 item_description: RSS feed for the contact page of the Kaishi website.
 item_guid: https://kaishi.one/contact/rss.xml
 item_link: https://kaishi.one/contact/rss.xml
@@ -114,6 +114,6 @@ thanks: "Thanks for reading!" ## The thanks of the page.
 site_last_updated: "2023-07-05" ## The last updated of the site.
 site_standards: "HTML5, CSS3, RSS, Atom, JSON, XML, YAML, Markdown, TOML" ## The standards of the site.
 site_components: "Kaishi, Kaishi Builder, Kaishi CLI, Kaishi Templates, Kaishi Themes" ## The components of the site.
-site_software: "Shokunin, Rust" ## The software of the site.
+site_software: "Static Data Gen, Rust" ## The software of the site.
 
 ---

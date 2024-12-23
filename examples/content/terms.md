@@ -13,7 +13,7 @@ charset: "utf-8" ## The charset of the site. (default: utf-8)
 cname: "kaishi.one" ## The cname value of the site. (Only required for the index page.)
 copyright: "© 2024 Kaishi. All rights reserved." ## The copyright of the site.
 date: "July 12, 2023"
-description: "Make beautiful websites with Kaishi, a Shokunin Static Site Generator starter template." ## The description of the site. (max 160 characters)
+description: "Make beautiful websites with Kaishi, a Static Data Gen - Structured data for static sites starter template." ## The description of the site. (max 160 characters)
 download: "" ## The download url for the product.
 format-detection: "telephone=no" ## The format detection of the site.
 hreflang: "en" ## The hreflang of the site. (default: en-gb)
@@ -60,7 +60,7 @@ news_title: "Terms" ## The title of the page. (max 64 characters)
 atom_link: https://kaishi.one/rss.xml
 category: "Technology"
 docs: https://validator.w3.org/feed/docs/rss2.html
-generator: "Shokunin SSG (version 0.0.30)"
+generator: "Static Data Gen (version 0.0.4)"
 item_description: RSS feed for the site
 item_guid: https://kaishi.one/rss.xml
 item_link: https://kaishi.one/rss.xml
@@ -93,7 +93,7 @@ twitter_card: "summary"
 ## twitter_creator - The Twitter Card creator of the page.
 twitter_creator: "janedoe"
 ## twitter_description - The Twitter Card description of the page.
-twitter_description: "Make beautiful websites with Kaishi, a Shokunin Static Site Generator Starter Template."
+twitter_description: "Make beautiful websites with Kaishi, a Static Data Gen - Structured data for static sites Starter Template."
 ## twitter_image - The Twitter Card image of the page.
 twitter_image: "https://kura.pro/kaishi/images/logos/kaishi.svg"
 ## twitter_image:alt - The Twitter Card image alt of the page.
@@ -101,7 +101,7 @@ twitter_image_alt: "Logo of Kaishi, a starter template for static sites"
 ## twitter_site - The Twitter Card site of the page.
 twitter_site: "janedoe"
 ## twitter_title - The Twitter Card title of the page.
-twitter_title: "Kaishi, a Shokunin Static Site Generator Starter Template"
+twitter_title: "Kaishi, a Static Data Gen - Structured data for static sites Starter Template"
 ## twitter_url - The Twitter Card url of the page.
 twitter_url: "https://kaishi.one"
 
@@ -113,13 +113,13 @@ thanks: "Thanks for reading!" ## The thanks of the page.
 site_last_updated: "2023-07-05" ## The last updated of the site.
 site_standards: "HTML5, CSS3, RSS, Atom, JSON, XML, YAML, Markdown, TOML" ## The standards of the site.
 site_components: "Kaishi, Kaishi Builder, Kaishi CLI, Kaishi Templates, Kaishi Themes" ## The components of the site.
-site_software: "Shokunin, Rust" ## The software of the site.
+site_software: "Static Data Gen, Rust" ## The software of the site.
 
 ---
 
 ## Agreement to Terms of Use
 
-These Terms and Conditions of Use (the "Terms of Use") apply to the Shokunin
+These Terms and Conditions of Use (the "Terms of Use") apply to the Static Data Gen
 (職人) website located at <https://kaishi.one/> (the "Website").
 
 BY USING THE SITE, YOU AGREE TO THESE TERMS OF USE; IF YOU DO NOT AGREE, DO NOT

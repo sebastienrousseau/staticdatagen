@@ -59,7 +59,7 @@ news_title: "Posts" ## The title of the page. (max 64 characters)
 atom_link: https://kaishi.one/rss.xml
 category: "Technology"
 docs: https://validator.w3.org/feed/docs/rss2.html
-generator: "Shokunin SSG (version 0.0.30)"
+generator: "Static Data Gen (version 0.0.4)"
 item_description: RSS feed for the site
 item_guid: https://kaishi.one/rss.xml
 item_link: https://kaishi.one/rss.xml
@@ -100,7 +100,7 @@ twitter_image_alt: "Logo of Kaishi, a starter template for static sites"
 ## twitter_site - The Twitter Card site of the page.
 twitter_site: "janedoe"
 ## twitter_title - The Twitter Card title of the page.
-twitter_title: "Kaishi, a Shokunin Static Site Generator Starter Template"
+twitter_title: "Kaishi, a Static Data Gen - Structured data for static sites Starter Template"
 ## twitter_url - The Twitter Card url of the page.
 twitter_url: "https://kaishi.one"
 
@@ -112,7 +112,7 @@ thanks: "Thanks for reading!" ## The thanks of the page.
 site_last_updated: "2023-07-05" ## The last updated of the site.
 site_standards: "HTML5, CSS3, RSS, Atom, JSON, XML, YAML, Markdown, TOML" ## The standards of the site.
 site_components: "Kaishi, Kaishi Builder, Kaishi CLI, Kaishi Templates, Kaishi Themes" ## The components of the site.
-site_software: "Shokunin, Rust" ## The software of the site.
+site_software: "Static Data Gen, Rust" ## The software of the site.
 
 ---
 
@@ -126,7 +126,7 @@ match them together to create your own custom layouts and content.
 
 ### Pages
 
-Get started with Shokunin using any of our Starter Templates for building
+Get started with Static Data Gen using any of our Starter Templates for building
 your website or web application. Our templates are designed to be flexible and easy to modify.
 
 #### Template Features

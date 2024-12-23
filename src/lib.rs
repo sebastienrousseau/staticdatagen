@@ -1,4 +1,4 @@
-// Copyright © 2024 StaticDataGen. All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 // src/lib.rs
@@ -18,6 +18,8 @@ pub mod generators {
     pub mod humans;
     /// Manifest Generation Module
     pub mod manifest;
+    /// News Sitemap Generation Module
+    pub mod news_sitemap;
 }
 
 /// Compiler module for processing and generating static site content.
