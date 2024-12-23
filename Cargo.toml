@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.2"                          # Initial version of the crate
+version = "0.0.3"                          # Initial version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.56.0"                    # Minimum supported Rust version
@@ -85,10 +85,9 @@ criterion = "0.5.1"                           # Benchmarking library to test per
 # -----------------------------------------------------------------------------
 [dependencies]
 # Required dependencies for building and running the project.
-anyhow = "1.0.94"
+anyhow = "1.0.95"
 clap = "4.5.23"
 comrak = "0.32.0"
-env_logger = "0.11.5"
 html-generator = "0.0.2"
 http-handle = "0.0.2"
 langweave = "0.0.1"
@@ -99,21 +98,20 @@ minify-html = "0.15.0"
 pulldown-cmark = "0.12.2"
 quick-xml = "0.37.1"
 regex = "1.11.1"
-reqwest = { version = "0.12.9", features = ["blocking", "json"] }
 rlg = "0.0.6"
 rss-gen = "0.0.3"
 serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.133"
+serde_json = "1.0.134"
 sitemap-gen = "0.0.1"
 staticweaver ="0.0.1"
 tempfile = "3.14.0"
-thiserror = "2.0.8"
+thiserror = "2.0.9"
 time = "0.3.37"
 toml = "0.8.19"
 url = "2.5.4"
 uuid = { version = "1.11.0", features = ["v4"] }
 vrd = "0.0.8"
-yaml-rust2 = "0.9.0"
+xml-rs = "0.8.24"
 
 
 # CNAME dependencies

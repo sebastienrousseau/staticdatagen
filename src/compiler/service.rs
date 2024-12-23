@@ -132,6 +132,58 @@ pub fn compile(
     Ok(())
 }
 
+/// Splits a Markdown content string into frontmatter and body parts.
+///
+/// The function uses the `---` separator to divide the content into two parts:
+/// the frontmatter (metadata) and the body (main content).
+///
+/// # Parameters
+///
+/// * `content` - A reference to a string containing the Markdown content.
+///
+/// # Returns
+///
+/// A tuple containing two strings:
+/// - The first string represents the frontmatter part of the content.
+/// - The second string represents the body part of the content.
+///
+/// If the `---` separator is not found in the content, both strings will be empty.
+pub fn split_frontmatter_and_body(content: &str) -> (String, String) {
+    let mut lines = content.lines();
+    let mut frontmatter = String::new();
+    let mut body = String::new();
+    let mut in_frontmatter = false;
+
+    for line in &mut lines {
+        if line.trim() == "---" {
+            if in_frontmatter {
+                // Ending the frontmatter
+                break;
+            } else {
+                // Starting the frontmatter
+                in_frontmatter = true;
+                continue;
+            }
+        }
+
+        if in_frontmatter {
+            frontmatter.push_str(line);
+            frontmatter.push('\n');
+        } else {
+            body.push_str(line);
+            body.push('\n');
+        }
+    }
+
+    // Append the rest of the lines to the body
+    for line in lines {
+        body.push_str(line);
+        body.push('\n');
+    }
+
+    (frontmatter.trim().to_string(), body.trim().to_string())
+}
+
 /// Processes a single file, generating necessary content and metadata.
 ///
 /// # Arguments
@@ -154,6 +206,11 @@ fn process_file(
     global_tags_data: &mut HashMap<String, Vec<PageData>>,
     site_path: &Path,
 ) -> Result<FileData> {
+    // Preprocess to separate frontmatter and body
+    let (frontmatter, body) = split_frontmatter_and_body(&file.content);
+
+    println!("Frontmatter: {}", frontmatter);
+
     let (metadata, keywords, all_meta_tags) =
         extract_and_prepare_metadata(&file.content)
             .context("Failed to extract and prepare metadata")?;
@@ -170,8 +227,10 @@ fn process_file(
         syntax_theme: None,
     };
 
-    let html_content = generate_html(&file.content, &config)
+    let html_content = generate_html(&body, &config)
         .context("Failed to generate HTML content")?;
+
+    println!("HTML Content: {}", html_content);
 
     let mut page_options = PageOptions::new();
     for (key, value) in metadata.iter() {
@@ -306,7 +365,7 @@ fn process_file(
         name: file.name.clone(),
         rss,
         security: security_data,
-        sitemap: sitemap_data,
+        sitemap: sitemap_data?,
         sitemap_news: news_sitemap_data,
         txt: txt_data,
     })

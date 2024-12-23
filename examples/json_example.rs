@@ -94,7 +94,7 @@ fn sitemap_example() -> Result<(), Box<dyn std::error::Error>> {
 
     let output = sitemap(site_map_data, Path::new("public"));
     println!("    ✅ Generated sitemap:");
-    println!("{}", output);
+    println!("{:?}", output);
 
     Ok(())
 }
