@@ -88,7 +88,6 @@ criterion = "0.5.1"                           # Benchmarking library to test per
 anyhow = "1.0.95"
 clap = "4.5.23"
 comrak = "0.32.0"
-env_logger = "0.11.6"
 html-generator = "0.0.2"
 http-handle = "0.0.2"
 langweave = "0.0.1"
@@ -99,7 +98,6 @@ minify-html = "0.15.0"
 pulldown-cmark = "0.12.2"
 quick-xml = "0.37.1"
 regex = "1.11.1"
-reqwest = { version = "0.12.9", features = ["blocking", "json"] }
 rlg = "0.0.6"
 rss-gen = "0.0.3"
 serde = { version = "1.0.216", features = ["derive"] }
@@ -110,12 +108,10 @@ tempfile = "3.14.0"
 thiserror = "2.0.9"
 time = "0.3.37"
 toml = "0.8.19"
-xml-rs = "0.8.24"
 url = "2.5.4"
 uuid = { version = "1.11.0", features = ["v4"] }
 vrd = "0.0.8"
-walkdir = "2.5.0"
-yaml-rust2 = "0.9.0"
+xml-rs = "0.8.24"
 
 
 # CNAME dependencies
