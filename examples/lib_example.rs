@@ -30,6 +30,7 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     sitemap_generation_example()?;
     multi_language_example()?;
     error_handling_example()?;
+    static_site_example()?;
 
     println!("\n🎉 All examples completed successfully!");
 
@@ -218,6 +219,23 @@ fn error_handling_example() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => {
             println!("    ✅ Successfully caught path error: {:?}", e)
         }
+    }
+
+    Ok(())
+}
+
+fn static_site_example() -> Result<(), Box<dyn std::error::Error>> {
+    println!("\n🦀 Static Site Example");
+    println!("---------------------------------------------");
+
+    let build_dir = Path::new("examples/build");
+    let content_dir = Path::new("examples/content");
+    let site_dir = Path::new("examples/site");
+    let template_dir = Path::new("examples/templates");
+
+    match compile(build_dir, content_dir, site_dir, template_dir) {
+        Ok(_) => println!("    ✅ Successfully compiled static site"),
+        Err(e) => println!("    ❌ Error compiling site: {:?}", e),
     }
 
     Ok(())
