@@ -1,4 +1,4 @@
-// Copyright © 2024 StaticDataGen. All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 // src/lib.rs
@@ -10,24 +10,13 @@
     html_root_url = "https://docs.rs/staticdatagen"
 )]
 
-/// Generator modules for creating static content.
-pub mod generators {
-    /// CNAME Record Generation Module
-    pub mod cname;
-    /// Humans.txt Generation Module
-    pub mod humans;
-    /// Manifest Generation Module
-    pub mod manifest;
-}
+// Core functionality
 
 /// Compiler module for processing and generating static site content.
 pub mod compiler;
 
-/// Locales module for language-specific translations and templates.
-pub mod locales;
-
-/// Macro definitions for common operations.
-pub mod macros;
+/// Generator modules for creating static content.
+pub mod generators;
 
 /// Data models and structures used throughout the crate.
 pub mod models;
@@ -37,6 +26,13 @@ pub mod modules;
 
 /// Utility functions and helpers.
 pub mod utilities;
+
+/// Locales module for language-specific translations and templates.
+pub mod locales;
+
+/// Macro definitions for common operations.
+#[macro_use]
+pub mod macros;
 
 // Re-export commonly used items for easier access
 pub use compiler::service::compile;

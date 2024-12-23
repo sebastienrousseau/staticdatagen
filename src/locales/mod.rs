@@ -1,7 +1,7 @@
 //! # Languages Module
 //!
 //! This module contains the language-specific translations and templates
-//! for internationalization in the Shokunin Static Site Generator.
+//! for internationalization in the Static Data Gen - Structured data for static sites.
 
 /// German language translations.
 pub mod de;

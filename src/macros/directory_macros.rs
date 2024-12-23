@@ -1,5 +1,4 @@
-// Copyright © 2025 Static Data Gen.
-// All rights reserved.
+// Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Directory operation macros for the static site generator
