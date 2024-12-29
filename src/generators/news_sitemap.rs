@@ -117,7 +117,7 @@ impl NewsSiteMapGenerator {
     /// Generates the news sitemap XML.
     pub fn generate_xml(&self) -> String {
         let news_data = self.config.to_news_data();
-        eprintln!("NewsData: {:?}", news_data);
+        //eprintln!("NewsData: {:?}", news_data);
         let mut output = Vec::new();
         let mut writer = EmitterConfig::new()
             .perform_indent(true)
@@ -182,17 +182,10 @@ impl NewsSiteMapGenerator {
 
 /// Formats publication dates from "Tue, 20 Feb 2024 15:15:15 GMT" to ISO 8601.
 fn format_publication_date(input: &str) -> String {
-    match OffsetDateTime::parse(
-        input,
-        &format_description::well_known::Rfc2822,
-    ) {
-        Ok(parsed) => {
-            let formatted = parsed
-                .format(&format_description::well_known::Rfc3339)
-                .unwrap_or_default();
-            eprintln!("Parsed and formatted date: {}", formatted);
-            formatted
-        }
+    match OffsetDateTime::parse(input, &format_description::well_known::Rfc2822) {
+        Ok(parsed) => parsed
+            .format(&format_description::well_known::Rfc3339)
+            .unwrap_or_default(),
         Err(e) => {
             eprintln!("Parsing failed: {}. Using fallback.", e);
             OffsetDateTime::now_utc()
@@ -463,7 +456,7 @@ mod tests {
         let generator = NewsSiteMapGenerator::new(config);
 
         let xml = generator.generate_xml();
-        eprintln!("Generated XML: {}", xml);
+        // eprintln!("Generated XML: {}", xml);
 
         // Ensure required elements exist in the XML
         assert!(xml.contains("<urlset"));
