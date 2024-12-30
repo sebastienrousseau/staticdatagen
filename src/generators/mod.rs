@@ -12,3 +12,6 @@ pub mod manifest;
 
 /// The `news_sitemap` module contains the news sitemap generator.
 pub mod news_sitemap;
+
+/// The `tags` module contains the tags generator.
+pub mod tags;

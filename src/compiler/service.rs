@@ -25,6 +25,7 @@ use crate::{
         humans::{HumansConfig, HumansGenerator},
         manifest::{ManifestConfig, ManifestGenerator},
         news_sitemap::{NewsSiteMapConfig, NewsSiteMapGenerator},
+        tags::*,
     },
     macro_cleanup_directories, macro_create_directories,
     macro_log_info, macro_metadata_option,
@@ -34,7 +35,6 @@ use crate::{
         navigation::NavigationGenerator,
         robots::create_txt_data,
         security::create_security_data,
-        tags::*,
     },
     utilities::{file::add, write::write_files_to_build_directory},
 };

@@ -466,11 +466,11 @@ mod tests {
 
         // Ensure a clean environment before the test
         if public_dir.exists() {
-            fs::remove_dir_all(public_dir)
+            remove_dir_all_with_retry(public_dir, 3)
             .expect("Failed to remove existing 'public' directory before test");
         }
         if out_dir.exists() {
-            fs::remove_dir_all(out_dir)
+            remove_dir_all_with_retry(out_dir, 3)
             .expect("Failed to remove existing 'test_output' directory before test");
         }
 
@@ -502,8 +502,33 @@ mod tests {
             "The public/test_site directory should exist after moving"
         );
 
-        fs::remove_dir_all("public")
+        // Use retry logic on cleanup, since the OS may still hold file locks
+        remove_dir_all_with_retry(public_dir, 3)
             .expect("Failed to clean up test public directory");
+    }
+
+    /// Helper function that retries `remove_dir_all` up to `retries` times.
+    /// This allows the OS some time to release locks on newly created/moved files.
+    fn remove_dir_all_with_retry(
+        dir: &Path,
+        retries: u32,
+    ) -> io::Result<()> {
+        for i in 0..=retries {
+            match fs::remove_dir_all(dir) {
+                Ok(_) => return Ok(()),
+                Err(e) => {
+                    // If this was our last attempt, bubble the error up
+                    if i == retries {
+                        return Err(e);
+                    }
+                    // Wait briefly and then retry
+                    std::thread::sleep(
+                        std::time::Duration::from_millis(200),
+                    );
+                }
+            }
+        }
+        Ok(())
     }
 
     /// Tests finding HTML files in a directory with subdirectories.

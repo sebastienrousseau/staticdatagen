@@ -7,10 +7,10 @@
 //! in the StaticDataGen library, showing various ways to create and
 //! manage content tags, tag pages, and tag-based navigation.
 
-use staticdatagen::models::data::{FileData, PageData, TagsData};
-use staticdatagen::modules::tags::{
+use staticdatagen::generators::tags::{
     create_tags_data, generate_tags, generate_tags_html,
 };
+use staticdatagen::models::data::{FileData, PageData, TagsData};
 use std::collections::HashMap;
 
 /// Entry point for the StaticDataGen Tags Examples program.

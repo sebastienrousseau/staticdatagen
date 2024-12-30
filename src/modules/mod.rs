@@ -24,6 +24,3 @@ pub mod robots;
 
 /// The `security` module generates the security.txt content.
 pub mod security;
-
-/// The `tags` module contains functions for generating a tags page.
-pub mod tags;
