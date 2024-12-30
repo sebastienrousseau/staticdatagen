@@ -116,11 +116,11 @@ site_software: "Static Data Gen, Rust" ## The software of the site.
 
 ---
 
-![Nature shinning][00].class=\"img-fluid w-50 float-start p-5 mb-3\"
+![Nature shinning](https://kura.pro/stock/images/banners/johannes-plenio-6XUA5KQ9-1k.webp).class="img-fluid w-50 float-start p-5 mb-3"
 
 ## Starter Templates
 
-.class=\"fw-bold\"All the starter templates, whether pages or websites are built from scratch
+All the starter templates, whether pages or websites are built from scratch
 using the same principles and features. This means that you can easily mix and
 match them together to create your own custom layouts and content.
 
@@ -137,7 +137,7 @@ your website or web application. Our templates are designed to be flexible and e
 
 #### Getting Started
 
-.class=\"fw-bold text-danger\"To get started, select a template that suits your project's needs. Customize it with your content, style, and functionality.
+To get started, select a template that suits your project's needs. Customize it with your content, style, and functionality.
 
 1. **Choose a Template**: Browse through our collection and pick a starting point.
 2. **Customize**: Modify the layout, add your content, and tweak the styles.
@@ -145,14 +145,13 @@ your website or web application. Our templates are designed to be flexible and e
 
 ### Websites
 
-.class=\"display-1\"Building a website from scratch can be a daunting task, but our starter templates make it simple and straightforward.
+Building a website from scratch can be a daunting task, but our starter templates make it simple and straightforward.
 
-
-![Nature shinning][00].class=\"img-fluid w-50 float-end p-5 mb-3\"
+![Nature shinning](https://kura.pro/stock/images/banners/johannes-plenio-6XUA5KQ9-1k.webp).class="img-fluid w-50 float-end p-5 mb-3"
 
 ### Why Use Our Templates?
 
-- **Speed**: Jumpstart your development with pre-made designs.
+- **Speed**: Jump start your development with pre-made designs.
 - **Quality**: High-quality, well-tested templates ensure reliability.
 - **Support**: Our team is here to help with any questions or issues.
 
@@ -169,5 +168,3 @@ Customize templates to fit your specific needs. The possibilities are endless!
 ## Conclusion
 
 With our range of starter templates, you have a solid foundation to build something unique and tailored to your specific requirements. Dive in and start creating!
-
-[00]: https://kura.pro/stock/images/banners/johannes-plenio-6XUA5KQ9-1k.webp

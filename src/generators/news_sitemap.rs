@@ -182,7 +182,10 @@ impl NewsSiteMapGenerator {
 
 /// Formats publication dates from "Tue, 20 Feb 2024 15:15:15 GMT" to ISO 8601.
 fn format_publication_date(input: &str) -> String {
-    match OffsetDateTime::parse(input, &format_description::well_known::Rfc2822) {
+    match OffsetDateTime::parse(
+        input,
+        &format_description::well_known::Rfc2822,
+    ) {
         Ok(parsed) => parsed
             .format(&format_description::well_known::Rfc3339)
             .unwrap_or_default(),
