@@ -9,6 +9,7 @@
 )]
 
 use std::error::Error as StdError;
+use std::io::ErrorKind;
 use thiserror::Error;
 
 /// The `compiler` module contains routines that parse and transform input data into
@@ -134,7 +135,7 @@ pub struct ContentProcessingErrorBuilder {
 ///
 /// This enumeration allows developers to categorise errors by their
 /// importance or impact, facilitating structured error handling and logging.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[non_exhaustive]
 pub enum ErrorSeverity {
     /// Informational messages that do not indicate a critical problem.
@@ -336,10 +337,7 @@ impl IoErrorBuilder {
     /// Similarly, if no meaningful context is found, a generic placeholder is supplied.
     pub fn build(self) -> Error {
         let source = self.source.unwrap_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "Unknown IO error",
-            )
+            std::io::Error::new(ErrorKind::Other, "Unknown IO error")
         });
 
         let mut context_parts = Vec::new();
@@ -1335,5 +1333,294 @@ mod tests {
             }
             _ => panic!("Expected an Error::Other variant"),
         }
+    }
+
+    /// Tests ErrorSeverity enum properties and comparisons
+    #[test]
+    fn test_error_severity_comparisons() {
+        assert!(ErrorSeverity::Critical > ErrorSeverity::Error);
+        assert!(ErrorSeverity::Error > ErrorSeverity::Warning);
+        assert!(ErrorSeverity::Warning > ErrorSeverity::Info);
+
+        // Test equality
+        assert_eq!(ErrorSeverity::Info, ErrorSeverity::Info);
+        assert_eq!(ErrorSeverity::Warning, ErrorSeverity::Warning);
+        assert_eq!(ErrorSeverity::Error, ErrorSeverity::Error);
+        assert_eq!(ErrorSeverity::Critical, ErrorSeverity::Critical);
+
+        // Test inequality
+        assert_ne!(ErrorSeverity::Info, ErrorSeverity::Warning);
+        assert_ne!(ErrorSeverity::Warning, ErrorSeverity::Error);
+        assert_ne!(ErrorSeverity::Error, ErrorSeverity::Critical);
+    }
+
+    /// Tests edge cases for ContentProcessingErrorBuilder
+    #[test]
+    fn test_content_processing_builder_edge_cases() {
+        // Test empty message
+        let error =
+            ContentProcessingErrorBuilder::new().message("").build();
+        match error {
+            Error::ContentProcessing { message, source } => {
+                assert_eq!(message, "");
+                assert!(source.is_none());
+            }
+            _ => panic!("Expected ContentProcessing error"),
+        }
+
+        // Test multiple contexts with empty strings
+        let error = ContentProcessingErrorBuilder::new()
+            .message("Test")
+            .context("")
+            .context("  ")
+            .build();
+        match error {
+            Error::ContentProcessing { message, .. } => {
+                assert!(message.contains("Context:"));
+                assert!(message.contains("Test"));
+            }
+            _ => panic!("Expected ContentProcessing error"),
+        }
+
+        // Test all severity levels
+        for severity in [
+            ErrorSeverity::Info,
+            ErrorSeverity::Warning,
+            ErrorSeverity::Error,
+            ErrorSeverity::Critical,
+        ] {
+            let error = ContentProcessingErrorBuilder::new()
+                .message("Test")
+                .severity(severity)
+                .build();
+            match error {
+                Error::ContentProcessing { message, .. } => {
+                    assert!(message
+                        .contains(format!("{:?}", severity).as_str()));
+                }
+                _ => panic!("Expected ContentProcessing error"),
+            }
+        }
+    }
+
+    /// Tests fluent method chaining for ContentProcessingErrorBuilder
+    #[test]
+    fn test_content_processing_builder_chaining() {
+        let source_err =
+            io::Error::new(ErrorKind::Other, "source error");
+        let error = ContentProcessingErrorBuilder::new()
+            .message("Primary error")
+            .source(source_err)
+            .context("First context")
+            .severity(ErrorSeverity::Warning)
+            .context("Second context")
+            .build();
+
+        match error {
+            Error::ContentProcessing { message, source } => {
+                assert!(message.contains("Primary error"));
+                assert!(message.contains("First context"));
+                assert!(message.contains("Second context"));
+                assert!(message.contains("[Warning]"));
+                assert!(source.is_some());
+            }
+            _ => panic!("Expected ContentProcessing error"),
+        }
+    }
+
+    /// Tests IoErrorBuilder with various edge cases
+    #[test]
+    fn test_io_error_builder_edge_cases() {
+        // Test empty strings
+        let error = IoErrorBuilder::new()
+            .operation("")
+            .path("")
+            .context("")
+            .build();
+
+        match error {
+            Error::Io { context, .. } => {
+                assert!(context.contains("Operation:"));
+                assert!(context.contains("Path:"));
+            }
+            _ => panic!("Expected Io error"),
+        }
+
+        // Test whitespace-only strings
+        let error = IoErrorBuilder::new()
+            .operation("  ")
+            .path("\t")
+            .context("\n")
+            .build();
+
+        match error {
+            Error::Io { context, .. } => {
+                assert!(context.contains("Operation:"));
+                assert!(context.contains("Path:"));
+            }
+            _ => panic!("Expected Io error"),
+        }
+
+        // Test very long strings
+        let long_string = "a".repeat(1000);
+        let error = IoErrorBuilder::new()
+            .operation(&long_string)
+            .path(&long_string)
+            .context(&long_string)
+            .build();
+
+        match error {
+            Error::Io { context, .. } => {
+                assert!(context.len() > 2000); // Ensure long strings are preserved
+            }
+            _ => panic!("Expected Io error"),
+        }
+    }
+
+    /// Tests IoErrorBuilder method ordering independence
+    #[test]
+    fn test_io_error_builder_method_ordering() {
+        let io_err = io::Error::new(ErrorKind::Other, "test error");
+
+        // Order 1
+        let error1 = IoErrorBuilder::new()
+            .source(io::Error::new(io_err.kind(), io_err.to_string()))
+            .operation("op")
+            .path("path")
+            .context("ctx")
+            .build();
+
+        // Order 2 (different method order)
+        let error2 = IoErrorBuilder::new()
+            .context("ctx")
+            .path("path")
+            .operation("op")
+            .source(io_err)
+            .build();
+
+        match (error1, error2) {
+            (
+                Error::Io { context: ctx1, .. },
+                Error::Io { context: ctx2, .. },
+            ) => {
+                assert_eq!(
+                    ctx1, ctx2,
+                    "Method ordering should not affect the result"
+                );
+            }
+            _ => panic!("Expected Io errors"),
+        }
+    }
+
+    /// Tests error variants with complex Unicode strings
+    #[test]
+    fn test_error_unicode_handling() {
+        // Test with various Unicode characters
+        let unicode_str = "Error 错误 エラー గోల్ 🌟 \u{1F4A9}";
+
+        // Test Config variant
+        let error = Error::Config(unicode_str.to_string());
+        assert_eq!(
+            error.to_string(),
+            format!("Configuration Error: {}", unicode_str)
+        );
+
+        // Test Template variant
+        let error = Error::Template(unicode_str.to_string());
+        assert_eq!(
+            error.to_string(),
+            format!("Template Error: {}", unicode_str)
+        );
+
+        // Test ContentProcessing variant
+        let error = Error::ContentProcessing {
+            message: unicode_str.to_string(),
+            source: None,
+        };
+        assert_eq!(
+            error.to_string(),
+            format!("Content Processing Error: {}", unicode_str)
+        );
+
+        // Test Other variant
+        let error = Error::Other(unicode_str.to_string());
+        assert_eq!(
+            error.to_string(),
+            format!("Unhandled Error: {}", unicode_str)
+        );
+    }
+
+    /// Tests error handling with zero-width and control characters
+    #[test]
+    fn test_error_special_characters() {
+        // Test with zero-width spaces and other special characters
+        let special_str =
+            "Error\u{200B}with\u{FEFF}special\u{200D}chars\u{0000}";
+
+        let error = Error::Config(special_str.to_string());
+        assert!(error.to_string().contains("Error"));
+        assert!(error.to_string().contains("special"));
+        assert!(error.to_string().contains("chars"));
+
+        // Test with control characters
+        let control_str =
+            "Error\u{0001}with\u{0002}control\u{0003}chars";
+        let error = Error::Template(control_str.to_string());
+        assert!(error.to_string().contains("Error"));
+        assert!(error.to_string().contains("control"));
+        assert!(error.to_string().contains("chars"));
+    }
+
+    /// Tests error conversion from various string types
+    #[test]
+    fn test_error_string_conversions() {
+        // Test with different string types
+        let static_str: &'static str = "static string error";
+        let string = String::from("owned string error");
+        let string_slice: &str = &string;
+
+        let error1: Error = static_str.into();
+        let error2: Error = string.clone().into();
+        let error3: Error = string_slice.into();
+
+        assert!(matches!(error1, Error::Other(_)));
+        assert!(matches!(error2, Error::Other(_)));
+        assert!(matches!(error3, Error::Other(_)));
+
+        // Test with empty strings
+        let empty_static: &'static str = "";
+        let empty_string = String::new();
+
+        let error1: Error = empty_static.into();
+        let error2: Error = empty_string.into();
+
+        assert!(matches!(error1, Error::Other(s) if s.is_empty()));
+        assert!(matches!(error2, Error::Other(s) if s.is_empty()));
+    }
+
+    /// Tests that errors implement expected traits
+    #[test]
+    fn test_error_trait_implementations() {
+        fn assert_trait_bounds<
+            T: Send + Sync + std::fmt::Debug + std::fmt::Display,
+        >() {
+        }
+
+        // Test Error
+        assert_trait_bounds::<Error>();
+
+        // Ensure Error is 'static
+        fn assert_static<T: 'static>() {}
+        assert_static::<Error>();
+
+        // Test specific error conversion traits
+        fn assert_from_string<T: From<String>>() {}
+        assert_from_string::<Error>();
+
+        fn assert_from_str<T: From<&'static str>>() {}
+        assert_from_str::<Error>();
+
+        fn assert_from_io_error<T: From<io::Error>>() {}
+        assert_from_io_error::<Error>();
     }
 }
