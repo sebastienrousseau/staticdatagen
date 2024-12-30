@@ -539,8 +539,10 @@ mod tests {
 
     /// Verifies that the `VERSION` string is not empty.
     #[test]
+    #[allow(clippy::const_is_empty)]
     fn test_version() {
-        assert!(VERSION.len() > 0, "VERSION should not be empty");
+        // Uses Clippy’s recommended check, but we allow `const_is_empty`.
+        assert!(!VERSION.is_empty(), "VERSION should not be empty");
     }
 
     /// Ensures that the `VERSION` string appears to follow a semver-like format with a dot.
