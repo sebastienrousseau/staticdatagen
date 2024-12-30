@@ -1232,4 +1232,108 @@ mod tests {
             _ => panic!("Expected Io error variant"),
         }
     }
+
+    /// Covers the scenario where multiple context strings are joined,
+    /// triggering `"{} (Context: {})"` code in `ContentProcessingErrorBuilder::build`.
+    #[test]
+    fn test_content_processing_error_context_merge() {
+        let error = ContentProcessingErrorBuilder::new()
+            .message("Merge test")
+            .context("ctx1")
+            .context("ctx2")
+            .build();
+
+        match error {
+            Error::ContentProcessing { message, source } => {
+                // Checking that both context parts are present in the final message.
+                assert!(
+                    message.contains("ctx1") && message.contains("ctx2"),
+                    "Merged context strings should appear in final error message"
+                );
+                assert!(source.is_none());
+            }
+            _ => panic!("Expected an Error::ContentProcessing variant"),
+        }
+    }
+
+    /// Exercises the `IoErrorBuilder::with_operation_and_path` method to ensure
+    /// both fields are set correctly.
+    #[test]
+    fn test_io_error_builder_with_operation_and_path() {
+        let io_err = io::Error::new(ErrorKind::Other, "some io error");
+        let error = IoErrorBuilder::new()
+            .source(io_err)
+            .with_operation_and_path("Reading file", "/some/path")
+            .build();
+
+        match error {
+            Error::Io { source, context } => {
+                assert_eq!(source.kind(), ErrorKind::Other);
+                assert!(context.contains("Operation: Reading file"));
+                assert!(context.contains("Path: /some/path"));
+            }
+            _ => panic!("Expected an Error::Io variant"),
+        }
+    }
+
+    /// Verifies that `Error::content_processing_builder()` produces a default
+    /// `ContentProcessingErrorBuilder`.
+    #[test]
+    fn test_error_content_processing_builder() {
+        // This calls the static method to ensure coverage.
+        let builder = Error::content_processing_builder();
+        let error = builder.build();
+        match error {
+            Error::ContentProcessing { .. } => {
+                // We expect a default "Unknown error" message due to no `message` set.
+            }
+            _ => panic!("Expected an Error::ContentProcessing"),
+        }
+    }
+
+    /// Checks that `Error::io_builder()` returns a fresh `IoErrorBuilder`.
+    #[test]
+    fn test_error_io_builder() {
+        // This confirms coverage for the `io_builder` function.
+        let builder = Error::io_builder();
+        let error = builder.build();
+        match error {
+            Error::Io { context, source } => {
+                assert_eq!(
+                    source.to_string(),
+                    "Unknown IO error",
+                    "No source was set, so expect a default"
+                );
+                assert_eq!(
+                    context, "No additional context",
+                    "No context was provided, so expect a placeholder"
+                );
+            }
+            _ => panic!("Expected an Error::Io variant"),
+        }
+    }
+
+    /// Ensures coverage for `impl From<&str> for Error`.
+    #[test]
+    fn test_error_from_str() {
+        let err: Error = "some str-based error".into();
+        match err {
+            Error::Other(msg) => {
+                assert_eq!(msg, "some str-based error");
+            }
+            _ => panic!("Expected an Error::Other variant"),
+        }
+    }
+
+    /// Ensures coverage for `impl From<String> for Error`.
+    #[test]
+    fn test_error_from_string() {
+        let err: Error = "some String-based error".to_string().into();
+        match err {
+            Error::Other(msg) => {
+                assert_eq!(msg, "some String-based error");
+            }
+            _ => panic!("Expected an Error::Other variant"),
+        }
+    }
 }
