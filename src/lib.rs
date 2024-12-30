@@ -540,7 +540,7 @@ mod tests {
     /// Verifies that the `VERSION` string is not empty.
     #[test]
     fn test_version() {
-        assert!(!VERSION.is_empty(), "VERSION should not be empty");
+        assert!(VERSION.len() > 0, "VERSION should not be empty");
     }
 
     /// Ensures that the `VERSION` string appears to follow a semver-like format with a dot.
