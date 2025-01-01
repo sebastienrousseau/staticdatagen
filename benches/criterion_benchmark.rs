@@ -7,9 +7,11 @@
 //! This module contains benchmarks for various operations provided by the library,
 //! including content generation, HTML processing, file operations, and metadata handling.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use staticdatagen::models::data::HumansData;
+use criterion::{
+    black_box, criterion_group, criterion_main, Criterion,
+};
 use staticdatagen::models::data::CnameData;
+use staticdatagen::models::data::HumansData;
 use staticdatagen::{
     generators::{
         cname::{CnameConfig, CnameGenerator},
@@ -27,7 +29,8 @@ use std::path::Path;
 
 /// Benchmark CNAME generation
 fn bench_cname_generation(c: &mut Criterion) {
-    let config = CnameConfig::new("example.com", Some(3600), None).unwrap();
+    let config =
+        CnameConfig::new("example.com", Some(3600), None).unwrap();
     let generator = CnameGenerator::new(config);
 
     c.bench_function("generate CNAME", |b| {
@@ -107,7 +110,8 @@ fn bench_security_txt_generation(c: &mut Criterion) {
         expires: "2024-12-31T23:59:59Z".to_string(),
         acknowledgments: "https://example.com/thanks".to_string(),
         preferred_languages: "en".to_string(),
-        canonical: "https://example.com/.well-known/security.txt".to_string(),
+        canonical: "https://example.com/.well-known/security.txt"
+            .to_string(),
         policy: String::new(),
         hiring: String::new(),
         encryption: String::new(),
@@ -143,7 +147,8 @@ fn bench_news_data_processing(c: &mut Criterion) {
 /// Benchmark file data processing
 fn bench_file_data_processing(c: &mut Criterion) {
     let content = "# Test Content\n\nThis is a test markdown file.";
-    let file_data = FileData::new("test.md".to_string(), content.to_string());
+    let file_data =
+        FileData::new("test.md".to_string(), content.to_string());
 
     c.bench_function("process file data", |b| {
         b.iter(|| {
@@ -156,12 +161,17 @@ fn bench_file_data_processing(c: &mut Criterion) {
 fn bench_human_txt_processing(c: &mut Criterion) {
     let mut metadata = HashMap::new();
     metadata.insert("author".to_string(), "John Doe".to_string());
-    metadata.insert("author_website".to_string(), "https://example.com".to_string());
-    metadata.insert("author_twitter".to_string(), "@johndoe".to_string());
+    metadata.insert(
+        "author_website".to_string(),
+        "https://example.com".to_string(),
+    );
+    metadata
+        .insert("author_twitter".to_string(), "@johndoe".to_string());
 
     c.bench_function("process humans.txt", |b| {
         b.iter(|| {
-            let humans_config = HumansConfig::from_metadata(&metadata).unwrap();
+            let humans_config =
+                HumansConfig::from_metadata(&metadata).unwrap();
             let humans_data = HumansData::new(
                 humans_config.author,
                 humans_config.thanks,
@@ -178,7 +188,8 @@ fn bench_cname_processing(c: &mut Criterion) {
 
     c.bench_function("process CNAME", |b| {
         b.iter(|| {
-            let config = CnameConfig::new("example.com", None, None).unwrap();
+            let config =
+                CnameConfig::new("example.com", None, None).unwrap();
             let cname_data = CnameData {
                 cname: config.domain,
                 ..Default::default()
@@ -194,7 +205,10 @@ fn bench_path_sanitization(c: &mut Criterion) {
 
     c.bench_function("sanitize path", |b| {
         b.iter(|| {
-            black_box(staticdatagen::utilities::security::sanitize_path(path).unwrap());
+            black_box(
+                staticdatagen::utilities::security::sanitize_path(path)
+                    .unwrap(),
+            );
         });
     });
 }
