@@ -1,4 +1,4 @@
-// Copyright © 2024 Static Data Gen - Structured data for static sites.
+// Copyright © 2025 Static Data Gen - Structured data for static sites.
 // All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 

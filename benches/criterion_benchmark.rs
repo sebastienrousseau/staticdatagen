@@ -2,45 +2,58 @@
 // Copyright © 2025 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! Enhanced benchmarks for the Static Data Gen library.
+//! # Enhanced Benchmarks for the Static Data Gen Library
 //!
 //! This module contains benchmarks for various operations provided by the library,
 //! including content generation, HTML processing, file operations, and metadata handling.
+//! Each benchmark function measures performance of a specific feature, preventing
+//! compiler optimizations from skewing the timings by using [`criterion::black_box`].
 
 use criterion::{
     black_box, criterion_group, criterion_main, Criterion,
 };
-use staticdatagen::models::data::CnameData;
-use staticdatagen::models::data::HumansData;
+use std::collections::HashMap;
+use std::path::Path;
+
 use staticdatagen::{
     generators::{
         cname::{CnameConfig, CnameGenerator},
         humans::{HumansConfig, HumansGenerator},
         manifest::{ManifestConfig, ManifestGenerator},
     },
-    models::data::{FileData, NewsData, SecurityData},
+    models::data::{
+        CnameData, FileData, HumansData, NewsData, SecurityData,
+    },
     modules::{
         json::{cname, human, security},
         navigation::NavigationGenerator,
     },
 };
-use std::collections::HashMap;
-use std::path::Path;
 
-/// Benchmark CNAME generation
+/// Benchmarks the generation of a `CNAME` record using [`CnameGenerator`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_cname_generation(c: &mut Criterion) {
     let config =
         CnameConfig::new("example.com", Some(3600), None).unwrap();
     let generator = CnameGenerator::new(config);
 
-    c.bench_function("generate CNAME", |b| {
+    // Store the return value of `bench_function` to avoid unused-result lint.
+    let _c = c.bench_function("generate CNAME", |b| {
         b.iter(|| {
-            black_box(generator.generate());
+            // Capture and discard the resulting `String` to avoid "unused result" warnings.
+            let _ = black_box(generator.generate());
         });
     });
 }
 
-/// Benchmark humans.txt generation
+/// Benchmarks the generation of `humans.txt` using [`HumansGenerator`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_humans_txt_generation(c: &mut Criterion) {
     let config = HumansConfig {
         author: "John Doe".to_string(),
@@ -55,14 +68,18 @@ fn bench_humans_txt_generation(c: &mut Criterion) {
     };
     let generator = HumansGenerator::new(config);
 
-    c.bench_function("generate humans.txt", |b| {
+    let _c = c.bench_function("generate humans.txt", |b| {
         b.iter(|| {
-            black_box(generator.generate());
+            let _ = black_box(generator.generate());
         });
     });
 }
 
-/// Benchmark manifest.json generation
+/// Benchmarks the generation of `manifest.json` using [`ManifestGenerator`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_manifest_generation(c: &mut Criterion) {
     let config = ManifestConfig::builder()
         .name("Test App")
@@ -74,19 +91,25 @@ fn bench_manifest_generation(c: &mut Criterion) {
         .unwrap();
     let generator = ManifestGenerator::new(config);
 
-    c.bench_function("generate manifest", |b| {
+    let _c = c.bench_function("generate manifest", |b| {
         b.iter(|| {
-            black_box(generator.generate().unwrap());
+            // `generate()` returns a `Result<String, _>`, so unwrap it.
+            let _ = black_box(generator.generate().unwrap());
         });
     });
 }
 
-/// Benchmark navigation generation
+/// Benchmarks the generation of navigation data using [`NavigationGenerator`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_navigation_generation(c: &mut Criterion) {
     let files = vec![
         FileData {
             name: "about.md".to_string(),
             content: "About page".to_string(),
+            // No need for struct update syntax since all fields are already explicitly specified
             ..Default::default()
         },
         FileData {
@@ -96,14 +119,20 @@ fn bench_navigation_generation(c: &mut Criterion) {
         },
     ];
 
-    c.bench_function("generate navigation", |b| {
+    let _c = c.bench_function("generate navigation", |b| {
         b.iter(|| {
-            black_box(NavigationGenerator::generate_navigation(&files));
+            let _ = black_box(
+                NavigationGenerator::generate_navigation(&files),
+            );
         });
     });
 }
 
-/// Benchmark security.txt generation
+/// Benchmarks the generation of a `security.txt` string.
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_security_txt_generation(c: &mut Criterion) {
     let security_data = SecurityData {
         contact: vec!["https://example.com/security".to_string()],
@@ -117,14 +146,18 @@ fn bench_security_txt_generation(c: &mut Criterion) {
         encryption: String::new(),
     };
 
-    c.bench_function("generate security.txt", |b| {
+    let _c = c.bench_function("generate security.txt", |b| {
         b.iter(|| {
-            black_box(security(&security_data));
+            let _ = black_box(security(&security_data));
         });
     });
 }
 
-/// Benchmark news data processing
+/// Benchmarks the creation of a new [`NewsData`] instance to simulate processing.
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_news_data_processing(c: &mut Criterion) {
     let news_data = NewsData {
         news_genres: "Blog, Opinion".to_string(),
@@ -137,38 +170,50 @@ fn bench_news_data_processing(c: &mut Criterion) {
         news_title: "Test Article".to_string(),
     };
 
-    c.bench_function("process news data", |b| {
+    let _c = c.bench_function("process news data", |b| {
         b.iter(|| {
-            black_box(NewsData::new(news_data.clone()));
+            let _ = black_box(NewsData::new(news_data.clone()));
         });
     });
 }
 
-/// Benchmark file data processing
+/// Benchmarks the validation of [`FileData`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_file_data_processing(c: &mut Criterion) {
     let content = "# Test Content\n\nThis is a test markdown file.";
     let file_data =
         FileData::new("test.md".to_string(), content.to_string());
 
-    c.bench_function("process file data", |b| {
+    let _c = c.bench_function("process file data", |b| {
         b.iter(|| {
-            black_box(file_data.validate().unwrap());
+            // `validate()` returns `Result<(), _>`, so there's no meaningful value to `black_box`.
+            // We'll just call `unwrap()` to ensure it doesn't error out.
+            file_data.validate().unwrap();
         });
     });
 }
 
-/// Benchmark human.txt data processing
+/// Benchmarks the creation of a minimal `humans.txt` JSON using [`HumansConfig`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_human_txt_processing(c: &mut Criterion) {
     let mut metadata = HashMap::new();
-    metadata.insert("author".to_string(), "John Doe".to_string());
-    metadata.insert(
+    // `insert` returns an Option with the old value, so ignore it to avoid "unused result" lint.
+    let _ =
+        metadata.insert("author".to_string(), "John Doe".to_string());
+    let _ = metadata.insert(
         "author_website".to_string(),
         "https://example.com".to_string(),
     );
-    metadata
+    let _ = metadata
         .insert("author_twitter".to_string(), "@johndoe".to_string());
 
-    c.bench_function("process humans.txt", |b| {
+    let _c = c.bench_function("process humans.txt", |b| {
         b.iter(|| {
             let humans_config =
                 HumansConfig::from_metadata(&metadata).unwrap();
@@ -176,36 +221,48 @@ fn bench_human_txt_processing(c: &mut Criterion) {
                 humans_config.author,
                 humans_config.thanks,
             );
-            black_box(human(&humans_data));
+
+            let _ = black_box(human(&humans_data));
         });
     });
 }
 
-/// Benchmark CNAME data processing
+/// Benchmarks processing of `CNAME` data from metadata using [`CnameConfig`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_cname_processing(c: &mut Criterion) {
     let mut metadata = HashMap::new();
-    metadata.insert("cname".to_string(), "example.com".to_string());
+    let _ =
+        metadata.insert("cname".to_string(), "example.com".to_string());
 
-    c.bench_function("process CNAME", |b| {
+    let _c = c.bench_function("process CNAME", |b| {
         b.iter(|| {
             let config =
                 CnameConfig::new("example.com", None, None).unwrap();
             let cname_data = CnameData {
                 cname: config.domain,
-                ..Default::default()
+                // Remove needless struct update syntax when no additional fields need filling
             };
-            black_box(cname(&cname_data));
+
+            let _ = black_box(cname(&cname_data));
         });
     });
 }
 
-/// Benchmark path sanitization
+/// Benchmarks path sanitization using [`staticdatagen::utilities::security::sanitize_path`].
+///
+/// # Arguments
+///
+/// * `c` - A mutable reference to the [`Criterion`] benchmarking context.
 fn bench_path_sanitization(c: &mut Criterion) {
     let path = Path::new("content/../sensitive.txt");
 
-    c.bench_function("sanitize path", |b| {
+    let _c = c.bench_function("sanitize path", |b| {
         b.iter(|| {
-            black_box(
+            // `sanitize_path` returns a `Result<PathBuf, _>`, so unwrap it.
+            let _ = black_box(
                 staticdatagen::utilities::security::sanitize_path(path)
                     .unwrap(),
             );
@@ -228,4 +285,5 @@ criterion_group!(
     bench_path_sanitization,
 );
 
+// Declare the main benchmark entry point
 criterion_main!(benches);

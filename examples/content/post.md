@@ -11,7 +11,7 @@ cdn: "https://kura.pro" ## The CDN of the site.
 changefreq: "weekly" ## The changefreq of the site.
 charset: "utf-8" ## The charset of the site. (default: utf-8)
 cname: "kaishi.one" ## The cname value of the site. (Only required for the index page.)
-copyright: "© 2024 Kaishi. All rights reserved." ## The copyright of the site.
+copyright: "© 2025 Kaishi. All rights reserved." ## The copyright of the site.
 date: "July 12, 2023"
 description: "Everything You Need to Build a Stunning Website." ## The description of the site. (max 160 characters)
 download: "" ## The download url for the product.

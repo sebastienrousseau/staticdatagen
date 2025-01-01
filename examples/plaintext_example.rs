@@ -287,7 +287,7 @@ fn special_characters_example() -> Result<(), Box<dyn std::error::Error>>
 # Special Characters Test
 
 ## Symbols
-Copyright © 2024
+Copyright © 2025
 Registered ®
 Trademark ™
 

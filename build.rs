@@ -48,7 +48,7 @@ fn main() {
 
     if version_check::is_min_version(min_version) == Some(true) {
     } else {
-        eprintln!("'fd' requires Rustc version >= {}", min_version);
+        eprintln!("'fd' requires Rustc version >= {min_version}");
         process::exit(1);
     }
 }
