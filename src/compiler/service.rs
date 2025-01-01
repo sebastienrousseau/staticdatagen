@@ -421,6 +421,7 @@ fn update_global_tags_data(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rss_gen::data::RssDataField;
 
     #[test]
     fn test_compile_missing_directories() {
@@ -518,6 +519,197 @@ mod tests {
             site_path,
         );
 
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_split_frontmatter_and_body_with_empty_frontmatter() {
+        let content = "---\n---\nThis is the body.";
+        let (frontmatter, body) = split_frontmatter_and_body(content);
+
+        assert!(frontmatter.is_empty());
+        assert_eq!(body, "This is the body.");
+    }
+
+    #[test]
+    fn test_update_global_tags_data_empty_tags() {
+        let mut global_tags_data = HashMap::new();
+        let tags_data: HashMap<String, Vec<HashMap<String, String>>> =
+            HashMap::new();
+
+        update_global_tags_data(&mut global_tags_data, &tags_data);
+
+        assert!(global_tags_data.is_empty());
+    }
+
+    #[test]
+    fn test_split_frontmatter_and_body_invalid_format() {
+        let content = "---\ninvalid_yaml_content\nBody content.";
+        let (frontmatter, body) = split_frontmatter_and_body(content);
+
+        assert_eq!(frontmatter, "invalid_yaml_content\nBody content.");
+        assert!(body.is_empty());
+    }
+
+    #[test]
+    fn test_compile_missing_navigation() {
+        let file = FileData {
+            name: "test".to_string(),
+            content: "---\ntitle: Test\n---\nBody.".to_string(),
+            ..Default::default()
+        };
+
+        let mut engine =
+            Engine::new("/templates", Duration::from_secs(60));
+        let mut global_tags_data = HashMap::new();
+        let navigation = "";
+        let site_path = Path::new("/site");
+
+        let result = process_file(
+            &file,
+            &mut engine,
+            Path::new("/templates"),
+            navigation,
+            &mut global_tags_data,
+            site_path,
+        );
+
+        assert!(result.is_err());
+    }
+
+    // Test handling of edge cases in HTML config
+    #[test]
+    fn test_html_config_edge_cases() {
+        let config = HtmlConfig {
+            enable_syntax_highlighting: false,
+            minify_output: true,
+            add_aria_attributes: false,
+            generate_structured_data: false,
+            generate_toc: true,
+            language: "fr".to_string(),
+            max_input_size: 100,
+            syntax_theme: Some("monokai".to_string()),
+        };
+
+        let body = "Test content";
+        let result = generate_html(body, &config);
+        assert!(result.is_ok());
+    }
+
+    // Test metadata extraction with various fields
+    #[test]
+    fn test_metadata_extraction() {
+        let content = r#"---
+title: Test Page
+description: A test description
+author: John Doe
+date: 2025-01-01
+keywords: test, example
+---
+Content here"#;
+
+        let (frontmatter, _) = split_frontmatter_and_body(content);
+        assert!(frontmatter.contains("title: Test Page"));
+        assert!(frontmatter.contains("author: John Doe"));
+    }
+
+    // Test RSS data generation
+    #[test]
+    fn test_rss_data_generation() {
+        let mut metadata = HashMap::new();
+        let _ = metadata
+            .insert("title".to_string(), "Test Title".to_string());
+        let _ = metadata.insert(
+            "description".to_string(),
+            "Test Description".to_string(),
+        );
+        let _ = metadata.insert(
+            "permalink".to_string(),
+            "https://example.com".to_string(),
+        );
+
+        let mut rss_data = RssData::new(None);
+        macro_set_rss_data_fields!(
+            rss_data,
+            Title = macro_metadata_option!(metadata, "title"),
+            Description =
+                macro_metadata_option!(metadata, "description"),
+            Link = macro_metadata_option!(metadata, "permalink")
+        );
+
+        let result = generate_rss(&rss_data);
+        assert!(result.is_ok());
+    }
+
+    // Test multiple file compilation
+    #[test]
+    fn test_multiple_file_compilation() {
+        let files = vec![
+            FileData {
+                name: "test1.md".to_string(),
+                content: "# Test 1".to_string(),
+                ..Default::default()
+            },
+            FileData {
+                name: "test2.md".to_string(),
+                content: "# Test 2".to_string(),
+                ..Default::default()
+            },
+        ];
+
+        let navigation =
+            NavigationGenerator::generate_navigation(&files);
+        assert!(!navigation.is_empty());
+    }
+
+    // Test error handling for invalid templates
+    #[test]
+    fn test_invalid_template_handling() {
+        let mut engine =
+            Engine::new("/nonexistent", Duration::from_secs(60));
+        let context = TemplateContext::new();
+        let result = engine.render_page(&context, "nonexistent");
+        assert!(result.is_err());
+    }
+
+    // Test metadata handling with missing required fields
+    #[test]
+    fn test_missing_required_metadata() {
+        let content = "---\n---\nBody content";
+        let file = FileData {
+            name: "test.md".to_string(),
+            content: content.to_string(),
+            ..Default::default()
+        };
+
+        let mut engine =
+            Engine::new("/templates", Duration::from_secs(60));
+        let navigation = "Navigation";
+        let mut global_tags_data = HashMap::new();
+        let site_path = Path::new("/site");
+
+        let result = process_file(
+            &file,
+            &mut engine,
+            Path::new("/templates"),
+            navigation,
+            &mut global_tags_data,
+            site_path,
+        );
+
+        assert!(result.is_err());
+    }
+
+    // Test handling of malformed RSS data
+    #[test]
+    fn test_malformed_rss_data() {
+        let rss_data = RssData::new(None);
+        // Set invalid fields
+        let _ = rss_data
+            .clone()
+            .set(RssDataField::Title, "invalid_value".to_string());
+
+        let result = generate_rss(&rss_data);
         assert!(result.is_err());
     }
 }
