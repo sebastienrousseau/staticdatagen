@@ -11,7 +11,7 @@ cdn: "https://kura.pro" ## The CDN of the site.
 changefreq: "weekly" ## The changefreq of the site.
 charset: "utf-8" ## The charset of the site. (default: utf-8)
 cname: "kaishi.one" ## The cname value of the site. (Only required for the index page.)
-copyright: "© 2024 Kaishi. All rights reserved." ## The copyright of the site.
+copyright: "© 2025 Kaishi. All rights reserved." ## The copyright of the site.
 date: "2023-07-12" ## The date of the page.
 description: "You can contact us using the contact form below." ## The description of the site. (max 160 characters)
 download: "" ## The download url for the product.
@@ -61,7 +61,7 @@ news_title: "Contact Us" ## The title of the page. (max 64 characters)
 atom_link: https://kaishi.one/contact/rss.xml
 category: "Technology"
 docs: https://validator.w3.org/feed/docs/rss2.html
-generator: "Static Data Gen (version 0.0.4)"
+generator: "Static Data Gen (version 0.0.5)"
 item_description: RSS feed for the contact page of the Kaishi website.
 item_guid: https://kaishi.one/contact/rss.xml
 item_link: https://kaishi.one/contact/rss.xml

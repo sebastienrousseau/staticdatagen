@@ -5,10 +5,10 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.4"                          # Initial version of the crate
+version = "0.0.5"                          # Initial version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
-rust-version = "1.56.0"                    # Minimum supported Rust version
+rust-version = "1.58.0"                    # Minimum supported Rust version
 license = "MIT OR Apache-2.0"              # Dual licensing strategy
 description = """
 A Rust library for generating structured data files and metadata for static sites, including HTML, RSS feeds, sitemaps, and SEO-optimized meta tags.
@@ -85,49 +85,62 @@ criterion = "0.5.1"                           # Benchmarking library to test per
 # -----------------------------------------------------------------------------
 [dependencies]
 # Required dependencies for building and running the project.
-anyhow = "1.0.95"
-clap = "4.5.23"
-comrak = "0.32.0"
-html-generator = "0.0.2"
-http-handle = "0.0.2"
-langweave = "0.0.1"
-lazy_static = "1.5.0"
-log = { version = "0.4.22", features = ["std"] }
-metadata-gen = "0.0.1"
-minify-html = "0.15.0"
-pulldown-cmark = "0.12.2"
-quick-xml = "0.37.1"
-regex = "1.11.1"
-rlg = "0.0.6"
-rss-gen = "0.0.3"
-serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.134"
-sitemap-gen = "0.0.1"
-staticweaver ="0.0.1"
-tempfile = "3.14.0"
-thiserror = "2.0.9"
-time = "0.3.37"
-toml = "0.8.19"
-url = "2.5.4"
-uuid = { version = "1.11.0", features = ["v4"] }
-vrd = "0.0.8"
-xml-rs = "0.8.24"
 
+# Core functionality
+anyhow = "1.0"
+thiserror = "2.0"
+log = { version = "0.4", features = ["std"] }
+rlg = "0.0.6"
+
+# CLI and configuration
+clap = "4.5"
+toml = "0.8"
+
+# Data processing
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Content generation
+comrak = "0.32"
+pulldown-cmark = "0.12"
+html-generator = "0.0.3"
+minify-html = "0.15"
+
+# Web and networking
+http-handle = "0.0.2"
+url = "2.5"
+
+# Utilities
+langweave= "0.0.1"
+lazy_static = "1.5"
+metadata-gen = "0.0.1"
+regex = "1.11.1"
+rss-gen = "0.0.3"
+sitemap-gen = "0.0.1"
+staticweaver = "0.0.1"
+tempfile = "3.14"
+time = "0.3"
+uuid = { version = "1.11", features = ["v4"] }
+vrd = "0.0.8"
+
+# XML processing
+quick-xml = "0.37"
+xml-rs = "0.8"
 
 # CNAME dependencies
 idna = "1.0.3"
 rayon = "1.10.0"
 
 #Humans.txt dependencies
-dtt = "0.0.8"
+dtt = "0.0.9"
 
 # -----------------------------------------------------------------------------
 # Criterion Benchmark
 # -----------------------------------------------------------------------------
-# [[bench]]
+[[bench]]
 # Benchmarking configuration for performance testing.
-# name = "content_benchmark"                   # Name of the benchmark
-# harness = false                             # Disable the default benchmark harness (used by Criterion)
+name = "criterion_benchmark"                # Name of the benchmark
+harness = false                             # Disable the default benchmark harness (used by Criterion)
 
 # -----------------------------------------------------------------------------
 # Documentation Configuration

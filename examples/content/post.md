@@ -11,7 +11,7 @@ cdn: "https://kura.pro" ## The CDN of the site.
 changefreq: "weekly" ## The changefreq of the site.
 charset: "utf-8" ## The charset of the site. (default: utf-8)
 cname: "kaishi.one" ## The cname value of the site. (Only required for the index page.)
-copyright: "© 2024 Kaishi. All rights reserved." ## The copyright of the site.
+copyright: "© 2025 Kaishi. All rights reserved." ## The copyright of the site.
 date: "July 12, 2023"
 description: "Everything You Need to Build a Stunning Website." ## The description of the site. (max 160 characters)
 download: "" ## The download url for the product.
@@ -59,7 +59,7 @@ news_title: "Posts" ## The title of the page. (max 64 characters)
 atom_link: https://kaishi.one/rss.xml
 category: "Technology"
 docs: https://validator.w3.org/feed/docs/rss2.html
-generator: "Static Data Gen (version 0.0.4)"
+generator: "Static Data Gen (version 0.0.5)"
 item_description: RSS feed for the site
 item_guid: https://kaishi.one/rss.xml
 item_link: https://kaishi.one/rss.xml
@@ -116,11 +116,11 @@ site_software: "Static Data Gen, Rust" ## The software of the site.
 
 ---
 
-![Nature shinning][00].class=\"img-fluid w-50 float-start p-5 mb-3\"
+![Nature shinning](https://kura.pro/stock/images/banners/johannes-plenio-6XUA5KQ9-1k.webp).class="img-fluid w-50 float-start p-5 mb-3"
 
 ## Starter Templates
 
-.class=\"fw-bold\"All the starter templates, whether pages or websites are built from scratch
+All the starter templates, whether pages or websites are built from scratch
 using the same principles and features. This means that you can easily mix and
 match them together to create your own custom layouts and content.
 
@@ -137,7 +137,7 @@ your website or web application. Our templates are designed to be flexible and e
 
 #### Getting Started
 
-.class=\"fw-bold text-danger\"To get started, select a template that suits your project's needs. Customize it with your content, style, and functionality.
+To get started, select a template that suits your project's needs. Customize it with your content, style, and functionality.
 
 1. **Choose a Template**: Browse through our collection and pick a starting point.
 2. **Customize**: Modify the layout, add your content, and tweak the styles.
@@ -145,14 +145,13 @@ your website or web application. Our templates are designed to be flexible and e
 
 ### Websites
 
-.class=\"display-1\"Building a website from scratch can be a daunting task, but our starter templates make it simple and straightforward.
+Building a website from scratch can be a daunting task, but our starter templates make it simple and straightforward.
 
-
-![Nature shinning][00].class=\"img-fluid w-50 float-end p-5 mb-3\"
+![Nature shinning](https://kura.pro/stock/images/banners/johannes-plenio-6XUA5KQ9-1k.webp).class="img-fluid w-50 float-end p-5 mb-3"
 
 ### Why Use Our Templates?
 
-- **Speed**: Jumpstart your development with pre-made designs.
+- **Speed**: Jump start your development with pre-made designs.
 - **Quality**: High-quality, well-tested templates ensure reliability.
 - **Support**: Our team is here to help with any questions or issues.
 
@@ -169,5 +168,3 @@ Customize templates to fit your specific needs. The possibilities are endless!
 ## Conclusion
 
 With our range of starter templates, you have a solid foundation to build something unique and tailored to your specific requirements. Dive in and start creating!
-
-[00]: https://kura.pro/stock/images/banners/johannes-plenio-6XUA5KQ9-1k.webp
