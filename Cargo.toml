@@ -85,10 +85,12 @@ criterion = "0.5.1"                           # Benchmarking library to test per
 # -----------------------------------------------------------------------------
 [dependencies]
 # Required dependencies for building and running the project.
+
 # Core functionality
 anyhow = "1.0"
 thiserror = "2.0"
 log = { version = "0.4", features = ["std"] }
+rlg = "0.0.6"
 
 # CLI and configuration
 clap = "4.5"
@@ -109,10 +111,17 @@ http-handle = "0.0.2"
 url = "2.5"
 
 # Utilities
+langweave= "0.0.1"
 lazy_static = "1.5"
+metadata-gen = "0.0.1"
+regex = "1.11.1"
+rss-gen = "0.0.3"
+sitemap-gen = "0.0.1"
+staticweaver = "0.0.1"
 tempfile = "3.14"
 time = "0.3"
 uuid = { version = "1.11", features = ["v4"] }
+vrd = "0.0.8"
 
 # XML processing
 quick-xml = "0.37"
@@ -128,10 +137,10 @@ dtt = "0.0.9"
 # -----------------------------------------------------------------------------
 # Criterion Benchmark
 # -----------------------------------------------------------------------------
-# [[bench]]
+[[bench]]
 # Benchmarking configuration for performance testing.
-# name = "content_benchmark"                   # Name of the benchmark
-# harness = false                             # Disable the default benchmark harness (used by Criterion)
+name = "criterion_benchmark"                # Name of the benchmark
+harness = false                             # Disable the default benchmark harness (used by Criterion)
 
 # -----------------------------------------------------------------------------
 # Documentation Configuration
