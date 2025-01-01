@@ -232,4 +232,4 @@ Special thanks to all contributors who have helped build the `staticdatagen` lib
 [github-badge]: https://img.shields.io/badge/github-sebastienrousseau/staticdatagen-8da0cb?style=for-the-badge&labelColor=555555&logo=github
 [libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.5-orange.svg?style=for-the-badge
 [made-with-rust]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust
-[msrv-badge]: https://img.shields.io/badge/MSRV-1.56.0-blue.svg?style=for-the-badge
+[msrv-badge]: https://img.shields.io/badge/MSRV-1.58.0-blue.svg?style=for-the-badge
