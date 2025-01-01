@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cname","humans","manifest","news_sitemap"]};
+window.SIDEBAR_ITEMS = {"mod":["cname","humans","manifest","news_sitemap","tags"]};

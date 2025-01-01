@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The `tags` module contains the tags generator."><title>staticdatagen::generators::tags - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="staticdatagen" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (d117b7f21 2024-12-31)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="icon" href="https://kura.pro/staticdatagen/images/favicon.ico"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button><a class="logo-container" href="../../../staticdatagen/index.html"><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt=""></a></nav><nav class="sidebar"><div class="sidebar-crate"><a class="logo-container" href="../../../staticdatagen/index.html"><img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt="logo"></a><h2><a href="../../../staticdatagen/index.html">staticdatagen</a><span class="version">0.0.5</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module tags</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#tag-generation-module" title="Tag Generation Module">Tag Generation Module</a><ul><li><a href="#features" title="Features">Features</a></li><li><a href="#example-usage" title="Example Usage">Example Usage</a></li></ul></li></ul><h3><a href="#functions">Module Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In staticdatagen::<wbr>generators</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../../index.html">staticdatagen</a>::<wbr><a href="../index.html">generators</a></span><h1>Module <span>tags</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/staticdatagen/generators/tags.rs.html#4-407">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The <code>tags</code> module contains the tags generator.</p>
+<h2 id="tag-generation-module"><a class="doc-anchor" href="#tag-generation-module">§</a>Tag Generation Module</h2>
+<p>This module handles the creation, management, and generation of tags
+for static site content. It allows for reading tags from metadata,
+sanitizing them, and then mapping them to relevant pages or content.
+It also supports creating HTML views of these tags and writing them
+into existing files via placeholders. To meet accessibility standards
+(e.g., WCAG, ARIA), additional ARIA attributes are applied in the
+generated HTML to ensure tags are announced properly by assistive
+technologies.</p>
+<h3 id="features"><a class="doc-anchor" href="#features">§</a>Features</h3>
+<ul>
+<li><strong>Extraction of tags from file metadata.</strong></li>
+<li><strong>Flexible creation of <code>TagsData</code> structures from metadata.</strong></li>
+<li><strong>Generating accessible HTML content that lists tags with their associated pages.</strong></li>
+<li><strong>Writing the resulting HTML into an existing <code>index.html</code> file.</strong></li>
+</ul>
+<h3 id="example-usage"><a class="doc-anchor" href="#example-usage">§</a>Example Usage</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>staticdatagen::models::data::{FileData, PageData};
+<span class="kw">use </span>staticdatagen::generators::tags::{
+    generate_tags, create_tags_data, generate_tags_html, write_tags_html_to_file
+};
+
+<span class="comment">// Prepare some metadata containing tags
+</span><span class="kw">let </span><span class="kw-2">mut </span>metadata = HashMap::new();
+metadata.insert(<span class="string">"tags"</span>.to_string(), <span class="string">"tag1,tag2"</span>.to_string());
+
+<span class="comment">// Create a FileData instance with placeholder content
+</span><span class="kw">let </span>file = FileData {
+    content: <span class="string">"This is a test with tag1 in the text"</span>.to_string(),
+    ..Default::default()
+};
+
+<span class="comment">// Generate a mapping of tag -&gt; page-like data
+</span><span class="kw">let </span>tags_map = generate_tags(<span class="kw-2">&amp;</span>file, <span class="kw-2">&amp;</span>metadata);
+
+<span class="comment">// Create `TagsData` from metadata (for more detailed usage elsewhere)
+</span><span class="kw">let </span>tags_data = create_tags_data(<span class="kw-2">&amp;</span>metadata);
+<span class="macro">println!</span>(<span class="string">"Created TagsData struct: {:?}"</span>, tags_data);
+
+<span class="comment">// Suppose you have a global mapping from tags to lists of `PageData`
+</span><span class="kw">let </span><span class="kw-2">mut </span>global_tags_data = HashMap::new();
+global_tags_data.insert(
+    <span class="string">"tag1"</span>.to_string(),
+    <span class="macro">vec!</span>[
+        PageData {
+            date: <span class="string">"2024-03-10"</span>.to_string(),
+            description: <span class="string">"Description 1"</span>.to_string(),
+            permalink: <span class="string">"/page1"</span>.to_string(),
+            title: <span class="string">"Page 1"</span>.to_string(),
+        }
+    ]
+);
+
+<span class="comment">// Generate HTML for these tags
+</span><span class="kw">let </span>html_content = generate_tags_html(<span class="kw-2">&amp;</span>global_tags_data);
+
+<span class="comment">// Write it into `tags/index.html` in the specified output directory
+</span><span class="kw">let </span>output_path = Path::new(<span class="string">"/path/to/output"</span>);
+<span class="kw">let </span>result = write_tags_html_to_file(<span class="kw-2">&amp;</span>html_content, <span class="kw-2">&amp;</span>output_path);
+<span class="kw">if let </span><span class="prelude-val">Err</span>(e) = result {
+    <span class="macro">eprintln!</span>(<span class="string">"Failed to write tags HTML: {}"</span>, e);
+}</code></pre></div>
+</div></details><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.create_tags_data.html" title="fn staticdatagen::generators::tags::create_tags_data">create_<wbr>tags_<wbr>data</a></div><div class="desc docblock-short">Create TagsData</div></li><li><div class="item-name"><a class="fn" href="fn.generate_tags.html" title="fn staticdatagen::generators::tags::generate_tags">generate_<wbr>tags</a></div><div class="desc docblock-short">Generate Tags</div></li><li><div class="item-name"><a class="fn" href="fn.generate_tags_html.html" title="fn staticdatagen::generators::tags::generate_tags_html">generate_<wbr>tags_<wbr>html</a></div><div class="desc docblock-short">Generate Tags HTML</div></li><li><div class="item-name"><a class="fn" href="fn.sanitize_tag.html" title="fn staticdatagen::generators::tags::sanitize_tag">sanitize_<wbr>tag</a></div><div class="desc docblock-short">Tag Sanitization</div></li><li><div class="item-name"><a class="fn" href="fn.write_tags_html_to_file.html" title="fn staticdatagen::generators::tags::write_tags_html_to_file">write_<wbr>tags_<wbr>html_<wbr>to_<wbr>file</a></div><div class="desc docblock-short">Write Tags HTML to File</div></li></ul></section></div></main></body></html>

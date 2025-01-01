@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["json","navigation","plaintext","postprocessor","preprocessor","robots","security","tags"]};
+window.SIDEBAR_ITEMS = {"mod":["json","navigation","plaintext","postprocessor","preprocessor","robots","security"]};
