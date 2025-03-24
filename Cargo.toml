@@ -104,7 +104,7 @@ serde_json = "1.0"
 comrak = "0.35"
 pulldown-cmark = "0.12"
 html-generator = "0.0.3"
-minify-html = "0.15"
+minify-html = "0.16"
 
 # Web and networking
 http-handle = "0.0.2"
