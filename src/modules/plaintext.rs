@@ -41,7 +41,7 @@
 //! - Unicode character validation
 
 use anyhow::Result;
-use log::{debug, error, info};
+use log::{debug, info};
 use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 use std::collections::HashMap;
 use thiserror::Error;
