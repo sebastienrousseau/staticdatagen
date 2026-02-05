@@ -76,8 +76,10 @@ pub fn compile(
         HashMap::new();
 
     // Initialize the templating engine with caching.
+    let template_path_str = template_path.to_str()
+        .ok_or_else(|| anyhow::anyhow!("Template path contains invalid UTF-8"))?;
     let mut engine = Engine::new(
-        template_path.to_str().unwrap(),
+        template_path_str,
         Duration::from_secs(60),
     );
 
@@ -183,6 +185,204 @@ pub fn split_frontmatter_and_body(content: &str) -> (String, String) {
     (frontmatter.trim().to_string(), body.trim().to_string())
 }
 
+/// Generates HTML content from markdown body using the specified configuration.
+///
+/// # Arguments
+///
+/// * `body` - The markdown body content to convert to HTML.
+///
+/// # Returns
+///
+/// Returns the generated HTML content as a string.
+fn generate_html_content(body: &str) -> Result<String> {
+    let config = HtmlConfig {
+        enable_syntax_highlighting: true,
+        minify_output: false,
+        add_aria_attributes: true,
+        generate_structured_data: true,
+        generate_toc: false,
+        language: "en".to_string(),
+        max_input_size: usize::MAX,
+        syntax_theme: None,
+    };
+
+    generate_html(body, &config)
+        .context("Failed to generate HTML content")
+}
+
+/// Generates RSS content from metadata.
+///
+/// # Arguments
+///
+/// * `metadata` - The metadata extracted from the file.
+///
+/// # Returns
+///
+/// Returns the generated RSS content as a string.
+fn generate_rss_content(metadata: &HashMap<String, String>) -> Result<String> {
+    let mut rss_data = RssData::new(None);
+    macro_set_rss_data_fields!(
+        rss_data,
+        AtomLink = macro_metadata_option!(metadata, "atom_link"),
+        Author = macro_metadata_option!(metadata, "author"),
+        Category = macro_metadata_option!(metadata, "category"),
+        Copyright = macro_metadata_option!(metadata, "copyright"),
+        Description = macro_metadata_option!(metadata, "description"),
+        Docs = macro_metadata_option!(metadata, "docs"),
+        Generator = macro_metadata_option!(metadata, "generator"),
+        ImageTitle = macro_metadata_option!(metadata, "image_title"),
+        ImageUrl = macro_metadata_option!(metadata, "image_url"),
+        Language = macro_metadata_option!(metadata, "language"),
+        LastBuildDate = macro_metadata_option!(metadata, "last_build_date"),
+        Link = macro_metadata_option!(metadata, "permalink"),
+        ManagingEditor = macro_metadata_option!(metadata, "managing_editor"),
+        PubDate = macro_metadata_option!(metadata, "pub_date"),
+        Title = macro_metadata_option!(metadata, "title"),
+        Ttl = macro_metadata_option!(metadata, "ttl"),
+        Webmaster = macro_metadata_option!(metadata, "webmaster")
+    );
+
+    let item = RssItem::new()
+        .guid(macro_metadata_option!(metadata, "item_guid"))
+        .description(macro_metadata_option!(metadata, "item_description"))
+        .link(macro_metadata_option!(metadata, "item_link"))
+        .pub_date(macro_metadata_option!(metadata, "item_pub_date"))
+        .title(macro_metadata_option!(metadata, "item_title"));
+    rss_data.add_item(item);
+
+    generate_rss(&rss_data).map_err(|e| anyhow::anyhow!("RSS generation failed: {}", e))
+}
+
+/// Generates manifest content from metadata.
+///
+/// # Arguments
+///
+/// * `metadata` - The metadata extracted from the file.
+///
+/// # Returns
+///
+/// Returns the generated manifest content as a string.
+fn generate_manifest_content(metadata: &HashMap<String, String>) -> String {
+    ManifestConfig::from_metadata(metadata)
+        .and_then(|config| ManifestGenerator::new(config).generate())
+        .unwrap_or_else(|e| {
+            eprintln!("Error generating manifest: {}", e);
+            String::new()
+        })
+}
+
+/// Generates auxiliary files (news sitemap, CNAME, humans).
+///
+/// # Arguments
+///
+/// * `metadata` - The metadata extracted from the file.
+///
+/// # Returns
+///
+/// Returns a tuple containing (news_sitemap_content, cname_content, humans_content).
+fn generate_auxiliary_files(
+    metadata: &HashMap<String, String>,
+) -> (String, String, String) {
+    // Generate news sitemap content
+    let news_sitemap_config = NewsSiteMapConfig::new(metadata.clone());
+    let news_sitemap_generator = NewsSiteMapGenerator::new(news_sitemap_config);
+    let news_sitemap_content = match news_sitemap_generator.generate_xml() {
+        xml if !xml.is_empty() => xml,
+        _ => {
+            eprintln!("Error generating news sitemap XML.");
+            String::new()
+        }
+    };
+
+    // Generate CNAME content
+    let cname_content = metadata
+        .get("cname")
+        .and_then(|domain| CnameConfig::new(domain, None, None).ok())
+        .map(|config| CnameGenerator::new(config).generate())
+        .unwrap_or_default();
+
+    // Generate humans.txt content
+    let humans_content = metadata
+        .get("humans")
+        .map(|humans| {
+            let humans: HashMap<String, String> = serde_json::from_str(humans)
+                .context("Failed to parse humans metadata")
+                .unwrap_or_else(|err| {
+                    eprintln!("Error parsing humans metadata: {}", err);
+                    HashMap::new()
+                });
+
+            match HumansConfig::from_metadata(&humans) {
+                Ok(humans_config) => HumansGenerator::new(humans_config).generate(),
+                Err(err) => {
+                    eprintln!("Error creating HumansConfig: {}", err);
+                    String::new()
+                }
+            }
+        })
+        .unwrap_or_default();
+
+    (news_sitemap_content, cname_content, humans_content)
+}
+
+/// Assembles the final FileData structure with all generated content.
+///
+/// # Arguments
+///
+/// * `file` - The original file data.
+/// * `content` - The rendered page content.
+/// * `keywords` - The extracted keywords.
+/// * `rss_content` - The generated RSS content.
+/// * `manifest_content` - The generated manifest content.
+/// * `news_sitemap_content` - The generated news sitemap content.
+/// * `cname_content` - The generated CNAME content.
+/// * `humans_content` - The generated humans.txt content.
+/// * `metadata` - The extracted metadata.
+/// * `global_tags_data` - Mutable reference to global tags data.
+/// * `site_path` - The path to the output site directory.
+///
+/// # Returns
+///
+/// Returns the assembled FileData structure.
+fn assemble_file_data(
+    file: &FileData,
+    content: String,
+    keywords: Vec<String>,
+    rss_content: String,
+    manifest_content: String,
+    news_sitemap_content: String,
+    cname_content: String,
+    humans_content: String,
+    metadata: &HashMap<String, String>,
+    global_tags_data: &mut HashMap<String, Vec<PageData>>,
+    site_path: &Path,
+) -> Result<FileData> {
+    let security_options = create_security_data(metadata);
+    let sitemap_options = create_site_map_data(metadata);
+    let tags_data = generate_tags(file, metadata);
+
+    update_global_tags_data(global_tags_data, &tags_data);
+
+    let txt_options = create_txt_data(metadata);
+    let txt_data = txt(&txt_options);
+    let security_data = security(&security_options);
+    let sitemap_data = sitemap(sitemap_options?, site_path);
+
+    Ok(FileData {
+        cname: cname_content,
+        content,
+        keyword: keywords.join(", "),
+        human: humans_content,
+        manifest: manifest_content,
+        name: file.name.clone(),
+        rss: rss_content,
+        security: security_data,
+        sitemap: sitemap_data?,
+        sitemap_news: news_sitemap_content,
+        txt: txt_data,
+    })
+}
+
 /// Processes a single file, generating necessary content and metadata.
 ///
 /// # Arguments
@@ -205,33 +405,15 @@ fn process_file(
     global_tags_data: &mut HashMap<String, Vec<PageData>>,
     site_path: &Path,
 ) -> Result<FileData> {
-    // Preprocess to separate frontmatter and body
-    let (_frontmatter, body) =
-        split_frontmatter_and_body(&file.content);
+    // Extract metadata and keywords (inline to avoid type issues)
+    let (_frontmatter, body) = split_frontmatter_and_body(&file.content);
+    let (metadata, keywords, all_meta_tags) = extract_and_prepare_metadata(&file.content)
+        .context("Failed to extract and prepare metadata")?;
 
-    // println!("Frontmatter: {}", frontmatter);
+    // Generate HTML content
+    let html_content = generate_html_content(&body)?;
 
-    let (metadata, keywords, all_meta_tags) =
-        extract_and_prepare_metadata(&file.content)
-            .context("Failed to extract and prepare metadata")?;
-
-    let _security_options = create_security_data(&metadata);
-    let config = HtmlConfig {
-        enable_syntax_highlighting: true,
-        minify_output: false,
-        add_aria_attributes: true,
-        generate_structured_data: true,
-        generate_toc: false,
-        language: "en".to_string(),
-        max_input_size: usize::MAX,
-        syntax_theme: None,
-    };
-
-    let html_content = generate_html(&body, &config)
-        .context("Failed to generate HTML content")?;
-
-    // println!("HTML Content: {}", html_content);
-
+    // Setup template context (inline to handle meta_tags properly)
     let mut page_options = PageOptions::new();
     for (key, value) in metadata.iter() {
         page_options.set(key.to_string(), value.to_string());
@@ -255,127 +437,25 @@ fn process_file(
         metadata.get("layout").cloned().unwrap_or_default().as_str(),
     )?;
 
-    let mut rss_data = RssData::new(None);
+    // Generate RSS, manifest and auxiliary files
+    let rss_content = generate_rss_content(&metadata)?;
+    let manifest_content = generate_manifest_content(&metadata);
+    let (news_sitemap_content, cname_content, humans_content) = generate_auxiliary_files(&metadata);
 
-    macro_set_rss_data_fields!(
-        rss_data,
-        AtomLink = macro_metadata_option!(metadata, "atom_link"),
-        Author = macro_metadata_option!(metadata, "author"),
-        Category = macro_metadata_option!(metadata, "category"),
-        Copyright = macro_metadata_option!(metadata, "copyright"),
-        Description = macro_metadata_option!(metadata, "description"),
-        Docs = macro_metadata_option!(metadata, "docs"),
-        Generator = macro_metadata_option!(metadata, "generator"),
-        ImageTitle = macro_metadata_option!(metadata, "image_title"),
-        ImageUrl = macro_metadata_option!(metadata, "image_url"),
-        Language = macro_metadata_option!(metadata, "language"),
-        LastBuildDate =
-            macro_metadata_option!(metadata, "last_build_date"),
-        Link = macro_metadata_option!(metadata, "permalink"),
-        ManagingEditor =
-            macro_metadata_option!(metadata, "managing_editor"),
-        PubDate = macro_metadata_option!(metadata, "pub_date"),
-        Title = macro_metadata_option!(metadata, "title"),
-        Ttl = macro_metadata_option!(metadata, "ttl"),
-        Webmaster = macro_metadata_option!(metadata, "webmaster")
-    );
-
-    let item = RssItem::new()
-        .guid(macro_metadata_option!(metadata, "item_guid"))
-        .description(macro_metadata_option!(
-            metadata,
-            "item_description"
-        ))
-        .link(macro_metadata_option!(metadata, "item_link"))
-        .pub_date(macro_metadata_option!(metadata, "item_pub_date"))
-        .title(macro_metadata_option!(metadata, "item_title"));
-    rss_data.add_item(item);
-
-    let rss = generate_rss(&rss_data)?;
-
-    let manifest_content = ManifestConfig::from_metadata(&metadata)
-        .and_then(|config| ManifestGenerator::new(config).generate())
-        .unwrap_or_else(|e| {
-            eprintln!("Error generating manifest: {}", e);
-            String::new()
-        });
-
-    let news_sitemap_config = NewsSiteMapConfig::new(metadata.clone());
-    let news_sitemap_generator =
-        NewsSiteMapGenerator::new(news_sitemap_config);
-
-    let news_sitemap_content =
-        match news_sitemap_generator.generate_xml() {
-            xml if !xml.is_empty() => xml, // Use the generated XML string
-            _ => {
-                eprintln!("Error generating news sitemap XML.");
-                String::new() // Default to an empty string if XML generation fails
-            }
-        };
-
-    let cname_content = metadata
-        .get("cname")
-        .and_then(|domain| CnameConfig::new(domain, None, None).ok())
-        .map(|config| CnameGenerator::new(config).generate())
-        .unwrap_or_default();
-
-    let humans_content = metadata
-        .get("humans")
-        .map(|humans| {
-            // Try parsing the "humans" string into a HashMap
-            let humans: HashMap<String, String> =
-                serde_json::from_str(humans)
-                    .context("Failed to parse humans metadata")
-                    .unwrap_or_else(|err| {
-                        eprintln!(
-                            "Error parsing humans metadata: {}",
-                            err
-                        );
-                        HashMap::new() // Default to an empty HashMap if parsing fails
-                    });
-
-            // Generate humans.txt content
-            match HumansConfig::from_metadata(&humans) {
-                Ok(humans_config) => {
-                    HumansGenerator::new(humans_config).generate()
-                }
-                Err(err) => {
-                    eprintln!("Error creating HumansConfig: {}", err);
-                    String::new() // Default to an empty string if creation fails
-                }
-            }
-        })
-        .unwrap_or_default();
-
-    // let human_options = create_human_data(&metadata);
-    let security_options = create_security_data(&metadata);
-    let sitemap_options = create_site_map_data(&metadata);
-    // let news_sitemap_options = create_news_site_map_data(&metadata);
-
-    let tags_data = generate_tags(file, &metadata);
-
-    update_global_tags_data(global_tags_data, &tags_data);
-
-    let txt_options = create_txt_data(&metadata);
-
-    let txt_data = txt(&txt_options);
-    // let human_data = human(&human_options);
-    let security_data = security(&security_options);
-    let sitemap_data = sitemap(sitemap_options?, site_path);
-
-    Ok(FileData {
-        cname: cname_content,
+    // Assemble final file data
+    assemble_file_data(
+        file,
         content,
-        keyword: keywords.join(", "),
-        human: humans_content,
-        manifest: manifest_content,
-        name: file.name.clone(),
-        rss,
-        security: security_data,
-        sitemap: sitemap_data?,
-        sitemap_news: news_sitemap_content,
-        txt: txt_data,
-    })
+        keywords,
+        rss_content,
+        manifest_content,
+        news_sitemap_content,
+        cname_content,
+        humans_content,
+        &metadata,
+        global_tags_data,
+        site_path,
+    )
 }
 
 /// Updates the global tags data with new tag information.
