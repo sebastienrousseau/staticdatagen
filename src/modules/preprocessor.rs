@@ -38,3 +38,60 @@ pub fn preprocess_content(
 
     Ok(result)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_preprocess_content_basic() {
+        let class_regex = Regex::new(r#"\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content = "Hello World\nTest content";
+        let result = preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(processed.contains("Hello World"));
+        assert!(processed.contains("Test content"));
+    }
+
+    #[test]
+    fn test_preprocess_content_empty() {
+        let class_regex = Regex::new(r#"\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content = "";
+        let result = preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "");
+    }
+
+    #[test]
+    fn test_preprocess_content_trailing_newlines() {
+        let class_regex = Regex::new(r#"\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content = "Hello\n\n\n";
+        let result = preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(!processed.ends_with('\n'));
+    }
+
+    #[test]
+    fn test_preprocess_content_multiline() {
+        let class_regex = Regex::new(r#"\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content = "Line 1\nLine 2\nLine 3";
+        let result = preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert_eq!(processed.lines().count(), 3);
+    }
+}

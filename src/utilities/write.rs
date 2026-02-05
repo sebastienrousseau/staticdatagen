@@ -476,3 +476,204 @@ fn print_section_headers(
     debug!("Section headers printed for '{}'", dir_path.display());
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_get_processed_file_name_md() {
+        let result = get_processed_file_name("index.md");
+        assert_eq!(result, "index");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_json() {
+        let result = get_processed_file_name("config.json");
+        assert_eq!(result, "config");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_txt() {
+        let result = get_processed_file_name("readme.txt");
+        assert_eq!(result, "readme");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_xml() {
+        let result = get_processed_file_name("sitemap.xml");
+        assert_eq!(result, "sitemap");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_toml() {
+        let result = get_processed_file_name("config.toml");
+        assert_eq!(result, "config");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_js() {
+        let result = get_processed_file_name("main.js");
+        assert_eq!(result, "main");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_unknown_ext() {
+        let result = get_processed_file_name("image.png");
+        assert_eq!(result, "image.png");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_no_ext() {
+        let result = get_processed_file_name("CNAME");
+        assert_eq!(result, "CNAME");
+    }
+
+    #[test]
+    fn test_get_file_content_cname() {
+        let mut file = FileData::default();
+        file.cname = "example.com".to_string();
+        let result = get_file_content(&file, "CNAME");
+        assert_eq!(result, "example.com");
+    }
+
+    #[test]
+    fn test_get_file_content_humans() {
+        let mut file = FileData::default();
+        file.human = "Test Human".to_string();
+        let result = get_file_content(&file, "humans.txt");
+        assert_eq!(result, "Test Human");
+    }
+
+    #[test]
+    fn test_get_file_content_index() {
+        let mut file = FileData::default();
+        file.content = "<html></html>".to_string();
+        let result = get_file_content(&file, "index.html");
+        assert_eq!(result, "<html></html>");
+    }
+
+    #[test]
+    fn test_get_file_content_manifest() {
+        let mut file = FileData::default();
+        file.manifest = "{}".to_string();
+        let result = get_file_content(&file, "manifest.json");
+        assert_eq!(result, "{}");
+    }
+
+    #[test]
+    fn test_get_file_content_robots() {
+        let mut file = FileData::default();
+        file.txt = "User-agent: *".to_string();
+        let result = get_file_content(&file, "robots.txt");
+        assert_eq!(result, "User-agent: *");
+    }
+
+    #[test]
+    fn test_get_file_content_rss() {
+        let mut file = FileData::default();
+        file.rss = "<rss></rss>".to_string();
+        let result = get_file_content(&file, "rss.xml");
+        assert_eq!(result, "<rss></rss>");
+    }
+
+    #[test]
+    fn test_get_file_content_security() {
+        let mut file = FileData::default();
+        file.security = "Contact: test@example.com".to_string();
+        let result = get_file_content(&file, "security.txt");
+        assert_eq!(result, "Contact: test@example.com");
+    }
+
+    #[test]
+    fn test_get_file_content_sitemap() {
+        let mut file = FileData::default();
+        file.sitemap = "<urlset></urlset>".to_string();
+        let result = get_file_content(&file, "sitemap.xml");
+        assert_eq!(result, "<urlset></urlset>");
+    }
+
+    #[test]
+    fn test_get_file_content_news_sitemap() {
+        let mut file = FileData::default();
+        file.sitemap_news = "<urlset></urlset>".to_string();
+        let result = get_file_content(&file, "news-sitemap.xml");
+        assert_eq!(result, "<urlset></urlset>");
+    }
+
+    #[test]
+    fn test_get_file_content_unknown() {
+        let file = FileData::default();
+        let result = get_file_content(&file, "unknown.file");
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_get_file_paths() {
+        let file = FileData::default();
+        let paths = get_file_paths(&file);
+
+        assert_eq!(paths.len(), 6);
+        assert!(paths.iter().any(|(name, _)| *name == "index.html"));
+        assert!(paths.iter().any(|(name, _)| *name == "manifest.json"));
+        assert!(paths.iter().any(|(name, _)| *name == "robots.txt"));
+        assert!(paths.iter().any(|(name, _)| *name == "rss.xml"));
+        assert!(paths.iter().any(|(name, _)| *name == "sitemap.xml"));
+        assert!(paths.iter().any(|(name, _)| *name == "news-sitemap.xml"));
+    }
+
+    #[test]
+    fn test_write_file_basic() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = write_file(temp_dir.path(), "test.txt", "Hello World", false);
+
+        assert!(result.is_ok());
+        let content = fs::read_to_string(temp_dir.path().join("test.txt")).unwrap();
+        assert_eq!(content, "Hello World");
+    }
+
+    #[test]
+    fn test_write_file_empty_content() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = write_file(temp_dir.path(), "empty.txt", "", false);
+
+        assert!(result.is_ok());
+        let content = fs::read_to_string(temp_dir.path().join("empty.txt")).unwrap();
+        assert_eq!(content, "");
+    }
+
+    #[test]
+    fn test_write_content_files() {
+        let temp_dir = TempDir::new().unwrap();
+        let dir_name = temp_dir.path().join("content");
+
+        let mut file = FileData::default();
+        file.content = "<html></html>".to_string();
+        file.manifest = "{}".to_string();
+        file.txt = "robots".to_string();
+        file.rss = "<rss></rss>".to_string();
+        file.sitemap = "<sitemap></sitemap>".to_string();
+        file.sitemap_news = "<news></news>".to_string();
+
+        let result = write_content_files(&dir_name, &file, false);
+
+        assert!(result.is_ok());
+        assert!(dir_name.exists());
+        assert!(dir_name.join("index.html").exists());
+        assert!(dir_name.join("manifest.json").exists());
+    }
+
+    #[test]
+    fn test_print_section_headers() {
+        let temp_dir = TempDir::new().unwrap();
+        fs::write(temp_dir.path().join("file1.txt"), "content").unwrap();
+        fs::write(temp_dir.path().join("file2.txt"), "content").unwrap();
+        fs::create_dir(temp_dir.path().join("subdir")).unwrap();
+
+        let start_time = Instant::now();
+        let result = print_section_headers(temp_dir.path(), start_time);
+
+        assert!(result.is_ok());
+    }
+}

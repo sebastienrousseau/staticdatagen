@@ -44,3 +44,42 @@ pub fn translate(key: &str) -> Result<String, I18nError> {
         Err(I18nError::TranslationFailed(key.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_translate_hello() {
+        let result = translate("Hello");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Hallo");
+    }
+
+    #[test]
+    fn test_translate_goodbye() {
+        let result = translate("Goodbye");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Auf Wiedersehen");
+    }
+
+    #[test]
+    fn test_translate_main_logger_msg() {
+        let result = translate("main_logger_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("--help"));
+    }
+
+    #[test]
+    fn test_translate_lib_banner_log_msg() {
+        let result = translate("lib_banner_log_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("erfolgreich"));
+    }
+
+    #[test]
+    fn test_translate_unknown_key() {
+        let result = translate("unknown_key");
+        assert!(result.is_err());
+    }
+}

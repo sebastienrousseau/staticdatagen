@@ -34,3 +34,56 @@ pub fn translate(key: &str) -> Result<String, I18nError> {
         Err(I18nError::TranslationFailed(key.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_translate_hello() {
+        let result = translate("Hello");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Hello");
+    }
+
+    #[test]
+    fn test_translate_goodbye() {
+        let result = translate("Goodbye");
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), "Goodbye");
+    }
+
+    #[test]
+    fn test_translate_main_logger_msg() {
+        let result = translate("main_logger_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("--help"));
+    }
+
+    #[test]
+    fn test_translate_lib_banner_log_msg() {
+        let result = translate("lib_banner_log_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Banner"));
+    }
+
+    #[test]
+    fn test_translate_lib_args_log_msg() {
+        let result = translate("lib_args_log_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Arguments"));
+    }
+
+    #[test]
+    fn test_translate_lib_server_log_msg() {
+        let result = translate("lib_server_log_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Server"));
+    }
+
+    #[test]
+    fn test_translate_unknown_key() {
+        let result = translate("unknown_key");
+        assert!(result.is_err());
+    }
+}

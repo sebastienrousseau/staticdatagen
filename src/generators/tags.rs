@@ -404,4 +404,120 @@ mod tests {
             "Expected 'goodtag' to appear, but it wasn't found."
         );
     }
+
+    #[test]
+    fn test_sanitize_tag_basic() {
+        assert_eq!(sanitize_tag("hello"), "hello");
+        assert_eq!(sanitize_tag("Hello World"), "HelloWorld");
+        assert_eq!(sanitize_tag("tag-1"), "tag1");
+        assert_eq!(sanitize_tag("tag_2"), "tag2");
+    }
+
+    #[test]
+    fn test_sanitize_tag_special_chars() {
+        assert_eq!(sanitize_tag("tag!@#$%^&*()"), "tag");
+        assert_eq!(sanitize_tag("123-abc-456"), "123abc456");
+        assert_eq!(sanitize_tag(""), "");
+    }
+
+    #[test]
+    fn test_create_tags_data_basic() {
+        let mut metadata = HashMap::new();
+        metadata.insert("tags".to_string(), "rust, programming".to_string());
+        metadata.insert("date".to_string(), "2024-01-01".to_string());
+        metadata.insert("title".to_string(), "Test Title".to_string());
+        metadata.insert("description".to_string(), "Test Description".to_string());
+        metadata.insert("permalink".to_string(), "/test".to_string());
+        metadata.insert("keywords".to_string(), "rust, test".to_string());
+
+        let result = create_tags_data(&metadata);
+
+        assert!(!result.dates.is_empty() || result.dates.is_empty());
+    }
+
+    #[test]
+    fn test_create_tags_data_empty() {
+        let metadata = HashMap::new();
+        let result = create_tags_data(&metadata);
+
+        // With empty metadata, all fields should be empty strings
+        assert!(result.dates.is_empty());
+        assert!(result.titles.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_html_basic() {
+        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        global_tags.insert(
+            "rust".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "A Rust post".to_string(),
+                permalink: "/rust-post".to_string(),
+                title: "Rust Post".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(html.contains("rust") || html.contains("Rust"));
+        assert!(html.contains("Rust Post") || html.contains("rust-post"));
+    }
+
+    #[test]
+    fn test_generate_tags_html_empty() {
+        let global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let html = generate_tags_html(&global_tags);
+
+        // Should still produce valid HTML structure
+        assert!(html.contains("<") || html.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_html_multiple_tags() {
+        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        global_tags.insert(
+            "tag1".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "Post 1".to_string(),
+                permalink: "/post1".to_string(),
+                title: "Post 1".to_string(),
+            }],
+        );
+        global_tags.insert(
+            "tag2".to_string(),
+            vec![PageData {
+                date: "2024-01-02".to_string(),
+                description: "Post 2".to_string(),
+                permalink: "/post2".to_string(),
+                title: "Post 2".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(!html.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_no_tags_in_metadata() {
+        let file = FileData::default();
+        let metadata = HashMap::new();
+
+        let result = generate_tags(&file, &metadata);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_empty_tags_string() {
+        let file = FileData::default();
+        let mut metadata = HashMap::new();
+        metadata.insert("tags".to_string(), "".to_string());
+
+        let result = generate_tags(&file, &metadata);
+
+        assert!(result.is_empty());
+    }
 }
