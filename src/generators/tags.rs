@@ -520,4 +520,45 @@ mod tests {
 
         assert!(result.is_empty());
     }
+
+    #[test]
+    fn test_generate_tags_html_with_home_title() {
+        // Test line 256: title contains "Home"
+        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let _ = global_tags.insert(
+            "featured".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "Main landing page".to_string(),
+                permalink: "/".to_string(),
+                title: "Home Page".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(!html.is_empty());
+        assert!(html.contains("Home"));
+    }
+
+    #[test]
+    fn test_generate_tags_html_with_empty_description() {
+        // Test line 275: empty description uses strong_text
+        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let _ = global_tags.insert(
+            "test".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: String::new(), // Empty description
+                permalink: "/page".to_string(),
+                title: "Test Page".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(!html.is_empty());
+        // Should contain the fallback text
+        assert!(html.contains("Learn more on this page") || html.contains("<strong>"));
+    }
 }

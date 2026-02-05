@@ -2801,4 +2801,471 @@ mod tests {
             validation::validate_text_length("a", 0, "test").is_err()
         );
     }
+
+    // Additional tests for coverage
+
+    #[test]
+    fn test_url_validation_unsafe_characters() {
+        // Test URL with < character
+        assert!(matches!(
+            validation::validate_url("https://example.com/<script>"),
+            Err(DataError::InvalidUrl(_))
+        ));
+
+        // Test URL with > character
+        assert!(matches!(
+            validation::validate_url("https://example.com/>test"),
+            Err(DataError::InvalidUrl(_))
+        ));
+
+        // Test URL with double quote
+        assert!(matches!(
+            validation::validate_url("https://example.com/\"test\""),
+            Err(DataError::InvalidUrl(_))
+        ));
+
+        // Test URL with single quote
+        assert!(matches!(
+            validation::validate_url("https://example.com/'test'"),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_path_sanitization() {
+        // Test directory traversal prevention
+        assert!(matches!(
+            validation::sanitize_path("../etc/passwd"),
+            Err(DataError::SecurityValidation(_))
+        ));
+
+        // Test valid path
+        assert!(validation::sanitize_path("valid/path/file.txt").is_ok());
+
+        // Test path with multiple traversal attempts
+        assert!(matches!(
+            validation::sanitize_path("foo/../bar/../baz"),
+            Err(DataError::SecurityValidation(_))
+        ));
+    }
+
+    #[test]
+    fn test_page_data_title_too_long() {
+        let long_title = "A".repeat(201);
+        let page = PageData::new(
+            long_title,
+            "Description".to_string(),
+            "2024-02-20T12:00:00Z".to_string(),
+            "/page".to_string(),
+        );
+        assert!(matches!(
+            page.validate(),
+            Err(DataError::InvalidMetadata(_))
+        ));
+    }
+
+    #[test]
+    fn test_page_data_empty_description() {
+        let page = PageData::new(
+            "Title".to_string(),
+            "".to_string(),
+            "2024-02-20T12:00:00Z".to_string(),
+            "/page".to_string(),
+        );
+        assert!(matches!(
+            page.validate(),
+            Err(DataError::MissingField(field)) if field == "description"
+        ));
+    }
+
+    #[test]
+    fn test_page_data_empty_permalink() {
+        let page = PageData::new(
+            "Title".to_string(),
+            "Description".to_string(),
+            "2024-02-20T12:00:00Z".to_string(),
+            "".to_string(),
+        );
+        assert!(matches!(
+            page.validate(),
+            Err(DataError::MissingField(field)) if field == "permalink"
+        ));
+    }
+
+    #[test]
+    fn test_page_data_sanitized_title() {
+        let page = PageData::new(
+            "Hello <World>! @#$%".to_string(),
+            "Description".to_string(),
+            "".to_string(),
+            "/page".to_string(),
+        );
+        assert_eq!(page.sanitized_title(), "Hello World ");
+    }
+
+    #[test]
+    fn test_page_data_display() {
+        let page = PageData::new(
+            "Test Title".to_string(),
+            "Test Desc".to_string(),
+            "2024-01-01T00:00:00Z".to_string(),
+            "/test".to_string(),
+        );
+        let display = format!("{}", page);
+        assert!(display.contains("Test Title"));
+        assert!(display.contains("Test Desc"));
+        assert!(display.contains("/test"));
+    }
+
+    #[test]
+    fn test_security_data_create_default() {
+        let data = SecurityData::create_default();
+        assert!(data.contact.is_empty());
+        assert!(data.expires.is_empty());
+    }
+
+    #[test]
+    fn test_security_data_is_valid() {
+        let valid = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        assert!(valid.is_valid());
+
+        let invalid = SecurityData::create_default();
+        assert!(!invalid.is_valid());
+    }
+
+    #[test]
+    fn test_security_data_get_populated_fields() {
+        let mut data = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.acknowledgments = "https://thanks.com".to_string();
+        data.preferred_languages = "en".to_string();
+        data.canonical = "https://canonical.com".to_string();
+        data.policy = "https://policy.com".to_string();
+        data.hiring = "https://hiring.com".to_string();
+        data.encryption = "https://encryption.com".to_string();
+
+        let fields = data.get_populated_fields();
+        assert!(fields.contains(&"contact".to_string()));
+        assert!(fields.contains(&"expires".to_string()));
+        assert!(fields.contains(&"acknowledgments".to_string()));
+        assert!(fields.contains(&"preferred-languages".to_string()));
+        assert!(fields.contains(&"canonical".to_string()));
+        assert!(fields.contains(&"policy".to_string()));
+        assert!(fields.contains(&"hiring".to_string()));
+        assert!(fields.contains(&"encryption".to_string()));
+    }
+
+    #[test]
+    fn test_security_data_validate_missing_contact() {
+        let data = SecurityData {
+            contact: vec![],
+            expires: "2024-12-31T23:59:59Z".to_string(),
+            ..Default::default()
+        };
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::MissingField(field)) if field == "contact"
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_missing_expires() {
+        let data = SecurityData {
+            contact: vec!["https://example.com".to_string()],
+            expires: "".to_string(),
+            ..Default::default()
+        };
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::MissingField(field)) if field == "expires"
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_invalid_mailto() {
+        let data = SecurityData::new(
+            vec!["mailto:invalid".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_policy_url() {
+        let mut data = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.policy = "invalid-url".to_string();
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_hiring_url() {
+        let mut data = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.hiring = "invalid-url".to_string();
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_encryption_url() {
+        let mut data = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.encryption = "invalid-url".to_string();
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_preferred_languages() {
+        let mut data = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.preferred_languages = "en, fr, de".to_string();
+        assert!(data.validate().is_ok());
+
+        data.preferred_languages = "invalid".to_string();
+        assert!(matches!(
+            data.validate(),
+            Err(DataError::InvalidLanguage(_))
+        ));
+    }
+
+    #[test]
+    fn test_rss_data_set_all_fields() {
+        let mut rss = RssData::new();
+
+        rss.set("atom_link", "https://example.com/atom".to_string());
+        rss.set("author", "Author Name".to_string());
+        rss.set("category", "Tech".to_string());
+        rss.set("copyright", "2024".to_string());
+        rss.set("description", "A description".to_string());
+        rss.set("docs", "https://example.com/docs".to_string());
+        rss.set("generator", "Test".to_string());
+        rss.set("image", "https://example.com/image.png".to_string());
+        rss.set("item_guid", "guid-123".to_string());
+        rss.set("item_description", "Item desc".to_string());
+        rss.set("item_link", "https://example.com/item".to_string());
+        rss.set("item_pub_date", "2024-01-01T00:00:00Z".to_string());
+        rss.set("item_title", "Item Title".to_string());
+        rss.set("language", "en".to_string());
+        rss.set("last_build_date", "2024-01-01T00:00:00Z".to_string());
+        rss.set("link", "https://example.com".to_string());
+        rss.set("managing_editor", "editor@example.com".to_string());
+        rss.set("pub_date", "2024-01-01T00:00:00Z".to_string());
+        rss.set("title", "Test Feed".to_string());
+        rss.set("ttl", "60".to_string());
+        rss.set("webmaster", "webmaster@example.com".to_string());
+        rss.set("unknown_field", "ignored".to_string());
+
+        assert_eq!(rss.atom_link, "https://example.com/atom");
+        assert_eq!(rss.author, "Author Name");
+        assert_eq!(rss.category, "Tech");
+        assert_eq!(rss.copyright, "2024");
+        assert_eq!(rss.description, "A description");
+        assert_eq!(rss.docs, "https://example.com/docs");
+        assert_eq!(rss.generator, "Test");
+        assert_eq!(rss.image, "https://example.com/image.png");
+        assert_eq!(rss.item_guid, "guid-123");
+        assert_eq!(rss.item_description, "Item desc");
+        assert_eq!(rss.item_link, "https://example.com/item");
+        assert_eq!(rss.item_pub_date, "2024-01-01T00:00:00Z");
+        assert_eq!(rss.item_title, "Item Title");
+        assert_eq!(rss.language, "en");
+        assert_eq!(rss.last_build_date, "2024-01-01T00:00:00Z");
+        assert_eq!(rss.link, "https://example.com");
+        assert_eq!(rss.managing_editor, "editor@example.com");
+        assert_eq!(rss.pub_date, "2024-01-01T00:00:00Z");
+        assert_eq!(rss.title, "Test Feed");
+        assert_eq!(rss.ttl, "60");
+        assert_eq!(rss.webmaster, "webmaster@example.com");
+    }
+
+    #[test]
+    fn test_file_data_default() {
+        let file = FileData::default();
+        assert!(file.name.is_empty());
+        assert!(file.content.is_empty());
+    }
+
+    #[test]
+    fn test_file_data_debug() {
+        let file = FileData::new(
+            "test.md".to_string(),
+            "# Content".to_string(),
+        );
+        let debug = format!("{:?}", file);
+        assert!(debug.contains("test.md"));
+    }
+
+    #[test]
+    fn test_cname_data_debug() {
+        let cname = CnameData::new("example.com".to_string());
+        let debug = format!("{:?}", cname);
+        assert!(debug.contains("example.com"));
+    }
+
+    #[test]
+    fn test_tags_data_debug() {
+        let tags = TagsData::new(
+            "2024-01-01T00:00:00Z".to_string(),
+            "Title".to_string(),
+            "Desc".to_string(),
+            "/page".to_string(),
+            "tag1, tag2".to_string(),
+        );
+        let debug = format!("{:?}", tags);
+        assert!(debug.contains("Title") || debug.contains("tag1"));
+    }
+
+    #[test]
+    fn test_manifest_data_debug() {
+        let mut manifest = ManifestData::new();
+        manifest.name = "My App".to_string();
+        let debug = format!("{:?}", manifest);
+        assert!(debug.contains("My App"));
+    }
+
+    #[test]
+    fn test_rss_data_debug() {
+        let mut rss = RssData::new();
+        rss.title = "Test Feed".to_string();
+        rss.link = "https://example.com".to_string();
+        rss.description = "Test description".to_string();
+        let debug = format!("{:?}", rss);
+        assert!(debug.contains("Test Feed"));
+    }
+
+    #[test]
+    fn test_humans_data_debug() {
+        let humans = HumansData::new(
+            "Author".to_string(),
+            "Thanks".to_string(),
+        );
+        let debug = format!("{:?}", humans);
+        assert!(debug.contains("Author"));
+    }
+
+
+    #[test]
+    fn test_icon_data_debug() {
+        let icon = IconData::new(
+            "https://example.com/icon.png".to_string(),
+            "192x192".to_string(),
+        );
+        let debug = format!("{:?}", icon);
+        assert!(debug.contains("192x192") || debug.contains("icon"));
+    }
+
+    #[test]
+    fn test_security_data_debug() {
+        let data = SecurityData::new(
+            vec!["https://example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        let debug = format!("{:?}", data);
+        assert!(debug.contains("example.com") || debug.contains("2024"));
+    }
+
+    #[test]
+    fn test_meta_tag_debug() {
+        let tag = MetaTag::new(
+            "description".to_string(),
+            "Test".to_string(),
+        );
+        let debug = format!("{:?}", tag);
+        assert!(debug.contains("description") || debug.contains("Test"));
+    }
+
+    #[test]
+    fn test_sw_file_data_debug() {
+        let sw = SwFileData::new("/offline.html".to_string());
+        let debug = format!("{:?}", sw);
+        assert!(debug.contains("offline"));
+    }
+
+    #[test]
+    fn test_txt_data_debug() {
+        let txt = TxtData {
+            permalink: "/test".to_string(),
+        };
+        let debug = format!("{:?}", txt);
+        assert!(debug.contains("/test") || debug.contains("permalink"));
+    }
+
+    #[test]
+    fn test_icon_data_empty_src() {
+        // Test line 867: empty src returns MissingField error
+        let icon = IconData::new(
+            String::new(),
+            "192x192".to_string(),
+        );
+        assert!(matches!(
+            icon.validate(),
+            Err(DataError::MissingField(ref field)) if field == "src"
+        ));
+    }
+
+    #[test]
+    fn test_icon_data_empty_sizes() {
+        // Test line 873: empty sizes returns MissingField error
+        let icon = IconData::new(
+            "https://example.com/icon.png".to_string(),
+            String::new(),
+        );
+        assert!(matches!(
+            icon.validate(),
+            Err(DataError::MissingField(ref field)) if field == "sizes"
+        ));
+    }
+
+    #[test]
+    fn test_icon_data_invalid_mime_type() {
+        // Test lines 889, 895-897: invalid MIME type
+        let mut icon = IconData::new(
+            "https://example.com/icon.png".to_string(),
+            "192x192".to_string(),
+        );
+        icon.icon_type = Some("invalid/mime".to_string());
+        assert!(matches!(
+            icon.validate(),
+            Err(DataError::InvalidMetadata(_))
+        ));
+    }
+
+    #[test]
+    fn test_icon_data_valid_mime_types() {
+        // Test valid MIME types pass validation
+        let valid_types = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+        for mime_type in valid_types {
+            let mut icon = IconData::new(
+                "https://example.com/icon.png".to_string(),
+                "192x192".to_string(),
+            );
+            icon.icon_type = Some(mime_type.to_string());
+            assert!(icon.validate().is_ok(), "MIME type {} should be valid", mime_type);
+        }
+    }
 }
