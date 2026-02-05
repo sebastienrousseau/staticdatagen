@@ -423,12 +423,12 @@ mod tests {
     #[test]
     fn test_create_tags_data_basic() {
         let mut metadata = HashMap::new();
-        metadata.insert("tags".to_string(), "rust, programming".to_string());
-        metadata.insert("date".to_string(), "2024-01-01".to_string());
-        metadata.insert("title".to_string(), "Test Title".to_string());
-        metadata.insert("description".to_string(), "Test Description".to_string());
-        metadata.insert("permalink".to_string(), "/test".to_string());
-        metadata.insert("keywords".to_string(), "rust, test".to_string());
+        let _ = metadata.insert("tags".to_string(), "rust, programming".to_string());
+        let _ = metadata.insert("date".to_string(), "2024-01-01".to_string());
+        let _ = metadata.insert("title".to_string(), "Test Title".to_string());
+        let _ = metadata.insert("description".to_string(), "Test Description".to_string());
+        let _ = metadata.insert("permalink".to_string(), "/test".to_string());
+        let _ = metadata.insert("keywords".to_string(), "rust, test".to_string());
 
         let result = create_tags_data(&metadata);
 
@@ -448,7 +448,7 @@ mod tests {
     #[test]
     fn test_generate_tags_html_basic() {
         let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
-        global_tags.insert(
+        let _ = global_tags.insert(
             "rust".to_string(),
             vec![PageData {
                 date: "2024-01-01".to_string(),
@@ -476,7 +476,7 @@ mod tests {
     #[test]
     fn test_generate_tags_html_multiple_tags() {
         let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
-        global_tags.insert(
+        let _ = global_tags.insert(
             "tag1".to_string(),
             vec![PageData {
                 date: "2024-01-01".to_string(),
@@ -485,7 +485,7 @@ mod tests {
                 title: "Post 1".to_string(),
             }],
         );
-        global_tags.insert(
+        let _ = global_tags.insert(
             "tag2".to_string(),
             vec![PageData {
                 date: "2024-01-02".to_string(),
@@ -514,7 +514,7 @@ mod tests {
     fn test_generate_tags_empty_tags_string() {
         let file = FileData::default();
         let mut metadata = HashMap::new();
-        metadata.insert("tags".to_string(), "".to_string());
+        let _ = metadata.insert("tags".to_string(), "".to_string());
 
         let result = generate_tags(&file, &metadata);
 

@@ -461,46 +461,43 @@ mod tests {
     /// Tests moving output directory to a public directory.
     #[test]
     fn test_move_output_directory() {
-        // Use unique names based on process ID to avoid conflicts in parallel tests
-        let unique_id = std::process::id();
-        let out_dir_name = format!("test_output_{}", unique_id);
-        let site_name = format!("test_site_{}", unique_id);
+        use uuid::Uuid;
+
+        // Use UUID for truly unique names to avoid CI conflicts
+        let unique_id = Uuid::new_v4().to_string().replace('-', "")[..8].to_string();
+        let out_dir_name = format!("test_out_{}", unique_id);
+        let site_name = format!("site_{}", unique_id);
         let out_dir = Path::new(&out_dir_name);
         let public_dir = Path::new("public");
 
-        // Ensure a clean environment before the test
-        if public_dir.exists() {
-            let _ = remove_dir_all_with_retry(public_dir, 3);
-        }
-        if out_dir.exists() {
-            let _ = remove_dir_all_with_retry(out_dir, 3);
-        }
+        // Ensure clean state - remove any existing directories
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
 
-        // Create the output directory and a dummy file to ensure it's not empty
+        // Create the output directory and a dummy file
         fs::create_dir_all(out_dir)
             .expect("Failed to create test output directory");
         fs::write(out_dir.join("dummy.txt"), b"test")
-            .expect("Failed to write dummy file to test_output");
+            .expect("Failed to write dummy file");
 
         let result = move_output_directory(&site_name, out_dir);
 
+        // Cleanup first, then assert (to avoid leaving state on failure)
+        let public_site_dir = public_dir.join(&site_name);
+        let dir_exists = public_site_dir.exists() && public_site_dir.is_dir();
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
+
         assert!(
             result.is_ok(),
-            "The move_output_directory operation should succeed: {:?}",
+            "move_output_directory should succeed: {:?}",
             result
         );
-
-        let public_test_site_dir = public_dir.join(&site_name);
-
         assert!(
-            public_test_site_dir.exists()
-                && public_test_site_dir.is_dir(),
-            "The public/{} directory should exist after moving",
+            dir_exists,
+            "public/{} should exist after moving",
             site_name
         );
-
-        // Use retry logic on cleanup, since the OS may still hold file locks
-        let _ = remove_dir_all_with_retry(public_dir, 3);
     }
 
     /// Helper function that retries `remove_dir_all` up to `retries` times.
