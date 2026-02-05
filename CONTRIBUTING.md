@@ -32,25 +32,74 @@ If you encounter a bug while using `StaticDataGen`, please let us know so we can
 
 If you're interested in contributing code to `StaticDataGen`, we're excited to have your help! Here's what you need to know:
 
+#### Development Setup
+
+1. Fork the repository on GitHub
+2. Clone your fork:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/staticdatagen.git
+   cd staticdatagen
+   ```
+3. Add the upstream remote:
+   ```bash
+   git remote add upstream https://github.com/sebastienrousseau/staticdatagen.git
+   ```
+4. Create a new branch for your changes:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+#### Code Style Guidelines
+
+We follow Rust's standard coding conventions. Please ensure your code:
+
+- Follows the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+- Is formatted with `rustfmt`
+- Has no warnings from `clippy`
+- Includes documentation for public APIs
+
+#### Testing Requirements
+
+Before submitting a pull request, ensure all tests pass:
+
+```bash
+# Run the test suite
+cargo test --lib
+
+# Check for linting issues
+cargo clippy -- -D warnings
+
+# Format your code
+cargo fmt
+
+# Build the library
+cargo build --lib
+```
+
+**Important:** Code coverage must remain at or above 90%. Run tests with coverage to verify:
+
+```bash
+cargo tarpaulin --lib --out Html
+```
+
+#### Submitting a Pull Request
+
+1. Ensure your changes pass all tests and linting checks
+2. Write clear, concise commit messages
+3. Update documentation if you've changed public APIs
+4. Submit your pull request with:
+   - A descriptive title
+   - A summary of changes
+   - Reference to any related issues (e.g., "Fixes #123")
+
 #### Feature Requests
 
-If you have an idea for a new feature or improvement, we'd love to hear it. Here's how you can contribute code for a new feature to `StaticDataGen`:
+If you have an idea for a new feature or improvement, we'd love to hear it:
 
-- Fork the repo.
-- Clone the [StaticDataGen][01] repo by running:
-  `git clone https://github.com/sebastienrousseau/staticdatagen.git`
-- Edit files in the `src/` folder. The `src/` folder contains the source code for `StaticDataGen`.
-- Submit a pull request, and we'll review and merge your changes if they fit with our vision for `StaticDataGen`.
-
-#### Submitting Code
-
-If you've identified a bug or have a specific code improvement in mind, we welcome your pull requests. Here's how to submit your code changes:
-
-- Fork the repo.
-- Clone the `StaticDataGen` repo by running:
-  `git clone https://github.com/sebastienrousseau/staticdatagen.git`
-- Edit files in the `src/` folder. The `src/` folder contains the source code for `StaticDataGen`.
-- Submit a pull request, and we'll review and merge your changes if they fit with our vision for `StaticDataGen`.
+1. Check existing issues to avoid duplicates
+2. Open a new issue describing the feature
+3. Wait for feedback before implementing
+4. Once approved, follow the contribution workflow above
 
 We hope that this guide has been helpful in explaining how you can contribute to `StaticDataGen`. Thank you for your interest and involvement in our project!
 
