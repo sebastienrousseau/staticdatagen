@@ -63,8 +63,31 @@ path = "src/lib.rs"                         # Path to the library entry point
 # -----------------------------------------------------------------------------
 [features]
 # Optional features that can be enabled or disabled.
-default = []                                # No default features enabled
-async = []                                  # Placeholder for future asynchronous feature support
+default = ["full"]                          # Full features enabled by default
+
+# Full feature set - includes all optional features
+full = ["rss", "sitemap", "i18n", "server"]
+
+# Minimal feature set - core functionality only
+minimal = []
+
+# Async/await support (placeholder for future implementation)
+async = []
+
+# RSS feed generation support
+rss = []
+
+# Sitemap generation support
+sitemap = []
+
+# Internationalization support
+i18n = []
+
+# Built-in HTTP server support
+server = []
+
+# Serialization support (always enabled via serde dependency)
+serde = []
 
 # -----------------------------------------------------------------------------
 # Build Dependencies
