@@ -206,4 +206,40 @@ mod tests {
         std::fs::write(&file_path, "test").unwrap();
         assert!(validate_directory(&file_path, "test").is_err());
     }
+
+    #[test]
+    fn test_sanitize_path_only_dots_and_slashes() {
+        // Test line 85: path becomes empty after sanitization
+        let path = Path::new("../../../");
+        let result = sanitize_path(path);
+        assert!(result.is_err(), "Should return error for path that becomes empty");
+    }
+
+    #[test]
+    fn test_sanitize_path_only_dots() {
+        // Test line 85: path with only dot components
+        let path = Path::new("./././.");
+        let result = sanitize_path(path);
+        assert!(result.is_err(), "Should return error for dots-only path");
+    }
+
+    #[test]
+    fn test_sanitize_path_with_unicode() {
+        // Test path with unicode characters that get filtered
+        let path = Path::new("content/日本語/test.md");
+        let result = sanitize_path(path).unwrap();
+        // Unicode chars are filtered out, leaving "content//test.md" which becomes "content/test.md"
+        assert!(result.to_str().unwrap().contains("content"));
+        assert!(result.to_str().unwrap().contains("test.md"));
+    }
+
+    #[test]
+    fn test_validate_directory_error_message() {
+        // Test error messages for directory validation
+        let path = Path::new("definitely_not_existing_dir_12345");
+        let result = validate_directory(path, "content");
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("content"), "Error should mention purpose");
+    }
 }

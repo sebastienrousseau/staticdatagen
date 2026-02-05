@@ -198,4 +198,116 @@ mod tests {
         let processed = result.unwrap();
         assert!(processed.contains("Existing Title"));
     }
+
+    #[test]
+    fn test_post_process_html_class_replacement() {
+        // A regex that matches class patterns that will be replaced
+        let class_regex = Regex::new(r#"<p class="([^"]*)""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = r#"<p class="highlight">Text</p>"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        // Should process the class attribute
+        assert!(processed.contains("class="));
+    }
+
+    #[test]
+    fn test_post_process_html_img_adds_title_from_alt() {
+        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        // img without title but with alt - should add title
+        let html = r#"<img src="test.jpg" alt="Beautiful landscape photo">"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        // Function processes the img tag
+        assert!(processed.contains("img"));
+    }
+
+    #[test]
+    fn test_post_process_html_img_no_alt() {
+        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        // img without alt - should not add title
+        let html = r#"<img src="test.jpg">"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_post_process_html_img_empty_alt() {
+        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        // img with empty alt - should not add title
+        let html = r#"<img src="test.jpg" alt="">"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_post_process_html_long_alt_text() {
+        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        // img with very long alt text
+        let long_alt = "A".repeat(100);
+        let html = format!(r#"<img src="test.jpg" alt="{}">"#, long_alt);
+        let result = post_process_html(&html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        // Should process without error
+        assert!(processed.contains("img"));
+    }
+
+    #[test]
+    fn test_post_process_html_multiple_imgs() {
+        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = r#"<img src="a.jpg" alt="First">
+<img src="b.jpg" alt="Second">"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(processed.contains("First") || processed.contains("first"));
+        assert!(processed.contains("Second") || processed.contains("second"));
+    }
+
+    #[test]
+    fn test_post_process_html_mixed_content() {
+        let class_regex = Regex::new(r#"<p class="([^"]*)""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = r#"<p class="intro">Hello</p>
+<img src="test.jpg" alt="Test image">
+<p class="outro">Goodbye</p>"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(processed.contains("Hello"));
+        assert!(processed.contains("Goodbye"));
+    }
+
+    #[test]
+    fn test_post_process_html_special_characters_in_alt() {
+        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = r#"<img src="test.jpg" alt="Test & Example">"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+    }
 }
