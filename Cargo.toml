@@ -78,7 +78,7 @@ version_check = "0.9.5"                       # Ensures that a compatible Rust v
 # -----------------------------------------------------------------------------
 [dev-dependencies]
 # Dependencies required for testing and development.
-criterion = "0.5.1"                           # Benchmarking library to test performance
+criterion = "0.8.2"                           # Benchmarking library to test performance
 
 # -----------------------------------------------------------------------------
 # Dependencies
