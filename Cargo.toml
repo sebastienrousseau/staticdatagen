@@ -125,7 +125,7 @@ vrd = "0.0.8"
 
 # XML processing
 quick-xml = "0.37"
-xml-rs = "0.8"
+xml-rs = "1.0"
 
 # CNAME dependencies
 idna = "1.0.3"
