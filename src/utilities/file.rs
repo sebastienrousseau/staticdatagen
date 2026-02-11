@@ -6,6 +6,9 @@ use log::warn;
 use quick_xml::escape::escape;
 use std::{fs, io, path::Path};
 
+/// Maximum file size in bytes (10 MiB).
+const MAX_FILE_SIZE: u64 = 10 * 1024 * 1024;
+
 /// Reads all files in a directory specified by the given path and returns a vector of FileData.
 ///
 /// Each file is represented as a `FileData` struct containing the name and content of the file.
@@ -28,6 +31,16 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
                     path.file_name()?.to_string_lossy().to_string();
                 if file_name == ".DS_Store" {
                     return None;
+                }
+                // Check file size before reading to prevent memory exhaustion
+                if let Ok(metadata) = fs::metadata(&path) {
+                    if metadata.len() > MAX_FILE_SIZE {
+                        warn!(
+                            "Skipping oversized file {:?} ({} bytes, limit {})",
+                            path, metadata.len(), MAX_FILE_SIZE
+                        );
+                        return None;
+                    }
                 }
                 let content = fs::read_to_string(&path)
                     .map_err(|e| {
@@ -178,6 +191,26 @@ mod tests {
             .find(|f| f.name == "manifest_file.txt")
             .unwrap();
         assert_eq!(file_data.manifest, "Manifest content test");
+
+        Ok(())
+    }
+
+    /// Tests that `add` skips files exceeding the size limit.
+    #[test]
+    fn test_add_skips_oversized_files() -> io::Result<()> {
+        let dir = tempdir()?;
+        let normal_path = dir.path().join("normal.txt");
+        let oversized_path = dir.path().join("oversized.txt");
+
+        File::create(&normal_path)?.write_all(b"Small content")?;
+        // Create a file just over 10 MiB
+        let oversized = vec![b'X'; (super::MAX_FILE_SIZE as usize) + 1];
+        File::create(&oversized_path)?.write_all(&oversized)?;
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].name, "normal.txt");
 
         Ok(())
     }

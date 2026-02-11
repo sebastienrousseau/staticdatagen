@@ -246,15 +246,35 @@ fn validate_language(lang: &str) -> String {
 
 /// Validates URLs to ensure they are well-formed and safe.
 fn validate_url(url: &str) -> String {
-    if url.starts_with("http://") || url.starts_with("https://") {
-        if url.contains('<') || url.contains('>') || url.contains('"') {
-            String::new()
-        } else {
-            url.to_string()
-        }
-    } else {
-        String::new()
+    // Reject non-HTTP(S) schemes
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return String::new();
     }
+
+    // Reject URLs with dangerous or invalid characters
+    let has_dangerous_chars = url.chars().any(|c| {
+        c == '<'
+            || c == '>'
+            || c == '"'
+            || c == '\''
+            || c == '\0'
+            || c.is_control()
+    });
+    if has_dangerous_chars {
+        return String::new();
+    }
+
+    // Reject URLs containing whitespace
+    if url.chars().any(|c| c.is_whitespace()) {
+        return String::new();
+    }
+
+    // Reject excessively long URLs
+    if url.len() > 2048 {
+        return String::new();
+    }
+
+    url.to_string()
 }
 
 /// Sanitizes text by removing control characters and limiting length.
@@ -682,5 +702,31 @@ mod tests {
             sanitize_text(input),
             "Text with controlcharactersandspaces."
         );
+    }
+
+    #[test]
+    fn test_validate_url_null_byte() {
+        assert!(validate_url("https://example.com/\0evil").is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_control_chars() {
+        assert!(validate_url("https://example.com/\npath").is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_whitespace() {
+        assert!(validate_url("https://example.com/path with spaces").is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_single_quote() {
+        assert!(validate_url("https://example.com/page'injection").is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_too_long() {
+        let long_url = format!("https://example.com/{}", "a".repeat(2048));
+        assert!(validate_url(&long_url).is_empty());
     }
 }

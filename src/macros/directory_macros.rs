@@ -19,6 +19,10 @@
 /// * `_dir` - The path to check/create (as a `std::path::Path`)
 /// * `_name` - A string literal representing the directory name for error messages
 ///
+/// # Returns
+///
+/// Returns a `Result<(), anyhow::Error>` indicating success or failure.
+///
 /// # Example
 ///
 /// ```rust
@@ -27,19 +31,13 @@
 /// use std::fs;
 ///
 /// let path = Path::new("logs");
-/// macro_check_directory!(path, "logs");
+/// macro_check_directory!(path, "logs").unwrap();
 ///
 /// // Ensure the directory is removed after the test
 /// if path.exists() {
 ///     fs::remove_dir_all(path).expect("Failed to remove logs directory");
 /// }
 /// ```
-///
-/// # Panics
-///
-/// This macro will panic if:
-/// - The path exists but is not a directory
-/// - The directory cannot be created
 #[macro_export]
 macro_rules! macro_check_directory {
     ($_dir:expr, $_name:expr) => {{
@@ -49,24 +47,27 @@ macro_rules! macro_check_directory {
 
         if directory.exists() {
             if !directory.is_dir() {
-                log::error!("❌ '{}' is not a directory.", name);
-                panic!("❌ '{}' is not a directory.", name);
+                log::error!("'{}' is not a directory.", name);
+                Err(anyhow::anyhow!("'{}' is not a directory.", name))
+            } else {
+                Ok(())
             }
         } else {
             match std::fs::create_dir_all(directory) {
                 Ok(_) => {
-                    log::info!("✓ Created directory: {}", name);
+                    log::info!("Created directory: {}", name);
+                    Ok(())
                 }
                 Err(e) => {
                     log::error!(
-                        "❌ Cannot create '{}' directory: {}",
+                        "Cannot create '{}' directory: {}",
                         name,
                         e
                     );
-                    panic!(
-                        "❌ Cannot create '{}' directory: {}",
+                    Err(anyhow::anyhow!(
+                        "Cannot create '{}' directory: {}",
                         name, e
-                    );
+                    ))
                 }
             }
         }
@@ -163,9 +164,20 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let test_path = temp_dir.path().join("test_dir");
 
-        macro_check_directory!(&test_path, "test_dir");
+        macro_check_directory!(&test_path, "test_dir").unwrap();
         assert!(test_path.exists());
         assert!(test_path.is_dir());
+    }
+
+    #[test]
+    fn test_macro_check_directory_not_a_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("a_file");
+        std::fs::write(&file_path, "data").unwrap();
+
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&file_path, "a_file");
+        assert!(result.is_err());
     }
 
     #[test]
