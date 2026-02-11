@@ -31,6 +31,7 @@
 //! ```
 
 use crate::models::data::NewsData;
+use log::warn;
 use std::collections::HashMap;
 use time::{format_description, OffsetDateTime};
 use xml::writer::events::XmlEvent;
@@ -190,7 +191,7 @@ fn format_publication_date(input: &str) -> String {
             .format(&format_description::well_known::Rfc3339)
             .unwrap_or_default(),
         Err(e) => {
-            eprintln!("Parsing failed: {}. Using fallback.", e);
+            warn!("Parsing failed: {}. Using fallback.", e);
             OffsetDateTime::now_utc()
                 .format(&format_description::well_known::Rfc3339)
                 .unwrap_or_default()

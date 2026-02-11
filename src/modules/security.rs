@@ -4,12 +4,13 @@
 //! Security.txt Generation Module
 //!
 //! This module handles the creation and generation of security.txt files according to
-//! RFC 9116 (https://www.rfc-editor.org/rfc/rfc9116.html). The security.txt file
+//! RFC 9116 (<https://www.rfc-editor.org/rfc/rfc9116.html>). The security.txt file
 //! helps security researchers report security vulnerabilities by providing standard
 //! contact and policy information.
 
 use crate::models::data::SecurityData;
 use dtt::datetime::DateTime;
+use log::debug;
 use std::collections::HashMap;
 
 /// Creates a SecurityData object from metadata.
@@ -89,7 +90,7 @@ pub fn create_security_data(
 /// * `String` - The generated security.txt content
 pub fn generate_security_content(data: &SecurityData) -> String {
     if data.contact.is_empty() {
-        println!("Contact field is empty, no content generated."); // Debug print
+        debug!("Contact field is empty, no content generated.");
         return String::new();
     }
 
@@ -129,7 +130,7 @@ pub fn generate_security_content(data: &SecurityData) -> String {
         content.push_str(&format!("Encryption: {}\n", data.encryption));
     }
 
-    println!("Generated security.txt content:\n{}", content); // Debug print
+    debug!("Generated security.txt content:\n{}", content);
     content
 }
 
@@ -179,7 +180,7 @@ fn sanitize_expires(date: &str) -> String {
         return String::new();
     }
 
-    println!("Attempting to parse date: {}", date);
+    debug!("Attempting to parse date: {}", date);
 
     // First try parsing as RFC 3339/ISO 8601
     let formatted = match DateTime::parse(date) {
@@ -199,7 +200,7 @@ fn sanitize_expires(date: &str) -> String {
         }
     };
 
-    println!("Formatted date: {}", formatted);
+    debug!("Formatted date: {}", formatted);
     formatted
 }
 

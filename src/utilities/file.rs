@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::models::data::FileData;
+use log::warn;
 use quick_xml::escape::escape;
 use std::{fs, io, path::Path};
 
@@ -30,7 +31,7 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
                 }
                 let content = fs::read_to_string(&path)
                     .map_err(|e| {
-                        eprintln!(
+                        warn!(
                             "Error reading file {:?}: {}",
                             path, e
                         );

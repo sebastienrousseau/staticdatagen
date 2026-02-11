@@ -467,11 +467,11 @@ fn print_section_headers(
     let file_name =
         dir_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
     let duration = start_time.elapsed();
-    println!("\n❯ Generating the `{}` directory content.\n", file_name);
+    info!("Generating the `{}` directory content.", file_name);
     for header in section_headers {
-        println!("{}", header);
+        info!("{}", header);
     }
-    println!("\n❯ Done in {} microseconds.\n", duration.as_micros());
+    info!("Done in {} microseconds.", duration.as_micros());
 
     debug!("Section headers printed for '{}'", dir_path.display());
     Ok(())

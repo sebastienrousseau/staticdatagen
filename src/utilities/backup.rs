@@ -66,6 +66,7 @@ mod tests {
     use super::*;
     use std::fs::{self, File};
     use std::io::{self, Write};
+    #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use std::path::Path;
     use tempfile::tempdir;
@@ -195,6 +196,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     /// Tests backup creation failure due to insufficient permissions
     fn test_backup_file_no_permission() -> io::Result<()> {
         let dir = tempdir()?;
@@ -289,6 +291,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     /// Tests backup creation with readonly source file
     fn test_backup_readonly_source() -> io::Result<()> {
         let (_dir, original_file_path) =
@@ -427,6 +430,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     /// Tests backup when destination already exists and is readonly
     fn test_backup_readonly_destination() -> io::Result<()> {
         let (_dir, original_file_path) =

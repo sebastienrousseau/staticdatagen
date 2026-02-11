@@ -7,6 +7,7 @@
     html_logo_url = "https://kura.pro/staticdatagen/images/logos/staticdatagen.svg",
     html_root_url = "https://docs.rs/staticdatagen"
 )]
+#![deny(missing_docs)]
 
 use std::error::Error as StdError;
 use std::io::ErrorKind;
@@ -86,7 +87,7 @@ pub use utilities::uuid::generate_unique_string;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// A crate-specific `Result` type that defaults to using the library's own
-/// [`Error`] variant. This reduces verbosity by eliminating repeated
+/// [`enum@Error`] variant. This reduces verbosity by eliminating repeated
 /// `std::result::Result<T, Error>` notation in function signatures.
 ///
 /// # Examples

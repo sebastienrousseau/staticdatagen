@@ -6,6 +6,7 @@
 //! This module provides various functions for working with directories,
 //! including creation, cleanup, file discovery, and path manipulation.
 
+use log::{debug, info};
 use regex::Regex;
 use std::{
     error::Error,
@@ -79,9 +80,9 @@ pub fn move_output_directory(
     site_name: &str,
     out_dir: &Path,
 ) -> io::Result<()> {
-    println!("❯ Moving output directory...");
-    eprintln!(
-        "DEBUG: site_name = '{}', out_dir = '{}'",
+    info!("Moving output directory...");
+    debug!(
+        "site_name = '{}', out_dir = '{}'",
         site_name,
         out_dir.display()
     );
@@ -89,24 +90,24 @@ pub fn move_output_directory(
     let public_dir = Path::new("public");
 
     if public_dir.exists() {
-        eprintln!(
-            "DEBUG: Removing existing public directory '{}'",
+        debug!(
+            "Removing existing public directory '{}'",
             public_dir.display()
         );
         fs::remove_dir_all(public_dir)?;
     }
 
     fs::create_dir(public_dir)?;
-    eprintln!(
-        "DEBUG: Created public directory '{}'",
+    debug!(
+        "Created public directory '{}'",
         public_dir.display()
     );
 
     let site_name = site_name.replace(' ', "_");
     let new_project_dir = public_dir.join(&site_name);
 
-    eprintln!(
-        "DEBUG: new_project_dir = '{}'",
+    debug!(
+        "new_project_dir = '{}'",
         new_project_dir.display()
     );
     fs::create_dir_all(&new_project_dir)?;
@@ -115,17 +116,17 @@ pub fn move_output_directory(
         io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
     })?;
 
-    eprintln!(
-        "DEBUG: out_dir_name = '{}'",
+    debug!(
+        "out_dir_name = '{}'",
         out_dir_name.to_string_lossy()
     );
 
     let target = new_project_dir.join(out_dir_name);
-    eprintln!("DEBUG: Target = '{}'", target.display());
+    debug!("Target = '{}'", target.display());
 
     fs::rename(out_dir, &target)?;
 
-    println!("  Done.\n");
+    info!("Done.");
 
     Ok(())
 }
@@ -183,11 +184,11 @@ pub fn cleanup_directory(
             continue;
         }
 
-        println!("\n❯ Cleaning up directories");
+        info!("Cleaning up directories");
 
         fs::remove_dir_all(directory)?;
 
-        println!("  Done.\n");
+        info!("Done.");
     }
 
     Ok(())

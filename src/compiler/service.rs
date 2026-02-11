@@ -8,6 +8,7 @@
 //! sitemaps, and various metadata files.
 
 use anyhow::{Context, Result};
+use log::{error, warn};
 use html_generator::{generate_html, HtmlConfig};
 use metadata_gen::extract_and_prepare_metadata;
 use rlg::{log_format::LogFormat, log_level::LogLevel};
@@ -266,7 +267,7 @@ fn generate_manifest_content(metadata: &HashMap<String, String>) -> String {
     ManifestConfig::from_metadata(metadata)
         .and_then(|config| ManifestGenerator::new(config).generate())
         .unwrap_or_else(|e| {
-            eprintln!("Error generating manifest: {}", e);
+            error!("Error generating manifest: {}", e);
             String::new()
         })
 }
@@ -289,7 +290,7 @@ fn generate_auxiliary_files(
     let news_sitemap_content = match news_sitemap_generator.generate_xml() {
         xml if !xml.is_empty() => xml,
         _ => {
-            eprintln!("Error generating news sitemap XML.");
+            warn!("Error generating news sitemap XML.");
             String::new()
         }
     };
@@ -308,14 +309,14 @@ fn generate_auxiliary_files(
             let humans: HashMap<String, String> = serde_json::from_str(humans)
                 .context("Failed to parse humans metadata")
                 .unwrap_or_else(|err| {
-                    eprintln!("Error parsing humans metadata: {}", err);
+                    error!("Error parsing humans metadata: {}", err);
                     HashMap::new()
                 });
 
             match HumansConfig::from_metadata(&humans) {
                 Ok(humans_config) => HumansGenerator::new(humans_config).generate(),
                 Err(err) => {
-                    eprintln!("Error creating HumansConfig: {}", err);
+                    error!("Error creating HumansConfig: {}", err);
                     String::new()
                 }
             }

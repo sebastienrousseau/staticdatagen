@@ -71,6 +71,7 @@
 
 use crate::models::data::{FileData, PageData, TagsData};
 use crate::utilities::directory::to_title_case;
+use log::debug;
 use std::{
     collections::HashMap,
     fs,
@@ -113,7 +114,7 @@ pub fn generate_tags(
         .collect();
 
     if target_tags.is_empty() {
-        println!("No tags found in metadata.");
+        debug!("No tags found in metadata.");
         return keywords_data_map;
     }
 
