@@ -9,7 +9,8 @@
 //! Each benchmark function measures performance of a specific feature, preventing
 //! compiler optimizations from skewing the timings by using [`criterion::black_box`].
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use std::hint::black_box;
 use std::collections::HashMap;
 use std::path::Path;
 

@@ -332,13 +332,13 @@ pub fn extract_front_matter(content: &str) -> &str {
     content
 }
 
-/// Creates and returns a `comrak::ComrakOptions` instance with custom settings.
+/// Creates and returns a `comrak::Options` instance with custom settings.
 ///
 /// # Returns
 ///
-/// A `comrak::ComrakOptions` instance with non-standard Markdown features enabled.
-pub fn create_comrak_options() -> comrak::ComrakOptions<'static> {
-    let mut options = comrak::ComrakOptions::default();
+/// A `comrak::Options` instance with non-standard Markdown features enabled.
+pub fn create_comrak_options() -> comrak::Options<'static> {
+    let mut options = comrak::Options::default();
     options.extension.autolink = true;
     options.extension.description_lists = true;
     options.extension.footnotes = true;
@@ -351,7 +351,7 @@ pub fn create_comrak_options() -> comrak::ComrakOptions<'static> {
     options.parse.smart = true;
     options.render.github_pre_lang = true;
     options.render.hardbreaks = false;
-    options.render.unsafe_ = true;
+    options.render.r#unsafe = true;
     options
 }
 
@@ -663,7 +663,7 @@ mod tests {
         assert!(options.parse.smart);
         assert!(options.render.github_pre_lang);
         assert!(!options.render.hardbreaks);
-        assert!(options.render.unsafe_);
+        assert!(options.render.r#unsafe);
     }
 
     /// Tests updating class attributes in a line containing an <img> tag.
