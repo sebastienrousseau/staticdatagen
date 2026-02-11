@@ -3268,4 +3268,322 @@ mod tests {
             assert!(icon.validate().is_ok(), "MIME type {} should be valid", mime_type);
         }
     }
+
+    #[test]
+    fn test_news_data_new() {
+        let data = NewsData {
+            news_genres: "Blog".to_string(),
+            news_keywords: "rust".to_string(),
+            news_language: "en".to_string(),
+            news_image_loc: "https://example.com/img.jpg".to_string(),
+            news_loc: "https://example.com/article".to_string(),
+            news_publication_date: "2024-01-01T00:00:00Z".to_string(),
+            news_publication_name: "Test".to_string(),
+            news_title: "Title".to_string(),
+        };
+        let result = NewsData::new(data);
+        assert_eq!(result.news_title, "Title");
+        assert_eq!(result.news_genres, "Blog");
+    }
+
+    #[test]
+    fn test_humans_data_is_minimal() {
+        let minimal = HumansData::new("Author".to_string(), "Thanks".to_string());
+        assert!(minimal.is_minimal());
+
+        let mut non_minimal = HumansData::new("Author".to_string(), "Thanks".to_string());
+        non_minimal.author_website = "https://example.com".to_string();
+        assert!(!non_minimal.is_minimal());
+
+        let mut non_minimal2 = HumansData::new("Author".to_string(), "Thanks".to_string());
+        non_minimal2.site_standards = "HTML5".to_string();
+        assert!(!non_minimal2.is_minimal());
+    }
+
+    #[test]
+    fn test_humans_data_to_hashmap() {
+        let mut humans = HumansData::new("Author".to_string(), "Thanks".to_string());
+        humans.author_location = "NYC".to_string();
+        humans.author_website = "https://example.com".to_string();
+        humans.author_twitter = "@test".to_string();
+
+        let map = humans.to_hashmap();
+        assert_eq!(map.get("author").unwrap(), "Author");
+        assert_eq!(map.get("thanks").unwrap(), "Thanks");
+        assert_eq!(map.get("author_location").unwrap(), "NYC");
+        assert_eq!(map.get("author_website").unwrap(), "https://example.com");
+        assert_eq!(map.get("author_twitter").unwrap(), "@test");
+
+        // Test without optional fields
+        let minimal = HumansData::new("A".to_string(), "B".to_string());
+        let map2 = minimal.to_hashmap();
+        assert!(map2.get("author_website").is_none());
+        assert!(map2.get("author_twitter").is_none());
+    }
+
+    #[test]
+    fn test_meta_tag_groups_get_all_keys() {
+        let mut groups = MetaTagGroups::new();
+        groups.apple = "apple_val".to_string();
+        groups.primary = "primary_val".to_string();
+        groups.og = "og_val".to_string();
+        groups.ms = "ms_val".to_string();
+        groups.twitter = "twitter_val".to_string();
+
+        assert_eq!(groups.get("apple").unwrap(), "apple_val");
+        assert_eq!(groups.get("primary").unwrap(), "primary_val");
+        assert_eq!(groups.get("og").unwrap(), "og_val");
+        assert_eq!(groups.get("ms").unwrap(), "ms_val");
+        assert_eq!(groups.get("twitter").unwrap(), "twitter_val");
+        assert!(groups.get("invalid").is_none());
+    }
+
+    #[test]
+    fn test_manifest_data_invalid_orientation() {
+        let mut manifest = ManifestData::new();
+        manifest.name = "App".to_string();
+        manifest.orientation = "diagonal".to_string();
+        assert!(matches!(
+            manifest.validate(),
+            Err(DataError::InvalidMetadata(_))
+        ));
+    }
+
+    #[test]
+    fn test_manifest_data_valid_orientations() {
+        let valid = [
+            "any", "natural", "landscape", "portrait",
+            "portrait-primary", "portrait-secondary",
+            "landscape-primary", "landscape-secondary",
+        ];
+        for orientation in valid {
+            let mut manifest = ManifestData::new();
+            manifest.name = "App".to_string();
+            manifest.orientation = orientation.to_string();
+            assert!(manifest.validate().is_ok(), "Orientation '{}' should be valid", orientation);
+        }
+    }
+
+    #[test]
+    fn test_manifest_data_invalid_scope() {
+        let mut manifest = ManifestData::new();
+        manifest.name = "App".to_string();
+        manifest.scope = "not-starting-with-slash".to_string();
+        assert!(matches!(
+            manifest.validate(),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_manifest_data_invalid_start_url() {
+        let mut manifest = ManifestData::new();
+        manifest.name = "App".to_string();
+        manifest.start_url = "not-starting-with-slash".to_string();
+        assert!(matches!(
+            manifest.validate(),
+            Err(DataError::InvalidUrl(_))
+        ));
+    }
+
+    #[test]
+    fn test_manifest_data_theme_color() {
+        let mut manifest = ManifestData::new();
+        manifest.name = "App".to_string();
+        manifest.theme_color = "#ffffff".to_string();
+        assert!(manifest.validate().is_ok());
+
+        manifest.theme_color = "not-a-color".to_string();
+        assert!(manifest.validate().is_err());
+    }
+
+    #[test]
+    fn test_news_data_valid_genres() {
+        let mut news = NewsData::create_default();
+        news.news_genres = "Blog, OpEd, Satire".to_string();
+        news.news_language = "en".to_string();
+        news.news_publication_date = "2024-01-01T00:00:00Z".to_string();
+        news.news_publication_name = "Test".to_string();
+        news.news_title = "Title".to_string();
+        assert!(news.validate().is_ok());
+    }
+
+    #[test]
+    fn test_news_data_invalid_genre() {
+        let mut news = NewsData::create_default();
+        news.news_genres = "InvalidGenre".to_string();
+        news.news_language = "en".to_string();
+        news.news_publication_date = "2024-01-01T00:00:00Z".to_string();
+        news.news_publication_name = "Test".to_string();
+        news.news_title = "Title".to_string();
+        assert!(matches!(
+            news.validate(),
+            Err(DataError::InvalidMetadata(_))
+        ));
+    }
+
+    #[test]
+    fn test_news_data_title_too_long() {
+        let mut news = NewsData::create_default();
+        news.news_language = "en".to_string();
+        news.news_publication_date = "2024-01-01T00:00:00Z".to_string();
+        news.news_publication_name = "Test".to_string();
+        news.news_title = "A".repeat(201);
+        assert!(news.validate().is_err());
+    }
+
+    #[test]
+    fn test_news_data_url_validation() {
+        let mut news = NewsData::create_default();
+        news.news_language = "en".to_string();
+        news.news_publication_date = "2024-01-01T00:00:00Z".to_string();
+        news.news_publication_name = "Test".to_string();
+        news.news_title = "Title".to_string();
+        news.news_image_loc = "https://example.com/img.jpg".to_string();
+        news.news_loc = "https://example.com/article".to_string();
+        assert!(news.validate().is_ok());
+    }
+
+    #[test]
+    fn test_rss_data_valid_ttl() {
+        let mut rss = RssData::new();
+        rss.set("title", "Test".to_string());
+        rss.set("link", "https://example.com".to_string());
+        rss.set("description", "Desc".to_string());
+        rss.set("ttl", "60".to_string());
+        assert!(rss.validate().is_ok());
+    }
+
+    #[test]
+    fn test_rss_data_invalid_ttl() {
+        let mut rss = RssData::new();
+        rss.set("title", "Test".to_string());
+        rss.set("link", "https://example.com".to_string());
+        rss.set("description", "Desc".to_string());
+        rss.set("ttl", "not-a-number".to_string());
+        assert!(matches!(
+            rss.validate(),
+            Err(DataError::InvalidMetadata(_))
+        ));
+    }
+
+    #[test]
+    fn test_rss_data_valid_language() {
+        let mut rss = RssData::new();
+        rss.set("title", "Test".to_string());
+        rss.set("link", "https://example.com".to_string());
+        rss.set("description", "Desc".to_string());
+        rss.set("language", "en".to_string());
+        assert!(rss.validate().is_ok());
+    }
+
+    #[test]
+    fn test_rss_data_invalid_language() {
+        let mut rss = RssData::new();
+        rss.set("title", "Test".to_string());
+        rss.set("link", "https://example.com".to_string());
+        rss.set("description", "Desc".to_string());
+        rss.set("language", "invalid-lang-code-too-long".to_string());
+        assert!(rss.validate().is_err());
+    }
+
+    #[test]
+    fn test_file_data_validate_with_manifest() {
+        let mut file = FileData::new("test.md".to_string(), "content".to_string());
+        file.manifest = r#"{"name":"test"}"#.to_string();
+        assert!(file.validate().is_ok());
+
+        let mut file2 = FileData::new("test.md".to_string(), "content".to_string());
+        file2.manifest = "not-valid-json".to_string();
+        assert!(file2.validate().is_err());
+    }
+
+    #[test]
+    fn test_file_data_validate_with_cname() {
+        let mut file = FileData::new("test.md".to_string(), "content".to_string());
+        file.cname = "example.com".to_string();
+        assert!(file.validate().is_ok());
+    }
+
+    #[test]
+    fn test_news_visit_options_invalid_genre_value() {
+        let opts = NewsVisitOptions::new(
+            "https://example.com",
+            "InvalidGenre",
+            "keywords",
+            "en",
+            "2024-01-01T00:00:00Z",
+            "Pub",
+            "Title",
+        );
+        assert!(matches!(
+            opts.validate(),
+            Err(DataError::InvalidMetadata(_))
+        ));
+    }
+
+    #[test]
+    fn test_news_visit_options_missing_title_value() {
+        let opts = NewsVisitOptions::new(
+            "https://example.com",
+            "",
+            "keywords",
+            "en",
+            "2024-01-01T00:00:00Z",
+            "Pub",
+            "",
+        );
+        assert!(matches!(
+            opts.validate(),
+            Err(DataError::MissingField(ref f)) if f == "news_title"
+        ));
+    }
+
+    #[test]
+    fn test_security_data_validate_valid_mailto() {
+        let mut data = SecurityData::new(
+            vec!["mailto:security@example.com".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.preferred_languages = "en".to_string();
+        assert!(data.validate().is_ok());
+    }
+
+    #[test]
+    fn test_security_data_field_length_limits() {
+        let mut data = SecurityData::new(
+            vec!["https://example.com/contact".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data.acknowledgments = "A".repeat(2049);
+        assert!(data.validate().is_err());
+
+        let mut data2 = SecurityData::new(
+            vec!["https://example.com/contact".to_string()],
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        data2.policy = "A".repeat(2049);
+        assert!(data2.validate().is_err());
+    }
+
+    #[test]
+    fn test_humans_data_field_length_edge_cases() {
+        let mut humans = HumansData::new("Author".to_string(), "Thanks".to_string());
+        humans.site_last_updated = "2024-01-01T00:00:00Z".to_string();
+        assert!(humans.validate().is_ok());
+
+        // Test field length limits on various fields
+        let humans2 = HumansData::new("A".repeat(201), "Thanks".to_string());
+        assert!(humans2.validate().is_err());
+
+        let humans3 = HumansData::new("Author".to_string(), "A".repeat(1001));
+        assert!(humans3.validate().is_err());
+    }
+
+    #[test]
+    fn test_meta_tag_groups_validate_with_twitter() {
+        let mut groups = MetaTagGroups::new();
+        groups.twitter = r#"<meta name="twitter:card" content="summary">"#.to_string();
+        assert!(groups.validate().is_ok());
+    }
 }
