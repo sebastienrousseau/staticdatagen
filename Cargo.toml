@@ -94,7 +94,7 @@ rlg = "0.0.6"
 
 # CLI and configuration
 clap = "4.5"
-toml = "0.8"
+toml = "1.0"
 
 # Data processing
 serde = { version = "1.0", features = ["derive"] }
