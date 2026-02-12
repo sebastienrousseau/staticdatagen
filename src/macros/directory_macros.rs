@@ -66,7 +66,8 @@ macro_rules! macro_check_directory {
                     );
                     Err(anyhow::anyhow!(
                         "Cannot create '{}' directory: {}",
-                        name, e
+                        name,
+                        e
                     ))
                 }
             }
@@ -263,5 +264,18 @@ mod tests {
 
         assert!(macro_cleanup_directories!(&test_path).is_ok());
         assert!(!test_path.exists());
+    }
+
+    #[test]
+    fn test_macro_check_directory_create_fails() {
+        let temp_dir = TempDir::new().unwrap();
+        // Create a file that blocks directory creation at a path component
+        let blocker = temp_dir.path().join("blocker_file");
+        std::fs::write(&blocker, "data").unwrap();
+        // Try to create a directory inside the file — create_dir_all will fail
+        let nested = blocker.join("subdir");
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&nested, "blocked");
+        assert!(result.is_err());
     }
 }

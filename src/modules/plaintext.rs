@@ -365,7 +365,8 @@ mod tests {
 
     #[test]
     fn test_multiple_paragraphs() -> Result<()> {
-        let input = "# First\n\nParagraph one.\n\n# Second\n\nParagraph two.";
+        let input =
+            "# First\n\nParagraph one.\n\n# Second\n\nParagraph two.";
         let (content, ..) =
             generate_plain_text(input, "", "", "", "", "")?;
 
@@ -385,7 +386,10 @@ mod tests {
             generate_plain_text(input, "", "", "", "", "")?;
 
         // Content should be joined with space
-        assert!(content.contains("Line one") || content.contains("Line two"));
+        assert!(
+            content.contains("Line one")
+                || content.contains("Line two")
+        );
         Ok(())
     }
 
@@ -422,25 +426,33 @@ mod tests {
 
     #[test]
     fn test_config_custom() {
-        let mut config = PlainTextConfig::default();
-        config.max_line_length = 120;
-        config.list_bullet = "- ".to_string();
-        config.preserve_empty_lines = false;
-        config.ascii_only = true;
-        let _ = config.replacements.insert("foo".to_string(), "bar".to_string());
+        let config = PlainTextConfig {
+            max_line_length: 120,
+            list_bullet: "- ".to_string(),
+            preserve_empty_lines: false,
+            ascii_only: true,
+            replacements: HashMap::from([(
+                "foo".to_string(),
+                "bar".to_string(),
+            )]),
+        };
 
         assert_eq!(config.max_line_length, 120);
         assert_eq!(config.list_bullet, "- ");
         assert!(!config.preserve_empty_lines);
         assert!(config.ascii_only);
-        assert_eq!(config.replacements.get("foo"), Some(&"bar".to_string()));
+        assert_eq!(
+            config.replacements.get("foo"),
+            Some(&"bar".to_string())
+        );
     }
 
     #[test]
     fn test_paragraph_separation() -> Result<()> {
         // Test line 192: when starting new paragraph after existing content with buffer
         let input = "# Heading One\n\nContent here.\n\n# Heading Two\n\nMore content.";
-        let (content, ..) = generate_plain_text(input, "", "", "", "", "")?;
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
 
         // Both headings and paragraphs should be present with separation
         assert!(content.contains("Heading One"));
@@ -457,7 +469,8 @@ mod tests {
         // Test line 230: buffer has content at end that needs flushing
         // Using emphasis which adds inline text without creating new paragraphs
         let input = "Just *some* inline text";
-        let (content, ..) = generate_plain_text(input, "", "", "", "", "")?;
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
 
         assert!(content.contains("Just"));
         assert!(content.contains("some"));
@@ -469,7 +482,8 @@ mod tests {
     fn test_consecutive_headings() -> Result<()> {
         // Test consecutive headings to trigger paragraph separator
         let input = "# First\n\n# Second\n\n# Third";
-        let (content, ..) = generate_plain_text(input, "", "", "", "", "")?;
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
 
         assert!(content.contains("First"));
         assert!(content.contains("Second"));
@@ -507,9 +521,8 @@ mod tests {
 
     #[test]
     fn test_plain_text_error_config() {
-        let err = PlainTextError::ConfigError(
-            "invalid setting".to_string(),
-        );
+        let err =
+            PlainTextError::ConfigError("invalid setting".to_string());
         assert_eq!(
             format!("{}", err),
             "Invalid configuration: invalid setting"

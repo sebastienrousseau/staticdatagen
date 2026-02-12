@@ -28,7 +28,8 @@ This is the main content of the test page.
 - Feature 3
 "#;
 
-    let file = FileData::new("test-page.md".to_string(), content.to_string());
+    let file =
+        FileData::new("test-page.md".to_string(), content.to_string());
 
     // Verify basic properties
     assert_eq!(file.name, "test-page.md");
@@ -41,11 +42,20 @@ This is the main content of the test page.
 fn test_metadata_extraction_patterns() {
     // Create metadata map
     let mut metadata: HashMap<String, String> = HashMap::new();
-    let _ = metadata.insert("title".to_string(), "Test Title".to_string());
-    let _ = metadata.insert("description".to_string(), "Test Description".to_string());
-    let _ = metadata.insert("author".to_string(), "Test Author".to_string());
-    let _ = metadata.insert("date".to_string(), "2026-02-05".to_string());
-    let _ = metadata.insert("keywords".to_string(), "test, integration, rust".to_string());
+    let _ =
+        metadata.insert("title".to_string(), "Test Title".to_string());
+    let _ = metadata.insert(
+        "description".to_string(),
+        "Test Description".to_string(),
+    );
+    let _ = metadata
+        .insert("author".to_string(), "Test Author".to_string());
+    let _ =
+        metadata.insert("date".to_string(), "2026-02-05".to_string());
+    let _ = metadata.insert(
+        "keywords".to_string(),
+        "test, integration, rust".to_string(),
+    );
 
     // Verify metadata access
     assert_eq!(metadata.get("title"), Some(&"Test Title".to_string()));
@@ -61,7 +71,7 @@ fn test_metadata_extraction_patterns() {
 #[test]
 fn test_content_processing_workflow() {
     // Simulate processing multiple content files
-    let files = vec![
+    let files = [
         ("index.md", "# Home\n\nWelcome to the site."),
         ("about.md", "# About\n\nLearn about us."),
         ("contact.md", "# Contact\n\nGet in touch."),
@@ -77,7 +87,9 @@ fn test_content_processing_workflow() {
 
     let file_data: Vec<FileData> = files
         .iter()
-        .map(|(name, content)| FileData::new(name.to_string(), content.to_string()))
+        .map(|(name, content)| {
+            FileData::new(name.to_string(), content.to_string())
+        })
         .collect();
 
     // Verify all files are created

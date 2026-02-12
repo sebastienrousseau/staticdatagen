@@ -205,7 +205,7 @@ fn technical_stack_example() -> Result<(), Box<dyn std::error::Error>> {
     .into();
 
     humans_data.site_standards =
-        concat!("W3C HTML5, CSS3, ECMAScript 2021, WAI-ARIA").into();
+        "W3C HTML5, CSS3, ECMAScript 2021, WAI-ARIA".into();
 
     let config =
         HumansConfig::from_metadata(&humans_data.to_hashmap())?;

@@ -98,28 +98,19 @@ pub fn move_output_directory(
     }
 
     fs::create_dir(public_dir)?;
-    debug!(
-        "Created public directory '{}'",
-        public_dir.display()
-    );
+    debug!("Created public directory '{}'", public_dir.display());
 
     let site_name = site_name.replace(' ', "_");
     let new_project_dir = public_dir.join(&site_name);
 
-    debug!(
-        "new_project_dir = '{}'",
-        new_project_dir.display()
-    );
+    debug!("new_project_dir = '{}'", new_project_dir.display());
     fs::create_dir_all(&new_project_dir)?;
 
-    let out_dir_name = out_dir.file_name().ok_or_else(|| {
-        io::Error::other("Invalid out_dir")
-    })?;
+    let out_dir_name = out_dir
+        .file_name()
+        .ok_or_else(|| io::Error::other("Invalid out_dir"))?;
 
-    debug!(
-        "out_dir_name = '{}'",
-        out_dir_name.to_string_lossy()
-    );
+    debug!("out_dir_name = '{}'", out_dir_name.to_string_lossy());
 
     let target = new_project_dir.join(out_dir_name);
     debug!("Target = '{}'", target.display());
@@ -465,7 +456,9 @@ mod tests {
         use uuid::Uuid;
 
         // Use UUID for truly unique names to avoid CI conflicts
-        let unique_id = Uuid::new_v4().to_string().replace('-', "")[..8].to_string();
+        let unique_id = Uuid::new_v4().to_string().replace('-', "")
+            [..8]
+            .to_string();
         let out_dir_name = format!("test_out_{}", unique_id);
         let site_name = format!("site_{}", unique_id);
         let out_dir = Path::new(&out_dir_name);
@@ -485,7 +478,8 @@ mod tests {
 
         // Cleanup first, then assert (to avoid leaving state on failure)
         let public_site_dir = public_dir.join(&site_name);
-        let dir_exists = public_site_dir.exists() && public_site_dir.is_dir();
+        let dir_exists =
+            public_site_dir.exists() && public_site_dir.is_dir();
         let _ = remove_dir_all_with_retry(public_dir, 3);
         let _ = remove_dir_all_with_retry(out_dir, 3);
 
@@ -919,5 +913,60 @@ mod tests {
         // Test line 116: out_dir.file_name() returns None for "/"
         let result = move_output_directory("test", Path::new("/"));
         assert!(result.is_err());
+    }
+
+    /// Tests moving output directory when public/ already exists (covers the remove branch).
+    #[test]
+    fn test_move_output_directory_with_existing_public() {
+        use uuid::Uuid;
+
+        let unique_id = Uuid::new_v4().to_string().replace('-', "")
+            [..8]
+            .to_string();
+        let out_dir_name = format!("test_out_pub_{}", unique_id);
+        let site_name = format!("site_pub_{}", unique_id);
+        let out_dir = Path::new(&out_dir_name);
+        let public_dir = Path::new("public");
+
+        // Clean up first
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
+
+        // Create a pre-existing public directory with some content
+        fs::create_dir_all(public_dir.join("old_site"))
+            .expect("Failed to create pre-existing public dir");
+        fs::write(
+            public_dir.join("old_site").join("old_file.txt"),
+            "old data",
+        )
+        .expect("Failed to write old file");
+
+        // Create the output directory
+        fs::create_dir_all(out_dir)
+            .expect("Failed to create test output directory");
+        fs::write(out_dir.join("dummy.txt"), b"test")
+            .expect("Failed to write dummy file");
+
+        let result = move_output_directory(&site_name, out_dir);
+
+        // Cleanup first, then assert
+        let public_site_dir = public_dir.join(&site_name);
+        let dir_exists =
+            public_site_dir.exists() && public_site_dir.is_dir();
+        let old_gone = !public_dir.join("old_site").exists();
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
+
+        assert!(
+            result.is_ok(),
+            "move_output_directory should succeed: {:?}",
+            result
+        );
+        assert!(
+            dir_exists,
+            "public/{} should exist after moving",
+            site_name
+        );
+        assert!(old_gone, "Old public/old_site should be removed");
     }
 }

@@ -718,7 +718,6 @@ mod tests {
             orientation: "portrait".to_string(),
             scope: "/".to_string(),
             icons: vec![],
-            ..Default::default()
         };
 
         // Add an icon
@@ -754,7 +753,6 @@ mod tests {
             orientation: "".to_string(),
             scope: "".to_string(),
             icons: vec![],
-            ..Default::default()
         };
 
         let result = manifest(&options);
@@ -812,10 +810,8 @@ mod tests {
     #[test]
     fn test_to_io_error() {
         // Create an XML error and convert it
-        let xml_err = xml::writer::Error::Io(io::Error::new(
-            io::ErrorKind::Other,
-            "test error",
-        ));
+        let xml_err =
+            xml::writer::Error::Io(io::Error::other("test error"));
         let io_err = to_io_error(xml_err);
         assert_eq!(io_err.kind(), io::ErrorKind::Other);
     }
@@ -876,7 +872,8 @@ mod tests {
             lastmod: "2024-01-01".to_string(),
         };
 
-        let dir = PathBuf::from("/nonexistent/path/that/does/not/exist");
+        let dir =
+            PathBuf::from("/nonexistent/path/that/does/not/exist");
         let result = sitemap(options, &dir);
         assert!(result.is_err());
     }
@@ -915,7 +912,8 @@ mod tests {
         use std::fs;
         use url::Url;
 
-        let temp_dir = std::env::temp_dir().join("sitemap_test_subdirs");
+        let temp_dir =
+            std::env::temp_dir().join("sitemap_test_subdirs");
         let subdir = temp_dir.join("subdir");
         let _ = fs::create_dir_all(&subdir);
 
@@ -973,7 +971,6 @@ mod tests {
                     i
                 },
             ],
-            ..Default::default()
         };
 
         let result = manifest(&options).unwrap();
@@ -1000,7 +997,6 @@ mod tests {
                 "/icon.svg".to_string(),
                 "any".to_string(),
             )],
-            ..Default::default()
         };
 
         let result = manifest(&options).unwrap();

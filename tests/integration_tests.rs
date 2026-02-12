@@ -7,8 +7,12 @@
 //! ensuring that components work together correctly.
 
 use staticdatagen::generators::cname::{CnameConfig, CnameGenerator};
-use staticdatagen::generators::humans::{HumansConfig, HumansGenerator};
-use staticdatagen::generators::manifest::{ManifestConfig, ManifestGenerator};
+use staticdatagen::generators::humans::{
+    HumansConfig, HumansGenerator,
+};
+use staticdatagen::generators::manifest::{
+    ManifestConfig, ManifestGenerator,
+};
 use staticdatagen::models::data::{FileData, SecurityData};
 use staticdatagen::modules::navigation::NavigationGenerator;
 use staticdatagen::utilities::uuid::generate_unique_string;
@@ -34,27 +38,39 @@ fn test_cname_generation_workflow() {
 fn test_humans_txt_generation_workflow() {
     // Create configuration from metadata
     let mut metadata = HashMap::new();
-    let _ = metadata.insert("author".to_string(), "Test Author".to_string());
+    let _ = metadata
+        .insert("author".to_string(), "Test Author".to_string());
     let _ = metadata.insert(
         "author_website".to_string(),
         "https://example.com".to_string(),
     );
-    let _ = metadata.insert("author_twitter".to_string(), "@testauthor".to_string());
-    let _ = metadata.insert("author_location".to_string(), "Test City".to_string());
-    let _ = metadata.insert("site_components".to_string(), "Rust, HTML".to_string());
+    let _ = metadata.insert(
+        "author_twitter".to_string(),
+        "@testauthor".to_string(),
+    );
+    let _ = metadata
+        .insert("author_location".to_string(), "Test City".to_string());
+    let _ = metadata.insert(
+        "site_components".to_string(),
+        "Rust, HTML".to_string(),
+    );
     let _ = metadata.insert(
         "site_last_updated".to_string(),
         "2026-01-01".to_string(),
     );
-    let _ = metadata.insert("site_standards".to_string(), "HTML5, CSS3".to_string());
+    let _ = metadata.insert(
+        "site_standards".to_string(),
+        "HTML5, CSS3".to_string(),
+    );
     let _ = metadata.insert(
         "site_software".to_string(),
         "StaticDataGen".to_string(),
     );
-    let _ = metadata.insert("thanks".to_string(), "Contributors".to_string());
+    let _ = metadata
+        .insert("thanks".to_string(), "Contributors".to_string());
 
-    let config =
-        HumansConfig::from_metadata(&metadata).expect("Failed to create config");
+    let config = HumansConfig::from_metadata(&metadata)
+        .expect("Failed to create config");
 
     // Generate humans.txt
     let generator = HumansGenerator::new(config);
@@ -82,7 +98,8 @@ fn test_manifest_generation_workflow() {
 
     // Generate manifest
     let generator = ManifestGenerator::new(config);
-    let result = generator.generate().expect("Failed to generate manifest");
+    let result =
+        generator.generate().expect("Failed to generate manifest");
 
     // Verify JSON output
     assert!(result.contains("Test Application"));
@@ -95,8 +112,14 @@ fn test_manifest_generation_workflow() {
 fn test_navigation_generation_workflow() {
     // Create file data for multiple pages
     let files = vec![
-        FileData::new("index.md".to_string(), "# Home\nWelcome".to_string()),
-        FileData::new("about.md".to_string(), "# About\nAbout us".to_string()),
+        FileData::new(
+            "index.md".to_string(),
+            "# Home\nWelcome".to_string(),
+        ),
+        FileData::new(
+            "about.md".to_string(),
+            "# About\nAbout us".to_string(),
+        ),
         FileData::new(
             "contact.md".to_string(),
             "# Contact\nContact info".to_string(),
@@ -124,9 +147,11 @@ fn test_security_txt_workflow() {
             "https://example.com/security".to_string(),
         ],
         expires: "2027-12-31T23:59:59Z".to_string(),
-        acknowledgments: "https://example.com/security/acknowledgments".to_string(),
+        acknowledgments: "https://example.com/security/acknowledgments"
+            .to_string(),
         preferred_languages: "en, fr, de".to_string(),
-        canonical: "https://example.com/.well-known/security.txt".to_string(),
+        canonical: "https://example.com/.well-known/security.txt"
+            .to_string(),
         policy: "https://example.com/security/policy".to_string(),
         hiring: "https://example.com/careers".to_string(),
         encryption: "https://example.com/pgp-key.txt".to_string(),
@@ -170,7 +195,8 @@ fn test_file_data_validation_workflow() {
     assert!(file.validate().is_ok());
 
     // Test with empty content
-    let empty_file = FileData::new("empty.md".to_string(), String::new());
+    let empty_file =
+        FileData::new("empty.md".to_string(), String::new());
     // Empty content should still be valid (it's a valid state)
     let _ = empty_file.validate();
 }
@@ -181,10 +207,12 @@ fn test_error_handling_workflow() {
     use staticdatagen::Error;
 
     // Test error creation and conversion
-    let config_error = Error::Config("Invalid configuration".to_string());
+    let config_error =
+        Error::Config("Invalid configuration".to_string());
     assert!(config_error.to_string().contains("Configuration Error"));
 
-    let template_error = Error::Template("Template not found".to_string());
+    let template_error =
+        Error::Template("Template not found".to_string());
     assert!(template_error.to_string().contains("Template Error"));
 
     // Test error builder
@@ -192,7 +220,9 @@ fn test_error_handling_workflow() {
         .message("Content parsing failed")
         .context("Line 42")
         .build();
-    assert!(content_error.to_string().contains("Content Processing Error"));
+    assert!(content_error
+        .to_string()
+        .contains("Content Processing Error"));
 }
 
 /// Tests the VERSION constant
@@ -205,7 +235,10 @@ fn test_version_constant() {
 
     // Verify semver format
     let parts: Vec<&str> = VERSION.split('.').collect();
-    assert!(parts.len() >= 2, "Version should have at least major.minor");
+    assert!(
+        parts.len() >= 2,
+        "Version should have at least major.minor"
+    );
 
     // Each part should be numeric
     for part in parts {
@@ -222,8 +255,9 @@ fn test_combined_generation_workflow() {
     // Simulate generating multiple output files for a site
 
     // 1. Generate CNAME
-    let cname_config = CnameConfig::new("mysite.example.com", None, None)
-        .expect("CNAME config failed");
+    let cname_config =
+        CnameConfig::new("mysite.example.com", None, None)
+            .expect("CNAME config failed");
     let cname_generator = CnameGenerator::new(cname_config);
     let cname_output = cname_generator.generate();
 
@@ -252,8 +286,9 @@ fn test_combined_generation_workflow() {
         .build()
         .expect("Manifest config failed");
     let manifest_generator = ManifestGenerator::new(manifest_config);
-    let manifest_output =
-        manifest_generator.generate().expect("Manifest generation failed");
+    let manifest_output = manifest_generator
+        .generate()
+        .expect("Manifest generation failed");
 
     // Verify all outputs
     assert!(!cname_output.is_empty());
@@ -270,7 +305,8 @@ fn test_combined_generation_workflow() {
 #[test]
 fn test_configuration_validation() {
     // Test CNAME with various inputs
-    let valid_cname = CnameConfig::new("valid.example.com", Some(3600), None);
+    let valid_cname =
+        CnameConfig::new("valid.example.com", Some(3600), None);
     assert!(valid_cname.is_ok());
 
     // Test manifest builder validation
@@ -296,6 +332,7 @@ fn test_output_format_validation() {
     let json_output = generator.generate().unwrap();
 
     // Verify it's parseable JSON
-    let parsed: Result<serde_json::Value, _> = serde_json::from_str(&json_output);
+    let parsed: Result<serde_json::Value, _> =
+        serde_json::from_str(&json_output);
     assert!(parsed.is_ok(), "Generated manifest should be valid JSON");
 }

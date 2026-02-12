@@ -2826,7 +2826,9 @@ mod tests {
         ));
 
         // Test valid path
-        assert!(validation::sanitize_path("valid/path/file.txt").is_ok());
+        assert!(
+            validation::sanitize_path("valid/path/file.txt").is_ok()
+        );
 
         // Test path with multiple traversal attempts
         assert!(matches!(
@@ -3146,14 +3148,11 @@ mod tests {
 
     #[test]
     fn test_humans_data_debug() {
-        let humans = HumansData::new(
-            "Author".to_string(),
-            "Thanks".to_string(),
-        );
+        let humans =
+            HumansData::new("Author".to_string(), "Thanks".to_string());
         let debug = format!("{:?}", humans);
         assert!(debug.contains("Author"));
     }
-
 
     #[test]
     fn test_icon_data_debug() {
@@ -3172,17 +3171,19 @@ mod tests {
             "2024-12-31T23:59:59Z".to_string(),
         );
         let debug = format!("{:?}", data);
-        assert!(debug.contains("example.com") || debug.contains("2024"));
+        assert!(
+            debug.contains("example.com") || debug.contains("2024")
+        );
     }
 
     #[test]
     fn test_meta_tag_debug() {
-        let tag = MetaTag::new(
-            "description".to_string(),
-            "Test".to_string(),
-        );
+        let tag =
+            MetaTag::new("description".to_string(), "Test".to_string());
         let debug = format!("{:?}", tag);
-        assert!(debug.contains("description") || debug.contains("Test"));
+        assert!(
+            debug.contains("description") || debug.contains("Test")
+        );
     }
 
     #[test]
@@ -3204,10 +3205,7 @@ mod tests {
     #[test]
     fn test_icon_data_empty_src() {
         // Test line 867: empty src returns MissingField error
-        let icon = IconData::new(
-            String::new(),
-            "192x192".to_string(),
-        );
+        let icon = IconData::new(String::new(), "192x192".to_string());
         assert!(matches!(
             icon.validate(),
             Err(DataError::MissingField(ref field)) if field == "src"
@@ -3244,14 +3242,19 @@ mod tests {
     #[test]
     fn test_icon_data_valid_mime_types() {
         // Test valid MIME types pass validation
-        let valid_types = ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
+        let valid_types =
+            ["image/png", "image/jpeg", "image/webp", "image/svg+xml"];
         for mime_type in valid_types {
             let mut icon = IconData::new(
                 "https://example.com/icon.png".to_string(),
                 "192x192".to_string(),
             );
             icon.icon_type = Some(mime_type.to_string());
-            assert!(icon.validate().is_ok(), "MIME type {} should be valid", mime_type);
+            assert!(
+                icon.validate().is_ok(),
+                "MIME type {} should be valid",
+                mime_type
+            );
         }
     }
 
@@ -3274,21 +3277,25 @@ mod tests {
 
     #[test]
     fn test_humans_data_is_minimal() {
-        let minimal = HumansData::new("Author".to_string(), "Thanks".to_string());
+        let minimal =
+            HumansData::new("Author".to_string(), "Thanks".to_string());
         assert!(minimal.is_minimal());
 
-        let mut non_minimal = HumansData::new("Author".to_string(), "Thanks".to_string());
+        let mut non_minimal =
+            HumansData::new("Author".to_string(), "Thanks".to_string());
         non_minimal.author_website = "https://example.com".to_string();
         assert!(!non_minimal.is_minimal());
 
-        let mut non_minimal2 = HumansData::new("Author".to_string(), "Thanks".to_string());
+        let mut non_minimal2 =
+            HumansData::new("Author".to_string(), "Thanks".to_string());
         non_minimal2.site_standards = "HTML5".to_string();
         assert!(!non_minimal2.is_minimal());
     }
 
     #[test]
     fn test_humans_data_to_hashmap() {
-        let mut humans = HumansData::new("Author".to_string(), "Thanks".to_string());
+        let mut humans =
+            HumansData::new("Author".to_string(), "Thanks".to_string());
         humans.author_location = "NYC".to_string();
         humans.author_website = "https://example.com".to_string();
         humans.author_twitter = "@test".to_string();
@@ -3297,14 +3304,17 @@ mod tests {
         assert_eq!(map.get("author").unwrap(), "Author");
         assert_eq!(map.get("thanks").unwrap(), "Thanks");
         assert_eq!(map.get("author_location").unwrap(), "NYC");
-        assert_eq!(map.get("author_website").unwrap(), "https://example.com");
+        assert_eq!(
+            map.get("author_website").unwrap(),
+            "https://example.com"
+        );
         assert_eq!(map.get("author_twitter").unwrap(), "@test");
 
         // Test without optional fields
         let minimal = HumansData::new("A".to_string(), "B".to_string());
         let map2 = minimal.to_hashmap();
-        assert!(map2.get("author_website").is_none());
-        assert!(map2.get("author_twitter").is_none());
+        assert!(!map2.contains_key("author_website"));
+        assert!(!map2.contains_key("author_twitter"));
     }
 
     #[test]
@@ -3338,15 +3348,24 @@ mod tests {
     #[test]
     fn test_manifest_data_valid_orientations() {
         let valid = [
-            "any", "natural", "landscape", "portrait",
-            "portrait-primary", "portrait-secondary",
-            "landscape-primary", "landscape-secondary",
+            "any",
+            "natural",
+            "landscape",
+            "portrait",
+            "portrait-primary",
+            "portrait-secondary",
+            "landscape-primary",
+            "landscape-secondary",
         ];
         for orientation in valid {
             let mut manifest = ManifestData::new();
             manifest.name = "App".to_string();
             manifest.orientation = orientation.to_string();
-            assert!(manifest.validate().is_ok(), "Orientation '{}' should be valid", orientation);
+            assert!(
+                manifest.validate().is_ok(),
+                "Orientation '{}' should be valid",
+                orientation
+            );
         }
     }
 
@@ -3475,18 +3494,21 @@ mod tests {
 
     #[test]
     fn test_file_data_validate_with_manifest() {
-        let mut file = FileData::new("test.md".to_string(), "content".to_string());
+        let mut file =
+            FileData::new("test.md".to_string(), "content".to_string());
         file.manifest = r#"{"name":"test"}"#.to_string();
         assert!(file.validate().is_ok());
 
-        let mut file2 = FileData::new("test.md".to_string(), "content".to_string());
+        let mut file2 =
+            FileData::new("test.md".to_string(), "content".to_string());
         file2.manifest = "not-valid-json".to_string();
         assert!(file2.validate().is_err());
     }
 
     #[test]
     fn test_file_data_validate_with_cname() {
-        let mut file = FileData::new("test.md".to_string(), "content".to_string());
+        let mut file =
+            FileData::new("test.md".to_string(), "content".to_string());
         file.cname = "example.com".to_string();
         assert!(file.validate().is_ok());
     }
@@ -3554,22 +3576,27 @@ mod tests {
 
     #[test]
     fn test_humans_data_field_length_edge_cases() {
-        let mut humans = HumansData::new("Author".to_string(), "Thanks".to_string());
+        let mut humans =
+            HumansData::new("Author".to_string(), "Thanks".to_string());
         humans.site_last_updated = "2024-01-01T00:00:00Z".to_string();
         assert!(humans.validate().is_ok());
 
         // Test field length limits on various fields
-        let humans2 = HumansData::new("A".repeat(201), "Thanks".to_string());
+        let humans2 =
+            HumansData::new("A".repeat(201), "Thanks".to_string());
         assert!(humans2.validate().is_err());
 
-        let humans3 = HumansData::new("Author".to_string(), "A".repeat(1001));
+        let humans3 =
+            HumansData::new("Author".to_string(), "A".repeat(1001));
         assert!(humans3.validate().is_err());
     }
 
     #[test]
     fn test_meta_tag_groups_validate_with_twitter() {
         let mut groups = MetaTagGroups::new();
-        groups.twitter = r#"<meta name="twitter:card" content="summary">"#.to_string();
+        groups.twitter =
+            r#"<meta name="twitter:card" content="summary">"#
+                .to_string();
         assert!(groups.validate().is_ok());
     }
 
@@ -3577,12 +3604,10 @@ mod tests {
     fn test_meta_tag_groups_validate_twitter_missing_card() {
         let mut groups = MetaTagGroups::new();
         groups.twitter =
-            r#"<meta name="twitter:site" content="@test">"#
-                .to_string();
+            r#"<meta name="twitter:site" content="@test">"#.to_string();
         let result = groups.validate();
         assert!(result.is_err());
         let err_msg = format!("{}", result.unwrap_err());
         assert!(err_msg.contains("Twitter card type"));
     }
-
 }

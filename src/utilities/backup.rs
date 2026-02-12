@@ -255,8 +255,7 @@ mod tests {
         let original_file_path = dir.path().join(&long_name);
 
         // Check if the path length would be valid for the system
-        if original_file_path.to_str().map_or(false, |s| s.len() < 255)
-        {
+        if original_file_path.to_str().is_some_and(|s| s.len() < 255) {
             let mut file = File::create(&original_file_path)?;
             writeln!(file, "File with long name")?;
 
