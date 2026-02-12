@@ -124,7 +124,7 @@ uuid = { version = "1.11", features = ["v4"] }
 vrd = "0.0.8"
 
 # XML processing
-quick-xml = "0.37"
+quick-xml = "0.39"
 xml-rs = "0.8"
 
 # CNAME dependencies
