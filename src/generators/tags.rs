@@ -562,4 +562,68 @@ mod tests {
         // Should contain the fallback text
         assert!(html.contains("Learn more on this page") || html.contains("<strong>"));
     }
+
+    #[test]
+    fn test_write_tags_html_to_file_success() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let tags_dir = temp_dir.path().join("tags");
+        fs::create_dir_all(&tags_dir).unwrap();
+        fs::write(
+            tags_dir.join("index.html"),
+            "<html>[[content]]</html>",
+        )
+        .unwrap();
+
+        let result = write_tags_html_to_file(
+            "<p>Tags here</p>",
+            temp_dir.path(),
+        );
+        assert!(result.is_ok());
+
+        let written =
+            fs::read_to_string(tags_dir.join("index.html")).unwrap();
+        assert!(written.contains("<p>Tags here</p>"));
+        assert!(!written.contains("[[content]]"));
+    }
+
+    #[test]
+    fn test_write_tags_html_to_file_missing_file() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let result = write_tags_html_to_file(
+            "<p>Tags</p>",
+            temp_dir.path(),
+        );
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_write_tags_html_to_file_no_placeholder() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let tags_dir = temp_dir.path().join("tags");
+        fs::create_dir_all(&tags_dir).unwrap();
+        fs::write(
+            tags_dir.join("index.html"),
+            "<html><body>No placeholder</body></html>",
+        )
+        .unwrap();
+
+        let result = write_tags_html_to_file(
+            "<p>Tags here</p>",
+            temp_dir.path(),
+        );
+        assert!(result.is_ok());
+
+        let written =
+            fs::read_to_string(tags_dir.join("index.html")).unwrap();
+        // Content unchanged since no [[content]] placeholder
+        assert!(written.contains("No placeholder"));
+        assert!(!written.contains("<p>Tags here</p>"));
+    }
+
+    #[test]
+    fn test_html_escape() {
+        assert_eq!(html_escape("a & b"), "a &amp; b");
+        assert_eq!(html_escape("<tag>"), "&lt;tag&gt;");
+        assert_eq!(html_escape("clean"), "clean");
+    }
 }

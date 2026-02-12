@@ -900,4 +900,24 @@ mod tests {
         // Only 1 component, can't get 3, should return None.
         assert_eq!(truncated, None);
     }
+
+    #[test]
+    fn test_directory_create_on_file_path() {
+        // Test line 58: directory() when create_dir_all fails
+        // because a file exists at a parent path component
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("blocker");
+        std::fs::write(&file_path, "data").unwrap();
+        // Try to create a dir inside a file — will fail
+        let nested = file_path.join("subdir");
+        let result = directory(&nested, "test");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_move_output_directory_root_out_dir() {
+        // Test line 116: out_dir.file_name() returns None for "/"
+        let result = move_output_directory("test", Path::new("/"));
+        assert!(result.is_err());
+    }
 }

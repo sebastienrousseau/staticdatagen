@@ -82,4 +82,18 @@ mod tests {
         let result = translate("unknown_key");
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_translate_lib_args_log_msg() {
+        let result = translate("lib_args_log_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Argumente"));
+    }
+
+    #[test]
+    fn test_translate_lib_server_log_msg() {
+        let result = translate("lib_server_log_msg");
+        assert!(result.is_ok());
+        assert!(result.unwrap().contains("Server"));
+    }
 }

@@ -750,4 +750,20 @@ mod tests {
         assert!(!result.contains('<'));
         assert!(!result.contains('>'));
     }
+
+    #[test]
+    fn test_process_file_control_chars_only_name() {
+        let file = FileData {
+            name: "\x00\x01\x02".to_string(),
+            content: "content".to_string(),
+            ..Default::default()
+        };
+        let result = NavigationGenerator::process_file(&file);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_is_malicious_path_root_only() {
+        assert!(is_malicious_path("/"));
+    }
 }

@@ -369,4 +369,44 @@ mod tests {
         assert!(result.contains("title=\"beta\""));
         assert!(result.contains("title=\"gamma\""));
     }
+
+    #[test]
+    fn test_post_process_html_complex_class_capture() {
+        // Test class regex with a pattern that actually captures a group
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html =
+            r#"<p.class="important">Critical text</p>"#;
+        let result =
+            post_process_html(html, &class_regex, &img_regex);
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(processed.contains("important"));
+    }
+
+    #[test]
+    fn test_post_process_html_img_alt_with_quotes() {
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = r#"<img src="test.jpg" alt="A &amp; B photo">"#;
+        let result =
+            post_process_html(html, &class_regex, &img_regex);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_post_process_html_only_whitespace_lines() {
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = "   \n  \n   ";
+        let result =
+            post_process_html(html, &class_regex, &img_regex);
+        assert!(result.is_ok());
+    }
 }

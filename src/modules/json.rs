@@ -939,4 +939,119 @@ mod tests {
         // Cleanup
         let _ = fs::remove_dir_all(&temp_dir);
     }
+
+    #[test]
+    fn test_manifest_with_multiple_icons() {
+        use crate::models::data::IconData;
+
+        let options = ManifestData {
+            name: "Multi Icon App".to_string(),
+            short_name: "MIA".to_string(),
+            start_url: "/".to_string(),
+            display: "standalone".to_string(),
+            background_color: "#fff".to_string(),
+            theme_color: "#000".to_string(),
+            description: "App with multiple icons".to_string(),
+            orientation: "portrait".to_string(),
+            scope: "/".to_string(),
+            icons: vec![
+                {
+                    let mut i = IconData::new(
+                        "/icon-192.png".to_string(),
+                        "192x192".to_string(),
+                    );
+                    i.icon_type = Some("image/png".to_string());
+                    i
+                },
+                {
+                    let mut i = IconData::new(
+                        "/icon-512.png".to_string(),
+                        "512x512".to_string(),
+                    );
+                    i.icon_type = Some("image/png".to_string());
+                    i.purpose = Some("maskable".to_string());
+                    i
+                },
+            ],
+            ..Default::default()
+        };
+
+        let result = manifest(&options).unwrap();
+        assert!(result.contains("192x192"));
+        assert!(result.contains("512x512"));
+        assert!(result.contains("maskable"));
+    }
+
+    #[test]
+    fn test_manifest_icon_without_optional_fields() {
+        use crate::models::data::IconData;
+
+        let options = ManifestData {
+            name: "Minimal Icon".to_string(),
+            short_name: "MI".to_string(),
+            start_url: "/".to_string(),
+            display: "standalone".to_string(),
+            background_color: "#fff".to_string(),
+            theme_color: "#000".to_string(),
+            description: "Test".to_string(),
+            orientation: "portrait".to_string(),
+            scope: "/".to_string(),
+            icons: vec![IconData::new(
+                "/icon.svg".to_string(),
+                "any".to_string(),
+            )],
+            ..Default::default()
+        };
+
+        let result = manifest(&options).unwrap();
+        assert!(result.contains("/icon.svg"));
+        assert!(result.contains("any"));
+    }
+
+    #[test]
+    fn test_sitemap_with_deeply_nested_dirs() {
+        use sitemap_gen::SiteMapData;
+        use std::fs;
+        use url::Url;
+
+        let temp_dir =
+            std::env::temp_dir().join("sitemap_test_deep_nest");
+        let deep = temp_dir.join("a/b/c");
+        let _ = fs::create_dir_all(&deep);
+        let _ = fs::write(deep.join("index.html"), "<html></html>");
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Monthly,
+            lastmod: "2024-03-01".to_string(),
+        };
+
+        let result = sitemap(options, &temp_dir);
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("a/b/c/index.html"));
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_sitemap_empty_dir() {
+        use sitemap_gen::SiteMapData;
+        use url::Url;
+
+        let temp_dir = tempfile::TempDir::new().unwrap();
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Daily,
+            lastmod: "2024-01-01".to_string(),
+        };
+
+        let result = sitemap(options, temp_dir.path());
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        // Should have XML header but no URL entries
+        assert!(content.contains("<?xml version"));
+        assert!(!content.contains("<loc>"));
+    }
 }

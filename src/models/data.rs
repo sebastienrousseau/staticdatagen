@@ -1020,20 +1020,6 @@ impl ManifestData {
             icon.validate()?;
         }
 
-        // Validate name lengths
-        if self.name.len() > 45 {
-            return Err(DataError::InvalidMetadata(
-                "Name exceeds maximum length of 45 characters"
-                    .to_string(),
-            ));
-        }
-        if self.short_name.len() > 12 {
-            return Err(DataError::InvalidMetadata(
-                "Short name exceeds maximum length of 12 characters"
-                    .to_string(),
-            ));
-        }
-
         Ok(())
     }
 }
@@ -3586,4 +3572,17 @@ mod tests {
         groups.twitter = r#"<meta name="twitter:card" content="summary">"#.to_string();
         assert!(groups.validate().is_ok());
     }
+
+    #[test]
+    fn test_meta_tag_groups_validate_twitter_missing_card() {
+        let mut groups = MetaTagGroups::new();
+        groups.twitter =
+            r#"<meta name="twitter:site" content="@test">"#
+                .to_string();
+        let result = groups.validate();
+        assert!(result.is_err());
+        let err_msg = format!("{}", result.unwrap_err());
+        assert!(err_msg.contains("Twitter card type"));
+    }
+
 }

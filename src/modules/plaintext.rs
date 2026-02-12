@@ -476,4 +476,77 @@ mod tests {
         assert!(content.contains("Third"));
         Ok(())
     }
+
+    #[test]
+    fn test_plain_text_error_parse() {
+        let err = PlainTextError::ParseError("bad input".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Failed to parse content: bad input"
+        );
+    }
+
+    #[test]
+    fn test_plain_text_error_unicode() {
+        let err =
+            PlainTextError::UnicodeError("invalid byte".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Invalid Unicode in input: invalid byte"
+        );
+    }
+
+    #[test]
+    fn test_plain_text_error_content_too_long() {
+        let err = PlainTextError::ContentTooLong(2000, 1000);
+        assert_eq!(
+            format!("{}", err),
+            "Content exceeds maximum length: 2000 > 1000"
+        );
+    }
+
+    #[test]
+    fn test_plain_text_error_config() {
+        let err = PlainTextError::ConfigError(
+            "invalid setting".to_string(),
+        );
+        assert_eq!(
+            format!("{}", err),
+            "Invalid configuration: invalid setting"
+        );
+    }
+
+    #[test]
+    fn test_config_zero_line_length() {
+        let config = PlainTextConfig {
+            max_line_length: 0,
+            ..Default::default()
+        };
+        assert_eq!(config.max_line_length, 0);
+    }
+
+    #[test]
+    fn test_paragraph_separator_condition() -> Result<()> {
+        // Trigger line 192: plain_text non-empty AND buffer non-empty
+        // when new paragraph starts
+        let input = "First paragraph.\n\nSecond paragraph.";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+        assert!(content.contains("First paragraph"));
+        assert!(content.contains("Second paragraph"));
+        // Both should be present in output
+        assert!(content.len() > 20);
+        Ok(())
+    }
+
+    #[test]
+    fn test_trailing_buffer_flush() -> Result<()> {
+        // Trigger line 230: buffer has content at end
+        let input = "**bold text** at end";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+        assert!(content.contains("bold text"));
+        assert!(content.contains("at end"));
+        Ok(())
+    }
 }

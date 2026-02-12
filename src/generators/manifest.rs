@@ -685,4 +685,54 @@ mod tests {
 
         assert_eq!(config.name, "TestApp");
     }
+
+    #[test]
+    fn test_sanitize_color_rgba() {
+        // rgba is not rgb(...) format, should fall back to default
+        assert_eq!(
+            sanitize_color("rgba(255,255,255,0.5)".to_string()),
+            defaults::BACKGROUND
+        );
+    }
+
+    #[test]
+    fn test_sanitize_color_empty() {
+        assert_eq!(
+            sanitize_color("".to_string()),
+            defaults::BACKGROUND
+        );
+    }
+
+    #[test]
+    fn test_manifest_error_display() {
+        let err =
+            ManifestError::InvalidName("empty".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Invalid manifest name: empty"
+        );
+
+        let err =
+            ManifestError::InvalidColor("bad".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Invalid color value: bad"
+        );
+
+        let err = ManifestError::InvalidIconUrl(
+            "not-a-url".to_string(),
+        );
+        assert_eq!(
+            format!("{}", err),
+            "Invalid icon URL: not-a-url"
+        );
+
+        let err = ManifestError::InvalidDisplayMode(
+            "invalid".to_string(),
+        );
+        assert_eq!(
+            format!("{}", err),
+            "Invalid display mode: invalid"
+        );
+    }
 }

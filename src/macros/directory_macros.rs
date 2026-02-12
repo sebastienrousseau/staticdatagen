@@ -202,4 +202,66 @@ mod tests {
         assert!(test_path1.exists());
         assert!(test_path2.exists());
     }
+
+    #[test]
+    fn test_macro_check_directory_existing() {
+        let temp_dir = TempDir::new().unwrap();
+        let test_path = temp_dir.path().join("existing_dir");
+        std::fs::create_dir(&test_path).unwrap();
+
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&test_path, "existing_dir");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_macro_cleanup_directories_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        let nonexistent = temp_dir.path().join("does_not_exist");
+
+        let result = macro_cleanup_directories!(&nonexistent);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_macro_create_directories_nested() {
+        let temp_dir = TempDir::new().unwrap();
+        let nested = temp_dir.path().join("a/b/c");
+
+        assert!(macro_create_directories!(&nested).is_ok());
+        assert!(nested.exists());
+    }
+
+    #[test]
+    fn test_macro_create_directories_single() {
+        let temp_dir = TempDir::new().unwrap();
+        let single = temp_dir.path().join("single_dir");
+
+        assert!(macro_create_directories!(&single).is_ok());
+        assert!(single.exists());
+    }
+
+    #[test]
+    fn test_macro_check_directory_creates_nested() {
+        let temp_dir = TempDir::new().unwrap();
+        let nested = temp_dir.path().join("x/y/z");
+
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&nested, "nested");
+        assert!(result.is_ok());
+        assert!(nested.exists());
+        assert!(nested.is_dir());
+    }
+
+    #[test]
+    fn test_macro_cleanup_then_verify_gone() {
+        let temp_dir = TempDir::new().unwrap();
+        let test_path = temp_dir.path().join("cleanup_target");
+        std::fs::create_dir(&test_path).unwrap();
+        // Add a file inside
+        std::fs::write(test_path.join("file.txt"), "data").unwrap();
+
+        assert!(macro_cleanup_directories!(&test_path).is_ok());
+        assert!(!test_path.exists());
+    }
 }

@@ -94,4 +94,50 @@ mod tests {
         let processed = result.unwrap();
         assert_eq!(processed.lines().count(), 3);
     }
+
+    #[test]
+    fn test_preprocess_content_with_class_attribute() {
+        let class_regex = Regex::new(
+            r#"\.class=&quot;([^&]*)&quot;"#,
+        )
+        .unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content =
+            r#"<img src="test.jpg" .class=&quot;highlight&quot;>"#;
+        let result =
+            preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_preprocess_content_with_img_tag() {
+        let class_regex = Regex::new(r#"\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content = r#"<img src="photo.jpg" alt="A photo">"#;
+        let result =
+            preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(processed.contains("img"));
+    }
+
+    #[test]
+    fn test_preprocess_content_combined_transforms() {
+        let class_regex = Regex::new(r#"\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"<img([^>]*)>"#).unwrap();
+
+        let content = "# Heading\n<img src=\"a.jpg\">\nParagraph text";
+        let result =
+            preprocess_content(content, &class_regex, &img_regex);
+
+        assert!(result.is_ok());
+        let processed = result.unwrap();
+        assert!(processed.contains("Heading"));
+        assert!(processed.contains("img"));
+        assert!(processed.contains("Paragraph text"));
+    }
 }

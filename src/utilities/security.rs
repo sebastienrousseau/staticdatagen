@@ -262,4 +262,30 @@ mod tests {
         let err = result.unwrap_err().to_string();
         assert!(err.contains("content"), "Error should mention purpose");
     }
+
+    #[test]
+    fn test_validate_directory_unreadable() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp_dir = TempDir::new().unwrap();
+        let restricted = temp_dir.path().join("restricted");
+        std::fs::create_dir(&restricted).unwrap();
+        // Remove all permissions
+        std::fs::set_permissions(
+            &restricted,
+            std::fs::Permissions::from_mode(0o000),
+        )
+        .unwrap();
+
+        let result = validate_directory(&restricted, "test");
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Cannot access"));
+
+        // Restore permissions for cleanup
+        let _ = std::fs::set_permissions(
+            &restricted,
+            std::fs::Permissions::from_mode(0o755),
+        );
+    }
 }

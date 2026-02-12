@@ -235,4 +235,46 @@ mod tests {
 
         Ok(())
     }
+
+    /// Tests that `add` skips files with invalid UTF-8 content.
+    #[test]
+    fn test_add_skips_invalid_utf8() -> io::Result<()> {
+        let dir = tempdir()?;
+        let valid_path = dir.path().join("valid.txt");
+        let binary_path = dir.path().join("binary.bin");
+
+        File::create(&valid_path)?.write_all(b"Valid UTF-8")?;
+        File::create(&binary_path)?
+            .write_all(&[0xFF, 0xFE, 0x00, 0x01])?;
+
+        let files = add(dir.path())?;
+
+        // Only the valid file should be read
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].name, "valid.txt");
+
+        Ok(())
+    }
+
+    /// Tests that `add` populates all FileData fields.
+    #[test]
+    fn test_add_populates_all_fields() -> io::Result<()> {
+        let dir = tempdir()?;
+        let file_path = dir.path().join("test.txt");
+        File::create(&file_path)?.write_all(b"Test content")?;
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 1);
+        let f = &files[0];
+        assert_eq!(f.name, "test.txt");
+        assert_eq!(f.content, "Test content");
+        assert_eq!(f.human, "Test content");
+        assert_eq!(f.security, "Test content");
+        assert_eq!(f.txt, "Test content");
+        // Escaped fields should equal raw content (no special chars)
+        assert_eq!(f.rss, "Test content");
+
+        Ok(())
+    }
 }
