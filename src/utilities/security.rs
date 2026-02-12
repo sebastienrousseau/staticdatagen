@@ -232,7 +232,10 @@ mod tests {
         // Test line 85: path becomes empty after sanitization
         let path = Path::new("../../../");
         let result = sanitize_path(path);
-        assert!(result.is_err(), "Should return error for path that becomes empty");
+        assert!(
+            result.is_err(),
+            "Should return error for path that becomes empty"
+        );
     }
 
     #[test]
@@ -240,7 +243,10 @@ mod tests {
         // Test line 85: path with only dot components
         let path = Path::new("./././.");
         let result = sanitize_path(path);
-        assert!(result.is_err(), "Should return error for dots-only path");
+        assert!(
+            result.is_err(),
+            "Should return error for dots-only path"
+        );
     }
 
     #[test]
@@ -260,7 +266,10 @@ mod tests {
         let result = validate_directory(path, "content");
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
-        assert!(err.contains("content"), "Error should mention purpose");
+        assert!(
+            err.contains("content"),
+            "Error should mention purpose"
+        );
     }
 
     #[test]

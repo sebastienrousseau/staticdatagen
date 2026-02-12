@@ -8,15 +8,19 @@
 //! with varying workload sizes (1x, 10x, 100x typical usage) to establish
 //! performance baselines and verify memory behavior under sustained load.
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use std::hint::black_box;
-use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use criterion::{
+    criterion_group, criterion_main, BenchmarkId, Criterion, Throughput,
+};
 use staticdatagen::compiler::service::split_frontmatter_and_body;
-use staticdatagen::generators::manifest::{ManifestConfig, ManifestGenerator};
+use staticdatagen::generators::manifest::{
+    ManifestConfig, ManifestGenerator,
+};
 use staticdatagen::models::data::FileData;
 use staticdatagen::modules::navigation::NavigationGenerator;
 use staticdatagen::utilities::security::sanitize_path;
+use std::collections::HashMap;
+use std::hint::black_box;
+use std::time::{Duration, Instant};
 
 /// Creates synthetic content of varying sizes for stress testing
 fn create_test_content(size_factor: usize) -> String {
@@ -50,7 +54,10 @@ Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliqu
 }
 
 /// Creates test files with varying content sizes
-fn create_test_files(count: usize, size_factor: usize) -> Vec<FileData> {
+fn create_test_files(
+    count: usize,
+    size_factor: usize,
+) -> Vec<FileData> {
     (0..count)
         .map(|i| {
             let content = create_test_content(size_factor);
@@ -68,20 +75,27 @@ fn bench_frontmatter_parsing_stress(c: &mut Criterion) {
     let mut group = c.benchmark_group("frontmatter_parsing_stress");
 
     // Test with different content sizes and repetitions
-    for &(size_factor, iterations) in &[(1, 1000), (10, 100), (100, 10)] {
+    for &(size_factor, iterations) in &[(1, 1000), (10, 100), (100, 10)]
+    {
         let content = create_test_content(size_factor);
-        let _ = group.throughput(Throughput::Bytes(content.len() as u64));
+        let _ =
+            group.throughput(Throughput::Bytes(content.len() as u64));
 
         let _ = group.bench_with_input(
-            BenchmarkId::new("parse", format!("{}x_content", size_factor)),
+            BenchmarkId::new(
+                "parse",
+                format!("{}x_content", size_factor),
+            ),
             &content,
             |b, content| {
                 b.iter(|| {
                     for _ in 0..iterations {
-                        let _ = black_box(split_frontmatter_and_body(content));
+                        let _ = black_box(split_frontmatter_and_body(
+                            content,
+                        ));
                     }
                 });
-            }
+            },
         );
     }
 
@@ -95,16 +109,19 @@ fn bench_navigation_large_scale(c: &mut Criterion) {
     // Test with different scales: 1x (50), 10x (500), 100x (5000) files
     for &file_count in &[50, 500, 5000] {
         let files = create_test_files(file_count, 1);
-        let _ = group.throughput(Throughput::Elements(file_count as u64));
+        let _ =
+            group.throughput(Throughput::Elements(file_count as u64));
 
         let _ = group.bench_with_input(
             BenchmarkId::new("generate", file_count),
             &files,
             |b, files| {
                 b.iter(|| {
-                    let _ = black_box(NavigationGenerator::generate_navigation(files));
+                    let _ = black_box(
+                        NavigationGenerator::generate_navigation(files),
+                    );
                 });
-            }
+            },
         );
     }
 
@@ -121,10 +138,11 @@ fn bench_file_processing_memory(c: &mut Criterion) {
         let large_content = "a".repeat(content_size);
         let file = FileData::new(
             format!("large-file-{}.md", content_size),
-            create_test_content(1) + &large_content
+            create_test_content(1) + &large_content,
         );
 
-        let _ = group.throughput(Throughput::Bytes(file.content.len() as u64));
+        let _ = group
+            .throughput(Throughput::Bytes(file.content.len() as u64));
 
         let _ = group.bench_with_input(
             BenchmarkId::new("validate", format!("{}B", content_size)),
@@ -133,7 +151,7 @@ fn bench_file_processing_memory(c: &mut Criterion) {
                 b.iter(|| {
                     let _ = black_box(file.validate());
                 });
-            }
+            },
         );
     }
 
@@ -156,7 +174,8 @@ fn bench_path_sanitization_complex(c: &mut Criterion) {
 
     for (name, path_str) in complex_paths {
         let path = std::path::Path::new(path_str);
-        let _ = group.throughput(Throughput::Bytes(path_str.len() as u64));
+        let _ =
+            group.throughput(Throughput::Bytes(path_str.len() as u64));
 
         let _ = group.bench_with_input(
             BenchmarkId::new("sanitize", name),
@@ -165,7 +184,7 @@ fn bench_path_sanitization_complex(c: &mut Criterion) {
                 b.iter(|| {
                     let _ = black_box(sanitize_path(path));
                 });
-            }
+            },
         );
     }
 
@@ -180,7 +199,8 @@ fn bench_generators_large_metadata(c: &mut Criterion) {
     for &metadata_size in &[10, 100, 1000] {
         let mut metadata = HashMap::new();
         for i in 0..metadata_size {
-            let _ = metadata.insert(format!("key_{}", i), format!("value_{}", i));
+            let _ = metadata
+                .insert(format!("key_{}", i), format!("value_{}", i));
         }
 
         // Benchmark manifest generation
@@ -192,7 +212,8 @@ fn bench_generators_large_metadata(c: &mut Criterion) {
             .display("standalone")
             .build()
             .unwrap();
-        let manifest_generator = ManifestGenerator::new(manifest_config);
+        let manifest_generator =
+            ManifestGenerator::new(manifest_config);
 
         let _ = group.bench_with_input(
             BenchmarkId::new("manifest", metadata_size),
@@ -201,7 +222,7 @@ fn bench_generators_large_metadata(c: &mut Criterion) {
                 b.iter(|| {
                     let _ = black_box(generator.generate());
                 });
-            }
+            },
         );
     }
 
@@ -214,7 +235,8 @@ fn bench_uuid_batch_memory(c: &mut Criterion) {
 
     // Test increasingly large batches to stress memory allocation
     for &batch_size in &[100, 1_000, 10_000, 100_000] {
-        let _ = group.throughput(Throughput::Elements(batch_size as u64));
+        let _ =
+            group.throughput(Throughput::Elements(batch_size as u64));
 
         let _ = group.bench_with_input(
             BenchmarkId::new("generate", batch_size),
@@ -222,11 +244,13 @@ fn bench_uuid_batch_memory(c: &mut Criterion) {
             |b, &size| {
                 b.iter(|| {
                     let uuids: Vec<String> = (0..size)
-                        .map(|_| staticdatagen::generate_unique_string())
+                        .map(|_| {
+                            staticdatagen::generate_unique_string()
+                        })
                         .collect();
                     let _ = black_box(uuids);
                 });
-            }
+            },
         );
     }
 
@@ -241,15 +265,20 @@ fn bench_sustained_load(c: &mut Criterion) {
 
     let test_files = create_test_files(100, 5); // Medium-sized test set
 
-    let _ = group.bench_function("continuous_navigation_generation", |b| {
-        b.iter_custom(|iters| {
-            let start = Instant::now();
-            for _ in 0..iters {
-                let _ = black_box(NavigationGenerator::generate_navigation(&test_files));
-            }
-            start.elapsed()
+    let _ =
+        group.bench_function("continuous_navigation_generation", |b| {
+            b.iter_custom(|iters| {
+                let start = Instant::now();
+                for _ in 0..iters {
+                    let _ = black_box(
+                        NavigationGenerator::generate_navigation(
+                            &test_files,
+                        ),
+                    );
+                }
+                start.elapsed()
+            });
         });
-    });
 
     group.finish();
 }
@@ -269,7 +298,9 @@ fn bench_memory_growth_detection(c: &mut Criterion) {
             // Simulate sustained operation without cleanup
             for i in 0..iters {
                 // Create and discard data structures repeatedly
-                let nav = NavigationGenerator::generate_navigation(&test_data);
+                let nav = NavigationGenerator::generate_navigation(
+                    &test_data,
+                );
                 let file = &test_data[i as usize % test_data.len()];
                 let _ = file.validate();
 

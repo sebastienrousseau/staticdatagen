@@ -261,31 +261,29 @@ mod tests {
 
     #[test]
     fn test_macro_execute_and_log_success() {
-        let result: Result<(), Box<dyn std::error::Error>> =
-            macro_execute_and_log!(
-                "echo hello",
-                "echo_test",
-                "Running echo",
-                "Echo done",
-                "Echo failed",
-                None::<&str>,
-                Some("sh")
-            );
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "echo hello",
+            "echo_test",
+            "Running echo",
+            "Echo done",
+            "Echo failed",
+            None::<&str>,
+            Some("sh")
+        );
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_macro_execute_and_log_failure() {
-        let result: Result<(), Box<dyn std::error::Error>> =
-            macro_execute_and_log!(
-                "false",
-                "fail_test",
-                "Running false",
-                "Should not reach",
-                "Command failed as expected",
-                None::<&str>,
-                Some("sh")
-            );
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "false",
+            "fail_test",
+            "Running false",
+            "Should not reach",
+            "Command failed as expected",
+            None::<&str>,
+            Some("sh")
+        );
         assert!(result.is_err());
     }
 
@@ -293,16 +291,15 @@ mod tests {
     fn test_macro_execute_and_log_with_output_dir() {
         let temp_dir = tempfile::TempDir::new().unwrap();
         let dir_str = temp_dir.path().to_str().unwrap();
-        let result: Result<(), Box<dyn std::error::Error>> =
-            macro_execute_and_log!(
-                "echo log_output",
-                "log_op",
-                "Running with output dir",
-                "Logged output",
-                "Failed to log",
-                Some(dir_str),
-                Some("sh")
-            );
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "echo log_output",
+            "log_op",
+            "Running with output dir",
+            "Logged output",
+            "Failed to log",
+            Some(dir_str),
+            Some("sh")
+        );
         assert!(result.is_ok());
         let log_file = temp_dir.path().join("log_op.log");
         assert!(log_file.exists());
@@ -310,23 +307,23 @@ mod tests {
 
     #[test]
     fn test_macro_execute_and_log_empty_command() {
-        let result: Result<(), Box<dyn std::error::Error>> =
-            macro_execute_and_log!(
-                "",
-                "empty_cmd",
-                "Running empty",
-                "Should not complete",
-                "Empty command error",
-                None::<&str>,
-                Some("sh")
-            );
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "",
+            "empty_cmd",
+            "Running empty",
+            "Should not complete",
+            "Empty command error",
+            None::<&str>,
+            Some("sh")
+        );
         assert!(result.is_err());
     }
 
     #[test]
     fn test_command_executor_invalid_interpreter() {
         let mut executor =
-            CommandExecutor::new(Some("nonexistent_shell_xyz")).unwrap();
+            CommandExecutor::new(Some("nonexistent_shell_xyz"))
+                .unwrap();
         let _ = executor.command("echo test");
         let err = executor.execute().unwrap_err();
         match err {
@@ -341,17 +338,18 @@ mod tests {
         assert_eq!(format!("{}", err), "Empty command provided");
 
         let err = CommandError::ExecutionFailed("test".to_string());
-        assert_eq!(format!("{}", err), "Command execution failed: test");
+        assert_eq!(
+            format!("{}", err),
+            "Command execution failed: test"
+        );
 
-        let err =
-            CommandError::InterpreterNotFound("zsh".to_string());
+        let err = CommandError::InterpreterNotFound("zsh".to_string());
         assert_eq!(
             format!("{}", err),
             "Shell interpreter not found: zsh"
         );
 
-        let err =
-            CommandError::OutputCaptureFailed("err".to_string());
+        let err = CommandError::OutputCaptureFailed("err".to_string());
         assert_eq!(
             format!("{}", err),
             "Failed to capture command output: err"

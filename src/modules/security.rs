@@ -444,17 +444,22 @@ mod tests {
             expires: "2024-12-31T23:59:59Z".to_string(),
             acknowledgments: "https://example.com/thanks".to_string(),
             preferred_languages: "en".to_string(),
-            canonical: "https://example.com/.well-known/security.txt".to_string(),
+            canonical: "https://example.com/.well-known/security.txt"
+                .to_string(),
             policy: "https://example.com/security-policy".to_string(),
             hiring: "https://example.com/jobs".to_string(),
             encryption: "https://example.com/pgp-key.txt".to_string(),
         };
 
         let content = generate_security_content(&data);
-        assert!(content.contains("Contact: mailto:security@example.com"));
-        assert!(content.contains("Policy: https://example.com/security-policy"));
+        assert!(
+            content.contains("Contact: mailto:security@example.com")
+        );
+        assert!(content
+            .contains("Policy: https://example.com/security-policy"));
         assert!(content.contains("Hiring: https://example.com/jobs"));
-        assert!(content.contains("Encryption: https://example.com/pgp-key.txt"));
+        assert!(content
+            .contains("Encryption: https://example.com/pgp-key.txt"));
     }
 
     #[test]
@@ -483,7 +488,10 @@ mod tests {
     #[test]
     fn test_convert_rfc2822_insufficient_parts() {
         // Test line 217-218: fewer than 5 parts returns None
-        assert_eq!(convert_rfc2822_to_iso8601("Tue, 20 Feb 2024"), None);
+        assert_eq!(
+            convert_rfc2822_to_iso8601("Tue, 20 Feb 2024"),
+            None
+        );
         assert_eq!(convert_rfc2822_to_iso8601("Tue, 20 Feb"), None);
     }
 
@@ -509,7 +517,10 @@ mod tests {
             let result = convert_rfc2822_to_iso8601(input);
             assert!(result.is_some(), "Failed to parse: {}", input);
             assert!(
-                result.as_ref().unwrap().contains(&format!("-{}-", expected_month)),
+                result
+                    .as_ref()
+                    .unwrap()
+                    .contains(&format!("-{}-", expected_month)),
                 "Expected month {} in result {:?} for input {}",
                 expected_month,
                 result,
@@ -521,7 +532,11 @@ mod tests {
     #[test]
     fn test_sanitize_urls_filters_empty() {
         // Test that sanitize_urls filters out empty results
-        let urls = vec!["https://example.com", "javascript:alert(1)", "mailto:test@example.com"];
+        let urls = vec![
+            "https://example.com",
+            "javascript:alert(1)",
+            "mailto:test@example.com",
+        ];
         let result = sanitize_urls(urls);
         assert_eq!(result.len(), 2);
         assert!(result.contains(&"https://example.com".to_string()));
@@ -544,20 +559,47 @@ mod tests {
     #[test]
     fn test_sanitize_url_http_scheme() {
         // Test http: scheme is accepted
-        assert_eq!(sanitize_url("http://example.com"), "http://example.com");
+        assert_eq!(
+            sanitize_url("http://example.com"),
+            "http://example.com"
+        );
     }
 
     #[test]
     fn test_create_security_data_all_fields() {
         let mut metadata = HashMap::new();
-        let _ = metadata.insert("security_contact".to_string(), "mailto:sec@example.com".to_string());
-        let _ = metadata.insert("security_expires".to_string(), "2024-12-31T23:59:59Z".to_string());
-        let _ = metadata.insert("security_acknowledgments".to_string(), "https://example.com/thanks".to_string());
-        let _ = metadata.insert("security_languages".to_string(), "en, fr".to_string());
-        let _ = metadata.insert("security_canonical".to_string(), "https://example.com/security.txt".to_string());
-        let _ = metadata.insert("security_policy".to_string(), "https://example.com/policy".to_string());
-        let _ = metadata.insert("security_hiring".to_string(), "https://example.com/jobs".to_string());
-        let _ = metadata.insert("security_encryption".to_string(), "https://example.com/pgp".to_string());
+        let _ = metadata.insert(
+            "security_contact".to_string(),
+            "mailto:sec@example.com".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_expires".to_string(),
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_acknowledgments".to_string(),
+            "https://example.com/thanks".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_languages".to_string(),
+            "en, fr".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_canonical".to_string(),
+            "https://example.com/security.txt".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_policy".to_string(),
+            "https://example.com/policy".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_hiring".to_string(),
+            "https://example.com/jobs".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_encryption".to_string(),
+            "https://example.com/pgp".to_string(),
+        );
 
         let data = create_security_data(&metadata);
         assert!(!data.contact.is_empty());
@@ -568,5 +610,50 @@ mod tests {
         assert!(!data.policy.is_empty());
         assert!(!data.hiring.is_empty());
         assert!(!data.encryption.is_empty());
+    }
+
+    #[test]
+    fn test_convert_rfc2822_non_numeric_day() {
+        // Non-numeric day causes day.parse::<u8>().ok()? to return None
+        assert_eq!(
+            convert_rfc2822_to_iso8601("Tue, XX Feb 2024 15:15:15 GMT"),
+            None
+        );
+    }
+
+    #[test]
+    fn test_sanitize_expires_rfc2822_inner_parse_failure() {
+        // An RFC 2822 date that converts to ISO but then fails DateTime::parse
+        // Day "99" is parseable as u8 but produces an invalid date
+        let result = sanitize_expires("Tue, 99 Feb 2024 15:15:15 GMT");
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_sanitize_url_empty() {
+        assert_eq!(sanitize_url(""), "");
+    }
+
+    #[test]
+    fn test_sanitize_languages_with_special_chars() {
+        // Languages with special chars should be filtered out
+        assert!(sanitize_languages("en!@#").is_empty());
+        assert_eq!(sanitize_languages("en, fr"), "en, fr");
+    }
+
+    #[test]
+    fn test_sanitize_expires_valid_iso8601() {
+        // Test a well-formed ISO 8601 date directly
+        let result = sanitize_expires("2025-06-15T10:30:00+00:00");
+        assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn test_convert_rfc2822_no_comma() {
+        // No comma means split(",").nth(1) returns None
+        assert_eq!(
+            convert_rfc2822_to_iso8601("20 Feb 2024 15:15:15 GMT"),
+            None
+        );
     }
 }

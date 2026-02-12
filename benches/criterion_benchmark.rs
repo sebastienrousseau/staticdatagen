@@ -9,9 +9,11 @@
 //! Each benchmark function measures performance of a specific feature, preventing
 //! compiler optimizations from skewing the timings by using [`criterion::black_box`].
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use std::hint::black_box;
+use criterion::{
+    criterion_group, criterion_main, BenchmarkId, Criterion,
+};
 use std::collections::HashMap;
+use std::hint::black_box;
 use std::path::Path;
 
 use staticdatagen::{
@@ -20,7 +22,9 @@ use staticdatagen::{
         humans::{HumansConfig, HumansGenerator},
         manifest::{ManifestConfig, ManifestGenerator},
     },
-    models::data::{CnameData, FileData, HumansData, NewsData, SecurityData},
+    models::data::{
+        CnameData, FileData, HumansData, NewsData, SecurityData,
+    },
     modules::{
         json::{cname, human, security},
         navigation::NavigationGenerator,
@@ -29,7 +33,8 @@ use staticdatagen::{
 
 /// Benchmarks the generation of a `CNAME` record using [`CnameGenerator`].
 fn bench_cname_generation(c: &mut Criterion) {
-    let config = CnameConfig::new("example.com", Some(3600), None).unwrap();
+    let config =
+        CnameConfig::new("example.com", Some(3600), None).unwrap();
     let generator = CnameGenerator::new(config);
 
     let _c = c.bench_function("generate CNAME", |b| {
@@ -97,7 +102,9 @@ fn bench_navigation_generation(c: &mut Criterion) {
 
     let _c = c.bench_function("generate navigation", |b| {
         b.iter(|| {
-            let _ = black_box(NavigationGenerator::generate_navigation(&files));
+            let _ = black_box(
+                NavigationGenerator::generate_navigation(&files),
+            );
         });
     });
 }
@@ -115,11 +122,17 @@ fn bench_navigation_scaling(c: &mut Criterion) {
             })
             .collect();
 
-        let _ = group.bench_with_input(BenchmarkId::from_parameter(size), &files, |b, files| {
-            b.iter(|| {
-                let _ = black_box(NavigationGenerator::generate_navigation(files));
-            });
-        });
+        let _ = group.bench_with_input(
+            BenchmarkId::from_parameter(size),
+            &files,
+            |b, files| {
+                b.iter(|| {
+                    let _ = black_box(
+                        NavigationGenerator::generate_navigation(files),
+                    );
+                });
+            },
+        );
     }
     group.finish();
 }
@@ -131,7 +144,8 @@ fn bench_security_txt_generation(c: &mut Criterion) {
         expires: "2024-12-31T23:59:59Z".to_string(),
         acknowledgments: "https://example.com/thanks".to_string(),
         preferred_languages: "en".to_string(),
-        canonical: "https://example.com/.well-known/security.txt".to_string(),
+        canonical: "https://example.com/.well-known/security.txt"
+            .to_string(),
         policy: String::new(),
         hiring: String::new(),
         encryption: String::new(),
@@ -167,7 +181,8 @@ fn bench_news_data_processing(c: &mut Criterion) {
 /// Benchmarks the validation of [`FileData`].
 fn bench_file_data_processing(c: &mut Criterion) {
     let content = "# Test Content\n\nThis is a test markdown file.";
-    let file_data = FileData::new("test.md".to_string(), content.to_string());
+    let file_data =
+        FileData::new("test.md".to_string(), content.to_string());
 
     let _c = c.bench_function("process file data", |b| {
         b.iter(|| {
@@ -183,12 +198,19 @@ fn bench_file_data_scaling(c: &mut Criterion) {
     for size in [100, 1000, 10000, 100000].iter() {
         let content = "a".repeat(*size);
 
-        let _ = group.bench_with_input(BenchmarkId::from_parameter(size), &content, |b, content| {
-            b.iter(|| {
-                let file = FileData::new("test.md".to_string(), content.clone());
-                let _ = black_box(file.validate());
-            });
-        });
+        let _ = group.bench_with_input(
+            BenchmarkId::from_parameter(size),
+            &content,
+            |b, content| {
+                b.iter(|| {
+                    let file = FileData::new(
+                        "test.md".to_string(),
+                        content.clone(),
+                    );
+                    let _ = black_box(file.validate());
+                });
+            },
+        );
     }
     group.finish();
 }
@@ -196,18 +218,23 @@ fn bench_file_data_scaling(c: &mut Criterion) {
 /// Benchmarks the creation of a minimal `humans.txt` JSON using [`HumansConfig`].
 fn bench_human_txt_processing(c: &mut Criterion) {
     let mut metadata = HashMap::new();
-    let _ = metadata.insert("author".to_string(), "John Doe".to_string());
+    let _ =
+        metadata.insert("author".to_string(), "John Doe".to_string());
     let _ = metadata.insert(
         "author_website".to_string(),
         "https://example.com".to_string(),
     );
-    let _ = metadata.insert("author_twitter".to_string(), "@johndoe".to_string());
+    let _ = metadata
+        .insert("author_twitter".to_string(), "@johndoe".to_string());
 
     let _c = c.bench_function("process humans.txt", |b| {
         b.iter(|| {
-            let humans_config = HumansConfig::from_metadata(&metadata).unwrap();
-            let humans_data =
-                HumansData::new(humans_config.author, humans_config.thanks);
+            let humans_config =
+                HumansConfig::from_metadata(&metadata).unwrap();
+            let humans_data = HumansData::new(
+                humans_config.author,
+                humans_config.thanks,
+            );
 
             let _ = black_box(human(&humans_data));
         });
@@ -217,11 +244,13 @@ fn bench_human_txt_processing(c: &mut Criterion) {
 /// Benchmarks processing of `CNAME` data from metadata using [`CnameConfig`].
 fn bench_cname_processing(c: &mut Criterion) {
     let mut metadata = HashMap::new();
-    let _ = metadata.insert("cname".to_string(), "example.com".to_string());
+    let _ =
+        metadata.insert("cname".to_string(), "example.com".to_string());
 
     let _c = c.bench_function("process CNAME", |b| {
         b.iter(|| {
-            let config = CnameConfig::new("example.com", None, None).unwrap();
+            let config =
+                CnameConfig::new("example.com", None, None).unwrap();
             let cname_data = CnameData {
                 cname: config.domain,
             };
@@ -238,7 +267,8 @@ fn bench_path_sanitization(c: &mut Criterion) {
     let _c = c.bench_function("sanitize path", |b| {
         b.iter(|| {
             let _ = black_box(
-                staticdatagen::utilities::security::sanitize_path(path).unwrap(),
+                staticdatagen::utilities::security::sanitize_path(path)
+                    .unwrap(),
             );
         });
     });
@@ -280,14 +310,20 @@ fn bench_uuid_batch_generation(c: &mut Criterion) {
     let mut group = c.benchmark_group("uuid_batch");
 
     for size in [10, 100, 1000].iter() {
-        let _ = group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
-            b.iter(|| {
-                let uuids: Vec<String> = (0..size)
-                    .map(|_| staticdatagen::generate_unique_string())
-                    .collect();
-                let _ = black_box(uuids);
-            });
-        });
+        let _ = group.bench_with_input(
+            BenchmarkId::from_parameter(size),
+            size,
+            |b, &size| {
+                b.iter(|| {
+                    let uuids: Vec<String> = (0..size)
+                        .map(|_| {
+                            staticdatagen::generate_unique_string()
+                        })
+                        .collect();
+                    let _ = black_box(uuids);
+                });
+            },
+        );
     }
     group.finish();
 }
@@ -312,7 +348,10 @@ fn bench_manifest_scaling(c: &mut Criterion) {
     let mut group = c.benchmark_group("manifest_scaling");
 
     let configs = [
-        ("minimal", ManifestConfig::builder().name("App").build().unwrap()),
+        (
+            "minimal",
+            ManifestConfig::builder().name("App").build().unwrap(),
+        ),
         (
             "standard",
             ManifestConfig::builder()
@@ -329,7 +368,9 @@ fn bench_manifest_scaling(c: &mut Criterion) {
             ManifestConfig::builder()
                 .name("Full Application")
                 .short_name("FullApp")
-                .description("A comprehensive application with all fields")
+                .description(
+                    "A comprehensive application with all fields",
+                )
                 .start_url("/index.html")
                 .display("fullscreen")
                 .background_color("#ffffff")

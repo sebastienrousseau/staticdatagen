@@ -424,12 +424,22 @@ mod tests {
     #[test]
     fn test_create_tags_data_basic() {
         let mut metadata = HashMap::new();
-        let _ = metadata.insert("tags".to_string(), "rust, programming".to_string());
-        let _ = metadata.insert("date".to_string(), "2024-01-01".to_string());
-        let _ = metadata.insert("title".to_string(), "Test Title".to_string());
-        let _ = metadata.insert("description".to_string(), "Test Description".to_string());
-        let _ = metadata.insert("permalink".to_string(), "/test".to_string());
-        let _ = metadata.insert("keywords".to_string(), "rust, test".to_string());
+        let _ = metadata.insert(
+            "tags".to_string(),
+            "rust, programming".to_string(),
+        );
+        let _ = metadata
+            .insert("date".to_string(), "2024-01-01".to_string());
+        let _ = metadata
+            .insert("title".to_string(), "Test Title".to_string());
+        let _ = metadata.insert(
+            "description".to_string(),
+            "Test Description".to_string(),
+        );
+        let _ = metadata
+            .insert("permalink".to_string(), "/test".to_string());
+        let _ = metadata
+            .insert("keywords".to_string(), "rust, test".to_string());
 
         let result = create_tags_data(&metadata);
 
@@ -448,7 +458,8 @@ mod tests {
 
     #[test]
     fn test_generate_tags_html_basic() {
-        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
         let _ = global_tags.insert(
             "rust".to_string(),
             vec![PageData {
@@ -462,12 +473,15 @@ mod tests {
         let html = generate_tags_html(&global_tags);
 
         assert!(html.contains("rust") || html.contains("Rust"));
-        assert!(html.contains("Rust Post") || html.contains("rust-post"));
+        assert!(
+            html.contains("Rust Post") || html.contains("rust-post")
+        );
     }
 
     #[test]
     fn test_generate_tags_html_empty() {
-        let global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
         let html = generate_tags_html(&global_tags);
 
         // Should still produce valid HTML structure
@@ -476,7 +490,8 @@ mod tests {
 
     #[test]
     fn test_generate_tags_html_multiple_tags() {
-        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
         let _ = global_tags.insert(
             "tag1".to_string(),
             vec![PageData {
@@ -525,7 +540,8 @@ mod tests {
     #[test]
     fn test_generate_tags_html_with_home_title() {
         // Test line 256: title contains "Home"
-        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
         let _ = global_tags.insert(
             "featured".to_string(),
             vec![PageData {
@@ -545,7 +561,8 @@ mod tests {
     #[test]
     fn test_generate_tags_html_with_empty_description() {
         // Test line 275: empty description uses strong_text
-        let mut global_tags: HashMap<String, Vec<PageData>> = HashMap::new();
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
         let _ = global_tags.insert(
             "test".to_string(),
             vec![PageData {
@@ -560,7 +577,10 @@ mod tests {
 
         assert!(!html.is_empty());
         // Should contain the fallback text
-        assert!(html.contains("Learn more on this page") || html.contains("<strong>"));
+        assert!(
+            html.contains("Learn more on this page")
+                || html.contains("<strong>")
+        );
     }
 
     #[test]
@@ -589,10 +609,8 @@ mod tests {
     #[test]
     fn test_write_tags_html_to_file_missing_file() {
         let temp_dir = tempfile::TempDir::new().unwrap();
-        let result = write_tags_html_to_file(
-            "<p>Tags</p>",
-            temp_dir.path(),
-        );
+        let result =
+            write_tags_html_to_file("<p>Tags</p>", temp_dir.path());
         assert!(result.is_err());
     }
 

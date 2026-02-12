@@ -716,17 +716,20 @@ mod tests {
 
     #[test]
     fn test_validate_url_whitespace() {
-        assert!(validate_url("https://example.com/path with spaces").is_empty());
+        assert!(validate_url("https://example.com/path with spaces")
+            .is_empty());
     }
 
     #[test]
     fn test_validate_url_single_quote() {
-        assert!(validate_url("https://example.com/page'injection").is_empty());
+        assert!(validate_url("https://example.com/page'injection")
+            .is_empty());
     }
 
     #[test]
     fn test_validate_url_too_long() {
-        let long_url = format!("https://example.com/{}", "a".repeat(2048));
+        let long_url =
+            format!("https://example.com/{}", "a".repeat(2048));
         assert!(validate_url(&long_url).is_empty());
     }
 }

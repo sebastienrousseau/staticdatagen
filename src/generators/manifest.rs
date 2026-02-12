@@ -705,34 +705,18 @@ mod tests {
 
     #[test]
     fn test_manifest_error_display() {
-        let err =
-            ManifestError::InvalidName("empty".to_string());
-        assert_eq!(
-            format!("{}", err),
-            "Invalid manifest name: empty"
-        );
+        let err = ManifestError::InvalidName("empty".to_string());
+        assert_eq!(format!("{}", err), "Invalid manifest name: empty");
+
+        let err = ManifestError::InvalidColor("bad".to_string());
+        assert_eq!(format!("{}", err), "Invalid color value: bad");
 
         let err =
-            ManifestError::InvalidColor("bad".to_string());
-        assert_eq!(
-            format!("{}", err),
-            "Invalid color value: bad"
-        );
+            ManifestError::InvalidIconUrl("not-a-url".to_string());
+        assert_eq!(format!("{}", err), "Invalid icon URL: not-a-url");
 
-        let err = ManifestError::InvalidIconUrl(
-            "not-a-url".to_string(),
-        );
-        assert_eq!(
-            format!("{}", err),
-            "Invalid icon URL: not-a-url"
-        );
-
-        let err = ManifestError::InvalidDisplayMode(
-            "invalid".to_string(),
-        );
-        assert_eq!(
-            format!("{}", err),
-            "Invalid display mode: invalid"
-        );
+        let err =
+            ManifestError::InvalidDisplayMode("invalid".to_string());
+        assert_eq!(format!("{}", err), "Invalid display mode: invalid");
     }
 }

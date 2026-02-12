@@ -700,37 +700,56 @@ mod tests {
     fn test_empty_sanitized_name() {
         // Test line 182: sanitized_name is empty after removing control chars
         // Note: file needs extension to pass initial check, but name part is all control chars
-        let files = vec![create_test_file("\0\0\0.md", "Empty after sanitize")];
+        let files =
+            vec![create_test_file("\0\0\0.md", "Empty after sanitize")];
         let nav = NavigationGenerator::generate_navigation(&files);
         // Should filter out the file since sanitized name is empty or invalid
-        assert!(!nav.contains("\0"), "Should not contain control characters");
+        assert!(
+            !nav.contains("\0"),
+            "Should not contain control characters"
+        );
     }
 
     #[test]
     fn test_display_name_empty_after_sanitize() {
         // Test line 214: display_name is empty after sanitizing
-        let files = vec![create_test_file("<>.md", "Angle brackets only")];
+        let files =
+            vec![create_test_file("<>.md", "Angle brackets only")];
         let nav = NavigationGenerator::generate_navigation(&files);
         // Either empty or doesn't contain the bad name
-        assert!(!nav.contains("<>"), "Should not contain empty display name");
+        assert!(
+            !nav.contains("<>"),
+            "Should not contain empty display name"
+        );
     }
 
     #[test]
     fn test_absolute_path_rejection() {
         // Test line 238: RootDir component (absolute path)
-        let files = vec![create_test_file("/absolute/path.md", "Absolute path")];
+        let files = vec![create_test_file(
+            "/absolute/path.md",
+            "Absolute path",
+        )];
         let nav = NavigationGenerator::generate_navigation(&files);
-        assert!(!nav.contains("absolute"), "Should reject absolute paths");
+        assert!(
+            !nav.contains("absolute"),
+            "Should reject absolute paths"
+        );
     }
 
     #[test]
     fn test_html_escape_ampersand() {
         // Test line 298: ampersand escaping
-        let files = vec![create_test_file("foo&bar.md", "Ampersand test")];
+        let files =
+            vec![create_test_file("foo&bar.md", "Ampersand test")];
         let nav = NavigationGenerator::generate_navigation(&files);
         // The ampersand should be escaped in the output
-        assert!(nav.contains("Foo&amp;bar") || nav.contains("Foo &amp; Bar") || nav.contains("Foo"),
-            "Should escape ampersand in output");
+        assert!(
+            nav.contains("Foo&amp;bar")
+                || nav.contains("Foo &amp; Bar")
+                || nav.contains("Foo"),
+            "Should escape ampersand in output"
+        );
     }
 
     #[test]

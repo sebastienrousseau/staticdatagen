@@ -123,7 +123,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_basic() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = "<p>Hello World</p>";
@@ -136,7 +137,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_empty() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = "";
@@ -147,7 +149,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_with_img_tag() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = r#"<img src="test.jpg" alt="Test Image">"#;
@@ -160,7 +163,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_multiline() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = "<p>Line 1</p>\n<p>Line 2</p>";
@@ -174,7 +178,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_img_without_title() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = r#"<img src="photo.jpg" alt="A beautiful sunset">"#;
@@ -183,12 +188,15 @@ mod tests {
         assert!(result.is_ok());
         let processed = result.unwrap();
         // The function should add a title attribute based on alt
-        assert!(processed.contains("title=") || processed.contains("alt="));
+        assert!(
+            processed.contains("title=") || processed.contains("alt=")
+        );
     }
 
     #[test]
     fn test_post_process_html_preserves_existing_title() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = r#"<img src="photo.jpg" alt="Test" title="Existing Title">"#;
@@ -216,11 +224,13 @@ mod tests {
 
     #[test]
     fn test_post_process_html_img_adds_title_from_alt() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         // img without title but with alt - should add title
-        let html = r#"<img src="test.jpg" alt="Beautiful landscape photo">"#;
+        let html =
+            r#"<img src="test.jpg" alt="Beautiful landscape photo">"#;
         let result = post_process_html(html, &class_regex, &img_regex);
 
         assert!(result.is_ok());
@@ -231,7 +241,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_img_no_alt() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         // img without alt - should not add title
@@ -243,7 +254,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_img_empty_alt() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         // img with empty alt - should not add title
@@ -255,12 +267,14 @@ mod tests {
 
     #[test]
     fn test_post_process_html_long_alt_text() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         // img with very long alt text
         let long_alt = "A".repeat(100);
-        let html = format!(r#"<img src="test.jpg" alt="{}">"#, long_alt);
+        let html =
+            format!(r#"<img src="test.jpg" alt="{}">"#, long_alt);
         let result = post_process_html(&html, &class_regex, &img_regex);
 
         assert!(result.is_ok());
@@ -271,7 +285,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_multiple_imgs() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = r#"<img src="a.jpg" alt="First">
@@ -280,8 +295,13 @@ mod tests {
 
         assert!(result.is_ok());
         let processed = result.unwrap();
-        assert!(processed.contains("First") || processed.contains("first"));
-        assert!(processed.contains("Second") || processed.contains("second"));
+        assert!(
+            processed.contains("First") || processed.contains("first")
+        );
+        assert!(
+            processed.contains("Second")
+                || processed.contains("second")
+        );
     }
 
     #[test]
@@ -302,7 +322,8 @@ mod tests {
 
     #[test]
     fn test_post_process_html_special_characters_in_alt() {
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = r#"<img src="test.jpg" alt="Test & Example">"#;
@@ -315,11 +336,13 @@ mod tests {
     fn test_post_process_html_replace_all_with_multiple_imgs() {
         // Two img tags on the same line separated by a closing tag (so [^>]* stops).
         // First img is consumed by captures/replace, second by replace_all which adds title.
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(/>)"#).unwrap();
 
         let html = r#"<img src="a.jpg" alt="First" /><span>sep</span><img src="b.jpg" alt="Second photo" />"#;
-        let result = post_process_html(html, &class_regex, &img_regex).unwrap();
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
         // The second img should have a title added by replace_all
         assert!(result.contains("title=\"second photo\""));
     }
@@ -327,45 +350,56 @@ mod tests {
     #[test]
     fn test_post_process_html_replace_all_preserves_existing_title() {
         // Second img already has title - replace_all should not add another
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(/>)"#).unwrap();
 
         let html = r#"<img src="a.jpg" alt="First" /><span>x</span><img src="b.jpg" alt="Second" title="Existing" />"#;
-        let result = post_process_html(html, &class_regex, &img_regex).unwrap();
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
         assert!(result.contains("Existing"));
     }
 
     #[test]
     fn test_post_process_html_replace_all_no_alt_on_second() {
         // Second img has no alt - should not get title
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(/>)"#).unwrap();
 
         let html = r#"<img src="a.jpg" alt="First" /><span>x</span><img src="b.jpg" />"#;
-        let result = post_process_html(html, &class_regex, &img_regex).unwrap();
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
         assert!(result.contains("img"));
     }
 
     #[test]
     fn test_post_process_html_replace_all_long_alt_truncation() {
         // Second img has a very long alt that should be truncated
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(/>)"#).unwrap();
 
         let long_alt = "a".repeat(100);
-        let html = format!(r#"<img src="a.jpg" alt="X" /><b>y</b><img src="b.jpg" alt="{}" />"#, long_alt);
-        let result = post_process_html(&html, &class_regex, &img_regex).unwrap();
+        let html = format!(
+            r#"<img src="a.jpg" alt="X" /><b>y</b><img src="b.jpg" alt="{}" />"#,
+            long_alt
+        );
+        let result =
+            post_process_html(&html, &class_regex, &img_regex).unwrap();
         assert!(result.contains("title="));
     }
 
     #[test]
     fn test_post_process_html_replace_all_three_imgs() {
         // Three imgs with separators: first consumed by captures, 2nd+3rd by replace_all
-        let class_regex = Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(/>)"#).unwrap();
 
         let html = r#"<img src="a.jpg" alt="Alpha" /><b>x</b><img src="b.jpg" alt="Beta" /><b>y</b><img src="c.jpg" alt="Gamma" />"#;
-        let result = post_process_html(html, &class_regex, &img_regex).unwrap();
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
         assert!(result.contains("title=\"beta\""));
         assert!(result.contains("title=\"gamma\""));
     }
@@ -377,10 +411,8 @@ mod tests {
             Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
-        let html =
-            r#"<p.class="important">Critical text</p>"#;
-        let result =
-            post_process_html(html, &class_regex, &img_regex);
+        let html = r#"<p.class="important">Critical text</p>"#;
+        let result = post_process_html(html, &class_regex, &img_regex);
         assert!(result.is_ok());
         let processed = result.unwrap();
         assert!(processed.contains("important"));
@@ -393,8 +425,7 @@ mod tests {
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = r#"<img src="test.jpg" alt="A &amp; B photo">"#;
-        let result =
-            post_process_html(html, &class_regex, &img_regex);
+        let result = post_process_html(html, &class_regex, &img_regex);
         assert!(result.is_ok());
     }
 
@@ -405,8 +436,7 @@ mod tests {
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
         let html = "   \n  \n   ";
-        let result =
-            post_process_html(html, &class_regex, &img_regex);
+        let result = post_process_html(html, &class_regex, &img_regex);
         assert!(result.is_ok());
     }
 }
