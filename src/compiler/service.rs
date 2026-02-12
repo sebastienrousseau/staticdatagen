@@ -1109,6 +1109,16 @@ Content here"#;
 
     #[test]
     fn test_assemble_file_data_basic() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let site_path = temp_dir.path();
+
+        // Create an index.html so visit_dirs/sitemap() succeeds
+        fs::write(
+            site_path.join("index.html"),
+            "<html><body>Hello</body></html>",
+        )
+        .unwrap();
+
         let file = FileData {
             name: "test.md".to_string(),
             content: "test".to_string(),
@@ -1117,7 +1127,7 @@ Content here"#;
         let mut metadata = HashMap::new();
         let _ = metadata.insert(
             "permalink".to_string(),
-            "https://example.com/page".to_string(),
+            "https://example.com".to_string(),
         );
         let _ = metadata
             .insert("changefreq".to_string(), "weekly".to_string());
@@ -1125,7 +1135,6 @@ Content here"#;
             .insert("lastmod".to_string(), "2024-01-01".to_string());
 
         let mut global_tags_data = HashMap::new();
-        let site_path = Path::new("/tmp/test_site_assemble");
 
         let result = assemble_file_data(
             &file,
@@ -1141,22 +1150,43 @@ Content here"#;
             site_path,
         );
 
-        // The result may fail due to sitemap generation needing specific data,
-        // but we exercise the function body
-        match result {
-            Ok(fd) => {
-                assert_eq!(fd.name, "test.md");
-                assert_eq!(fd.content, "rendered content");
-                assert_eq!(fd.keyword, "keyword1");
-                assert_eq!(fd.rss, "rss content");
-                assert_eq!(fd.manifest, "manifest content");
-                assert_eq!(fd.cname, "cname");
-                assert_eq!(fd.human, "humans");
-            }
-            Err(_) => {
-                // Sitemap generation may fail, that's ok - we still covered
-                // create_security_data, create_site_map_data, generate_tags, etc.
-            }
-        }
+        let fd = result.expect("assemble_file_data should succeed");
+        assert_eq!(fd.name, "test.md");
+        assert_eq!(fd.content, "rendered content");
+        assert_eq!(fd.keyword, "keyword1");
+        assert_eq!(fd.rss, "rss content");
+        assert_eq!(fd.manifest, "manifest content");
+        assert_eq!(fd.cname, "cname");
+        assert_eq!(fd.human, "humans");
+        assert!(!fd.sitemap.is_empty());
+        assert!(!fd.txt.is_empty());
+    }
+
+    #[test]
+    fn test_assemble_file_data_missing_permalink() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let file = FileData {
+            name: "test.md".to_string(),
+            content: "test".to_string(),
+            ..Default::default()
+        };
+        // No permalink → create_site_map_data fails → sitemap_options? returns Err
+        let metadata = HashMap::new();
+        let mut global_tags_data = HashMap::new();
+
+        let result = assemble_file_data(
+            &file,
+            "content".to_string(),
+            vec![],
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            String::new(),
+            &metadata,
+            &mut global_tags_data,
+            temp_dir.path(),
+        );
+        assert!(result.is_err());
     }
 }

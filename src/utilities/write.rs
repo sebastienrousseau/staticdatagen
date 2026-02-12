@@ -678,13 +678,15 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let dir_name = temp_dir.path().join("content");
 
-        let mut file = FileData::default();
-        file.content = "<html></html>".to_string();
-        file.manifest = "{}".to_string();
-        file.txt = "robots".to_string();
-        file.rss = "<rss></rss>".to_string();
-        file.sitemap = "<sitemap></sitemap>".to_string();
-        file.sitemap_news = "<news></news>".to_string();
+        let file = FileData {
+            content: "<html></html>".to_string(),
+            manifest: "{}".to_string(),
+            txt: "robots".to_string(),
+            rss: "<rss></rss>".to_string(),
+            sitemap: "<sitemap></sitemap>".to_string(),
+            sitemap_news: "<news></news>".to_string(),
+            ..Default::default()
+        };
 
         let result = write_content_files(&dir_name, &file, false);
 
@@ -743,16 +745,18 @@ mod tests {
     #[test]
     fn test_write_index_files() {
         let temp_dir = TempDir::new().unwrap();
-        let mut file = FileData::default();
-        file.cname = "example.com".to_string();
-        file.human = "/* TEAM */".to_string();
-        file.content = "<html></html>".to_string();
-        file.manifest = "{}".to_string();
-        file.txt = "User-agent: *".to_string();
-        file.rss = "<rss></rss>".to_string();
-        file.security = "Contact: test@example.com".to_string();
-        file.sitemap = "<urlset></urlset>".to_string();
-        file.sitemap_news = "<news></news>".to_string();
+        let file = FileData {
+            cname: "example.com".to_string(),
+            human: "/* TEAM */".to_string(),
+            content: "<html></html>".to_string(),
+            manifest: "{}".to_string(),
+            txt: "User-agent: *".to_string(),
+            rss: "<rss></rss>".to_string(),
+            security: "Contact: test@example.com".to_string(),
+            sitemap: "<urlset></urlset>".to_string(),
+            sitemap_news: "<news></news>".to_string(),
+            ..Default::default()
+        };
 
         let result = write_index_files(temp_dir.path(), &file, false);
 
@@ -848,10 +852,12 @@ mod tests {
         fs::write(template_dir.path().join("main.js"), "main").unwrap();
         fs::write(template_dir.path().join("sw.js"), "sw").unwrap();
 
-        let mut file = FileData::default();
-        file.name = "index.md".to_string();
-        file.content = "<html></html>".to_string();
-        file.cname = "example.com".to_string();
+        let file = FileData {
+            name: "index.md".to_string(),
+            content: "<html></html>".to_string(),
+            cname: "example.com".to_string(),
+            ..Default::default()
+        };
 
         let result = write_files_to_build_directory(
             build_dir.path(),
@@ -870,10 +876,12 @@ mod tests {
         let build_dir = TempDir::new().unwrap();
         let template_dir = TempDir::new().unwrap();
 
-        let mut file = FileData::default();
-        file.name = "about.md".to_string();
-        file.content = "<html><body>About</body></html>".to_string();
-        file.manifest = "{}".to_string();
+        let file = FileData {
+            name: "about.md".to_string(),
+            content: "<html><body>About</body></html>".to_string(),
+            manifest: "{}".to_string(),
+            ..Default::default()
+        };
 
         let result = write_files_to_build_directory(
             build_dir.path(),

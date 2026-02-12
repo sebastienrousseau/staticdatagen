@@ -603,7 +603,7 @@ mod tests {
     #[test]
     fn test_error_source() {
         // Test IO error source
-        let io_err = io::Error::new(ErrorKind::Other, "test");
+        let io_err = io::Error::other("test");
         let err = Error::Io {
             source: io_err,
             context: "test context".to_string(),
@@ -627,7 +627,7 @@ mod tests {
     /// Ensures the `?` operator converts `std::io::Error` to `Error::Io`.
     #[test]
     fn test_error_from_io() {
-        let io_err = io::Error::new(ErrorKind::Other, "io error");
+        let io_err = io::Error::other("io error");
         let err: Error = io_err.into();
         assert!(matches!(err, Error::Io { .. }));
     }
@@ -646,7 +646,7 @@ mod tests {
     /// Verifies that nested I/O errors have a `.source()` chain.
     #[test]
     fn test_error_chaining() {
-        let io_err = io::Error::new(ErrorKind::Other, "base error");
+        let io_err = io::Error::other("base error");
         let err = Error::Io {
             source: io_err,
             context: "test".to_string(),
@@ -735,7 +735,7 @@ mod tests {
     /// Tests that I/O errors carry exactly one level of nesting in the cause chain.
     #[test]
     fn test_error_nesting() {
-        let io_error = io::Error::new(ErrorKind::Other, "root cause");
+        let io_error = io::Error::other("root cause");
         let error = Error::Io {
             source: io_error,
             context: "test context".to_string(),
@@ -756,7 +756,7 @@ mod tests {
     /// Checks `From<std::io::Error>` conversion retains default context.
     #[test]
     fn test_error_conversion_chain() {
-        let io_error = io::Error::new(ErrorKind::Other, "base error");
+        let io_error = io::Error::other("base error");
         let error: Error = io_error.into();
 
         match error {
@@ -790,7 +790,7 @@ mod tests {
     #[test]
     fn test_result_type_composition() {
         fn inner_operation() -> io::Result<i32> {
-            Err(io::Error::new(ErrorKind::Other, "inner error"))
+            Err(io::Error::other("inner error"))
         }
 
         fn outer_operation() -> Result<i32, io::Error> {
@@ -841,12 +841,12 @@ mod tests {
     #[test]
     fn test_error_conversions_again() {
         // `From` implementation
-        let io_err = io::Error::new(ErrorKind::Other, "io error");
+        let io_err = io::Error::other("io error");
         let err: Error = Error::from(io_err);
         assert!(matches!(err, Error::Io { .. }));
 
         // `Into` implementation
-        let io_err2 = io::Error::new(ErrorKind::Other, "io error2");
+        let io_err2 = io::Error::other("io error2");
         let err2: Error = io_err2.into();
         assert!(matches!(err2, Error::Io { .. }));
     }
@@ -903,7 +903,7 @@ mod tests {
     /// Tests downcasting capabilities, ensuring the `Error` type implements `StdError`.
     #[test]
     fn test_error_downcasting() {
-        let io_err = io::Error::new(ErrorKind::Other, "test");
+        let io_err = io::Error::other("test");
         let err = Error::Io {
             source: io_err,
             context: "test context".to_string(),
@@ -917,7 +917,7 @@ mod tests {
     /// upon inspection or logging.
     #[test]
     fn test_io_error_cloning() {
-        let io_err = io::Error::new(ErrorKind::Other, "original");
+        let io_err = io::Error::other("original");
         let err = Error::Io {
             source: io_err,
             context: "some context".to_string(),
@@ -938,7 +938,7 @@ mod tests {
                 source: None,
             },
             Error::Io {
-                source: io::Error::new(ErrorKind::Other, "io"),
+                source: io::Error::other("io"),
                 context: "some context".to_string(),
             },
         ];
@@ -965,7 +965,7 @@ mod tests {
     #[test]
     fn test_error_context_preservation() {
         let context = "important context";
-        let io_err = io::Error::new(ErrorKind::Other, context);
+        let io_err = io::Error::other(context);
         let err = Error::Io {
             source: io_err,
             context: context.to_string(),
@@ -1198,7 +1198,7 @@ mod tests {
     #[test]
     fn test_error_content_processing_with_source() {
         let src_err: Box<dyn StdError + Send + Sync> =
-            Box::new(io::Error::new(ErrorKind::Other, "Root cause"));
+            Box::new(io::Error::other("Root cause"));
         let err = Error::content_processing(
             "Top-level content error",
             Some(src_err),
@@ -1258,7 +1258,7 @@ mod tests {
     /// both fields are set correctly.
     #[test]
     fn test_io_error_builder_with_operation_and_path() {
-        let io_err = io::Error::new(ErrorKind::Other, "some io error");
+        let io_err = io::Error::other("some io error");
         let error = IoErrorBuilder::new()
             .source(io_err)
             .with_operation_and_path("Reading file", "/some/path")
@@ -1406,8 +1406,7 @@ mod tests {
     /// Tests fluent method chaining for ContentProcessingErrorBuilder
     #[test]
     fn test_content_processing_builder_chaining() {
-        let source_err =
-            io::Error::new(ErrorKind::Other, "source error");
+        let source_err = io::Error::other("source error");
         let error = ContentProcessingErrorBuilder::new()
             .message("Primary error")
             .source(source_err)
@@ -1480,7 +1479,7 @@ mod tests {
     /// Tests IoErrorBuilder method ordering independence
     #[test]
     fn test_io_error_builder_method_ordering() {
-        let io_err = io::Error::new(ErrorKind::Other, "test error");
+        let io_err = io::Error::other("test error");
 
         // Order 1
         let error1 = IoErrorBuilder::new()

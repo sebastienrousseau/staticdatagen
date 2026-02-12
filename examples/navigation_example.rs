@@ -164,7 +164,7 @@ fn i18n_navigation_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🦀 Internationalized Navigation Example");
     println!("---------------------------------------------");
 
-    let files = vec![
+    let files = [
         // English
         FileData::new(
             "en/about.md".to_string(),
