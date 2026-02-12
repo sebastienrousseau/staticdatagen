@@ -407,7 +407,7 @@ fn process_file(
 
 /// Helper function to convert `xml::writer::Error` to `std::io::Error`
 fn to_io_error(err: xml::writer::Error) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, err)
+    io::Error::other(err)
 }
 
 /// Helper function to visit directories for news sitemap generation

@@ -10,7 +10,6 @@
 #![deny(missing_docs)]
 
 use std::error::Error as StdError;
-use std::io::ErrorKind;
 use thiserror::Error;
 
 /// The `compiler` module contains routines that parse and transform input data into
@@ -338,7 +337,7 @@ impl IoErrorBuilder {
     /// Similarly, if no meaningful context is found, a generic placeholder is supplied.
     pub fn build(self) -> Error {
         let source = self.source.unwrap_or_else(|| {
-            std::io::Error::new(ErrorKind::Other, "Unknown IO error")
+            std::io::Error::other("Unknown IO error")
         });
 
         let mut context_parts = Vec::new();

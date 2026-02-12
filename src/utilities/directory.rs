@@ -113,7 +113,7 @@ pub fn move_output_directory(
     fs::create_dir_all(&new_project_dir)?;
 
     let out_dir_name = out_dir.file_name().ok_or_else(|| {
-        io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
+        io::Error::other("Invalid out_dir")
     })?;
 
     debug!(

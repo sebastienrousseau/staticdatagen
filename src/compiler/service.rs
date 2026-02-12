@@ -345,6 +345,7 @@ fn generate_auxiliary_files(
 /// # Returns
 ///
 /// Returns the assembled FileData structure.
+#[allow(clippy::too_many_arguments)]
 fn assemble_file_data(
     file: &FileData,
     content: String,
