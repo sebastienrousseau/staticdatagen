@@ -527,6 +527,48 @@ mod tests {
     use rss_gen::data::RssDataField;
 
     #[test]
+    fn test_compile_success() {
+        let build_dir = tempfile::TempDir::new().unwrap();
+        let content_dir = tempfile::TempDir::new().unwrap();
+        let site_dir = tempfile::TempDir::new().unwrap();
+        let template_dir = tempfile::TempDir::new().unwrap();
+
+        // Create a content file with full frontmatter
+        fs::write(
+            content_dir.path().join("index.md"),
+            "---\ntitle: Home\nlayout: page\npermalink: https://example.com\ndescription: Home page\nauthor: Test\nchangefreq: weekly\n---\n# Welcome\n\nHello world.",
+        )
+        .unwrap();
+
+        // Create the template and auxiliary files
+        fs::write(
+            template_dir.path().join("page.html"),
+            "<html><head><title>{{title}}</title></head><body>{{content}}</body></html>",
+        )
+        .unwrap();
+        fs::write(template_dir.path().join("main.js"), "// main")
+            .unwrap();
+        fs::write(template_dir.path().join("sw.js"), "// sw").unwrap();
+
+        // Create tags/index.html in build dir (write_tags_html_to_file expects it)
+        fs::create_dir_all(build_dir.path().join("tags")).unwrap();
+        fs::write(
+            build_dir.path().join("tags/index.html"),
+            "<html><body>[[content]]</body></html>",
+        )
+        .unwrap();
+
+        let result = compile(
+            build_dir.path(),
+            content_dir.path(),
+            site_dir.path(),
+            template_dir.path(),
+        );
+
+        assert!(result.is_ok(), "compile failed: {:?}", result.err());
+    }
+
+    #[test]
     fn test_compile_missing_directories() {
         let build_dir_path = Path::new("/nonexistent/build");
         let content_path = Path::new("/nonexistent/content");
@@ -1158,6 +1200,55 @@ Content here"#;
         assert_eq!(fd.manifest, "manifest content");
         assert_eq!(fd.cname, "cname");
         assert_eq!(fd.human, "humans");
+        assert!(!fd.sitemap.is_empty());
+        assert!(!fd.txt.is_empty());
+    }
+
+    #[test]
+    fn test_process_file_basic() {
+        let template_dir = tempfile::TempDir::new().unwrap();
+        let site_dir = tempfile::TempDir::new().unwrap();
+
+        // Create index.html for sitemap
+        fs::write(
+            site_dir.path().join("index.html"),
+            "<html><body>Site</body></html>",
+        )
+        .unwrap();
+
+        // Create a template file for the "page" layout
+        fs::write(
+            template_dir.path().join("page.html"),
+            "<html><head><title>{{title}}</title></head><body>{{content}}</body></html>",
+        )
+        .unwrap();
+
+        let mut engine = Engine::new(
+            template_dir.path().to_str().unwrap(),
+            Duration::from_secs(60),
+        );
+
+        let file = FileData {
+            name: "test.md".to_string(),
+            content: "---\ntitle: Test Page\nlayout: page\npermalink: https://example.com\nchangefreq: weekly\ndescription: A test page\nauthor: Test\n---\n# Hello World\n\nThis is test content.".to_string(),
+            ..Default::default()
+        };
+
+        let mut global_tags_data = HashMap::new();
+
+        let result = process_file(
+            &file,
+            &mut engine,
+            template_dir.path(),
+            "<nav>Nav</nav>",
+            &mut global_tags_data,
+            site_dir.path(),
+        );
+
+        let fd = result.expect("process_file should succeed");
+        assert_eq!(fd.name, "test.md");
+        assert!(!fd.content.is_empty());
+        assert!(!fd.rss.is_empty());
         assert!(!fd.sitemap.is_empty());
         assert!(!fd.txt.is_empty());
     }
