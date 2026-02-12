@@ -41,11 +41,11 @@ This is the main content of the test page.
 fn test_metadata_extraction_patterns() {
     // Create metadata map
     let mut metadata: HashMap<String, String> = HashMap::new();
-    metadata.insert("title".to_string(), "Test Title".to_string());
-    metadata.insert("description".to_string(), "Test Description".to_string());
-    metadata.insert("author".to_string(), "Test Author".to_string());
-    metadata.insert("date".to_string(), "2026-02-05".to_string());
-    metadata.insert("keywords".to_string(), "test, integration, rust".to_string());
+    let _ = metadata.insert("title".to_string(), "Test Title".to_string());
+    let _ = metadata.insert("description".to_string(), "Test Description".to_string());
+    let _ = metadata.insert("author".to_string(), "Test Author".to_string());
+    let _ = metadata.insert("date".to_string(), "2026-02-05".to_string());
+    let _ = metadata.insert("keywords".to_string(), "test, integration, rust".to_string());
 
     // Verify metadata access
     assert_eq!(metadata.get("title"), Some(&"Test Title".to_string()));
@@ -168,7 +168,7 @@ fn test_parallel_processing_simulation() {
     // Simulate parallel processing
     let files: Vec<FileData> = (0..10)
         .map(|i| {
-            counter.fetch_add(1, Ordering::SeqCst);
+            let _ = counter.fetch_add(1, Ordering::SeqCst);
             FileData::new(
                 format!("file-{}.md", i),
                 format!("Content {}", i),

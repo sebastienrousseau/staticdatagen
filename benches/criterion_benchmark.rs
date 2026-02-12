@@ -115,7 +115,7 @@ fn bench_navigation_scaling(c: &mut Criterion) {
             })
             .collect();
 
-        group.bench_with_input(BenchmarkId::from_parameter(size), &files, |b, files| {
+        let _ = group.bench_with_input(BenchmarkId::from_parameter(size), &files, |b, files| {
             b.iter(|| {
                 let _ = black_box(NavigationGenerator::generate_navigation(files));
             });
@@ -183,7 +183,7 @@ fn bench_file_data_scaling(c: &mut Criterion) {
     for size in [100, 1000, 10000, 100000].iter() {
         let content = "a".repeat(*size);
 
-        group.bench_with_input(BenchmarkId::from_parameter(size), &content, |b, content| {
+        let _ = group.bench_with_input(BenchmarkId::from_parameter(size), &content, |b, content| {
             b.iter(|| {
                 let file = FileData::new("test.md".to_string(), content.clone());
                 let _ = black_box(file.validate());
@@ -257,7 +257,7 @@ fn bench_path_sanitization_scaling(c: &mut Criterion) {
 
     for (name, path_str) in paths.iter() {
         let path = Path::new(path_str);
-        group.bench_with_input(BenchmarkId::from_parameter(name), &path, |b, path| {
+        let _ = group.bench_with_input(BenchmarkId::from_parameter(name), &path, |b, path| {
             b.iter(|| {
                 let _ = black_box(staticdatagen::utilities::security::sanitize_path(path));
             });
@@ -280,7 +280,7 @@ fn bench_uuid_batch_generation(c: &mut Criterion) {
     let mut group = c.benchmark_group("uuid_batch");
 
     for size in [10, 100, 1000].iter() {
-        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
+        let _ = group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, &size| {
             b.iter(|| {
                 let uuids: Vec<String> = (0..size)
                     .map(|_| staticdatagen::generate_unique_string())
@@ -341,7 +341,7 @@ fn bench_manifest_scaling(c: &mut Criterion) {
 
     for (name, config) in configs.iter() {
         let generator = ManifestGenerator::new(config.clone());
-        group.bench_with_input(
+        let _ = group.bench_with_input(
             BenchmarkId::from_parameter(name),
             &generator,
             |b, generator| {

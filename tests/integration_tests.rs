@@ -34,24 +34,24 @@ fn test_cname_generation_workflow() {
 fn test_humans_txt_generation_workflow() {
     // Create configuration from metadata
     let mut metadata = HashMap::new();
-    metadata.insert("author".to_string(), "Test Author".to_string());
-    metadata.insert(
+    let _ = metadata.insert("author".to_string(), "Test Author".to_string());
+    let _ = metadata.insert(
         "author_website".to_string(),
         "https://example.com".to_string(),
     );
-    metadata.insert("author_twitter".to_string(), "@testauthor".to_string());
-    metadata.insert("author_location".to_string(), "Test City".to_string());
-    metadata.insert("site_components".to_string(), "Rust, HTML".to_string());
-    metadata.insert(
+    let _ = metadata.insert("author_twitter".to_string(), "@testauthor".to_string());
+    let _ = metadata.insert("author_location".to_string(), "Test City".to_string());
+    let _ = metadata.insert("site_components".to_string(), "Rust, HTML".to_string());
+    let _ = metadata.insert(
         "site_last_updated".to_string(),
         "2026-01-01".to_string(),
     );
-    metadata.insert("site_standards".to_string(), "HTML5, CSS3".to_string());
-    metadata.insert(
+    let _ = metadata.insert("site_standards".to_string(), "HTML5, CSS3".to_string());
+    let _ = metadata.insert(
         "site_software".to_string(),
         "StaticDataGen".to_string(),
     );
-    metadata.insert("thanks".to_string(), "Contributors".to_string());
+    let _ = metadata.insert("thanks".to_string(), "Contributors".to_string());
 
     let config =
         HumansConfig::from_metadata(&metadata).expect("Failed to create config");

@@ -427,7 +427,7 @@ mod tests {
         config.list_bullet = "- ".to_string();
         config.preserve_empty_lines = false;
         config.ascii_only = true;
-        config.replacements.insert("foo".to_string(), "bar".to_string());
+        let _ = config.replacements.insert("foo".to_string(), "bar".to_string());
 
         assert_eq!(config.max_line_length, 120);
         assert_eq!(config.list_bullet, "- ");
