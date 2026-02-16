@@ -330,7 +330,31 @@ jobs:
       - name: Check semver compatibility
         run: cargo semver-checks check-release
 
-  # Job 10: Comprehensive Check Job (required for branch protection)
+  # Job 10: SBOM Generation
+  sbom:
+    name: 📦 SBOM Generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-cyclonedx
+        run: cargo install cargo-cyclonedx
+
+      - name: Generate CycloneDX SBOM
+        run: cargo cyclonedx --all --format json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: "**/*bom.json"
+          retention-days: 90
+
+  # Job 11: Comprehensive Check Job (required for branch protection)
   strict-ci-complete:
     name: ✅ Strict CI Complete
     runs-on: ubuntu-latest
@@ -341,7 +365,8 @@ jobs:
       security-audit,
       msrv-check,
       test-matrix,
-      miri-check
+      miri-check,
+      sbom
     ]
     steps:
       - name: All checks passed
@@ -354,3 +379,4 @@ jobs:
           echo "✅ MSRV verification: PASSED"
           echo "✅ Cross-platform tests: PASSED"
           echo "✅ Miri validation: PASSED"
+          echo "✅ SBOM generation: PASSED"

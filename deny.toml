@@ -39,15 +39,29 @@ skip-tree = []
 [advisories]
 # List of advisory IDs to ignore
 # Note: Only ignore advisories after careful consideration
+#
+# QUARTERLY REVIEW SCHEDULE:
+# Last reviewed: 2026-02-16
+# Next review:   2026-05-16
+#
+# Review checklist:
+#   1. Run `cargo audit` to check for new advisories
+#   2. Check each ignored advisory for maintained alternatives
+#   3. Update comments with findings and next review date
+#   4. Remove entries where replacements are available
 ignore = [
-    # Unmaintained crates that are still functional and have no secure alternatives
-    # These should be reviewed periodically for maintained alternatives
-    "RUSTSEC-2024-0436",  # paste - still functional, widely used
-    "RUSTSEC-2025-0119",  # number_prefix - used transitively, still functional
-    "RUSTSEC-2024-0320",  # yaml-rust - used transitively, still functional
-    "RUSTSEC-2024-0384",  # fxhash - used transitively, still functional
-    "RUSTSEC-2025-0067",  # libyml - transitive dep via metadata-gen/rlg, no direct replacement
-    "RUSTSEC-2025-0068",  # serde_yml - transitive dep via metadata-gen/rlg, no direct replacement
+    # [Reviewed 2026-02-16] Unmaintained but functional, no drop-in replacement
+    "RUSTSEC-2024-0436",  # paste - still functional, widely used, no alternative
+    # [Reviewed 2026-02-16] Transitive via indicatif/rlg, no action possible
+    "RUSTSEC-2025-0119",  # number_prefix - transitive dep, still functional
+    # [Reviewed 2026-02-16] Transitive via config/rlg, yaml-rust2 exists but not a drop-in
+    "RUSTSEC-2024-0320",  # yaml-rust - transitive dep, still functional
+    # [Reviewed 2026-02-16] Transitive via whatlang, no action possible
+    "RUSTSEC-2024-0384",  # fxhash - transitive dep, still functional
+    # [Reviewed 2026-02-16] Transitive via metadata-gen/rlg, upstream needs to migrate
+    "RUSTSEC-2025-0067",  # libyml - transitive dep, no direct replacement available
+    # [Reviewed 2026-02-16] Transitive via metadata-gen/rlg, upstream needs to migrate
+    "RUSTSEC-2025-0068",  # serde_yml - transitive dep, no direct replacement available
 ]
 
 # Advisory database configuration

@@ -399,7 +399,9 @@ fn process_file(
                 .map_err(to_io_error)?; // close <url>
 
             // Collect the escaped and properly encoded XML string
-            urls.push(String::from_utf8(buffer).expect("Valid UTF-8"));
+            urls.push(String::from_utf8(buffer).map_err(
+                |e| io::Error::new(io::ErrorKind::InvalidData, e),
+            )?);
         }
     }
     Ok(())
@@ -483,7 +485,15 @@ pub fn sitemap(
         )
     })?;
     let base_dir =
-        sanitize_path(dir_str).expect("Failed to sanitize path");
+        sanitize_path(dir_str).map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!(
+                    "Failed to sanitize path: {}",
+                    e
+                ),
+            )
+        })?;
     let mut urls = vec![];
     visit_dirs(
         &base_dir,

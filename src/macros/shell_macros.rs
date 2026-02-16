@@ -6,8 +6,19 @@
 //! This module provides utilities for executing shell commands, logging their execution,
 //! and handling errors in a safe and controlled manner.
 //!
+//! # Security Warning
+//!
+//! Commands are executed via a shell interpreter (`sh -c`).
+//! **Never pass unsanitized user input** as the command string,
+//! as this would create a **command injection vulnerability**.
+//! All command strings must be constructed from trusted,
+//! validated sources only.
+//!
+//! This module is intended for internal build/deployment
+//! tooling, not for processing external user input.
+//!
 //! # Features
-//! - Safe shell command execution
+//! - Safe shell command execution (with trusted inputs)
 //! - Comprehensive error handling
 //! - Command execution logging
 //! - Configurable shell interpreter
@@ -59,7 +70,14 @@ pub enum CommandError {
     OutputCaptureFailed(String),
 }
 
-/// Encapsulates command execution functionality with safety checks
+/// Encapsulates command execution functionality with safety checks.
+///
+/// # Security
+///
+/// This executor passes commands to a shell interpreter via `-c`.
+/// The command string is **not escaped or sanitized** — callers
+/// must ensure that command strings come from trusted sources.
+/// Passing unsanitized external input would allow command injection.
 #[derive(Debug)]
 pub struct CommandExecutor {
     /// The command to execute

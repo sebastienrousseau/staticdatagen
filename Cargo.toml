@@ -102,6 +102,7 @@ version_check = "0.9.5"                       # Ensures that a compatible Rust v
 [dev-dependencies]
 # Dependencies required for testing and development.
 criterion = "0.8.2"                           # Benchmarking library to test performance
+proptest = "1.6"                              # Property-based testing framework
 
 # -----------------------------------------------------------------------------
 # Dependencies
@@ -225,7 +226,15 @@ unused_qualifications = "deny"              # Deny unnecessary type qualificatio
 variant_size_differences = "deny"           # Deny enum variants with significant size differences
 
 # -----------------------------------------------------------------------------
-# Clippy Configuration
+# Clippy Lint Configuration (enforced by cargo clippy)
+# -----------------------------------------------------------------------------
+[lints.clippy]
+# Enforce strict error handling in production code
+unwrap_used = "deny"                         # Deny .unwrap() to ensure proper error handling
+expect_used = "deny"                         # Deny .expect() to ensure proper error handling
+
+# -----------------------------------------------------------------------------
+# Clippy Metadata (informational, for tooling reference)
 # -----------------------------------------------------------------------------
 [package.metadata.clippy]
 # Clippy lint configuration for enhanced code analysis.

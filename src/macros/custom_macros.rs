@@ -261,8 +261,7 @@ macro_rules! macro_render_layout {
 
         let template_content = fs::read_to_string(
             Path::new($template_path).join(&template_file),
-        )
-        .unwrap();
+        )?;
         render_template(&template_content, &$context)
     }};
 }
@@ -286,6 +285,6 @@ macro_rules! macro_render_layout {
 macro_rules! macro_serve {
     ($server_address:expr, $document_root:expr) => {
         let server = Server::new($server_address, $document_root);
-        server.start().unwrap();
+        server.start()?;
     };
 }

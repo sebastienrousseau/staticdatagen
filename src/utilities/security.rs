@@ -297,4 +297,52 @@ mod tests {
             std::fs::Permissions::from_mode(0o755),
         );
     }
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn sanitize_path_never_panics(
+                s in ".*"
+            ) {
+                let path = Path::new(&s);
+                // Should never panic, only return Ok or Err
+                let _ = sanitize_path(path);
+            }
+
+            #[test]
+            fn sanitize_path_never_contains_dotdot(
+                s in "[a-zA-Z0-9/._-]{1,100}"
+            ) {
+                let path = Path::new(&s);
+                if let Ok(result) = sanitize_path(path) {
+                    let result_str =
+                        result.to_string_lossy();
+                    prop_assert!(
+                        !result_str.contains(".."),
+                        "Sanitized path must not contain \
+                         '..': {}",
+                        result_str
+                    );
+                }
+            }
+
+            #[test]
+            fn sanitize_path_no_absolute_output(
+                s in "[a-zA-Z0-9/._-]{1,100}"
+            ) {
+                let path = Path::new(&s);
+                if let Ok(result) = sanitize_path(path) {
+                    prop_assert!(
+                        !result
+                            .to_string_lossy()
+                            .starts_with('/'),
+                        "Sanitized path must be relative"
+                    );
+                }
+            }
+        }
+    }
 }

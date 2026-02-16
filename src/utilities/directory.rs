@@ -12,7 +12,24 @@ use std::{
     error::Error,
     fs, io,
     path::{Path, PathBuf},
+    sync::LazyLock,
 };
+
+/// Pre-compiled regex for title case conversion.
+#[allow(clippy::expect_used)] // Static pattern validated at development time
+static TITLE_CASE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:^|\s)(\p{L})")
+        .expect("valid static regex pattern")
+});
+
+/// Pre-compiled regex for matching HTML header tags.
+#[allow(clippy::expect_used)] // Static pattern validated at development time
+static HEADER_TAG_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>",
+    )
+    .expect("valid static regex pattern")
+});
 
 /// Ensures a directory exists, creating it if necessary.
 ///
@@ -229,8 +246,7 @@ pub fn create_directory(
 /// assert_eq!(to_title_case("hello world"), "Hello World");
 /// ```
 pub fn to_title_case(s: &str) -> String {
-    let re = Regex::new(r"(?:^|\s)(\p{L})").unwrap();
-    re.replace_all(s, |caps: &regex::Captures| {
+    TITLE_CASE_RE.replace_all(s, |caps: &regex::Captures| {
         format!(" {}", &caps[1].to_uppercase())
     })
     .trim_start()
@@ -263,11 +279,7 @@ pub fn format_header_with_id_class(
     header_str: &str,
     id_regex: &Regex,
 ) -> String {
-    // Match HTML header tags with a named capture group for the tag name and allow empty content.
-    let re = Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>")
-        .unwrap();
-
-    re.replace(header_str, |caps: &regex::Captures| {
+    HEADER_TAG_RE.replace(header_str, |caps: &regex::Captures| {
         let tag = caps.name("tag").map_or("", |m| m.as_str());
         let attrs = caps.get(2).map_or("", |m| m.as_str());
         let content = caps.name("content").map_or("", |m| m.as_str());
@@ -368,8 +380,14 @@ pub fn update_class_attributes(
     img_regex: &Regex,
 ) -> String {
     if line.contains(".class=&quot;") && line.contains("<img") {
-        let captures = class_regex.captures(line).unwrap();
-        let class_value = captures.get(1).unwrap().as_str();
+        let captures = match class_regex.captures(line) {
+            Some(c) => c,
+            None => return line.to_owned(),
+        };
+        let class_value = match captures.get(1) {
+            Some(m) => m.as_str(),
+            None => return line.to_owned(),
+        };
         let updated_line = class_regex.replace(line, "");
         img_regex
             .replace(

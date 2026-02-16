@@ -51,8 +51,11 @@ pub fn post_process_html(
 
         for class_captures in class_regex.captures_iter(&processed_line)
         {
-            let class_attribute =
-                class_captures.get(1).unwrap().as_str();
+            let class_attribute = match class_captures.get(1)
+            {
+                Some(m) => m.as_str(),
+                None => continue,
+            };
             modified_line = class_regex
                 .replace(
                     &modified_line,
