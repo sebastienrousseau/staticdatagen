@@ -1,3 +1,6 @@
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 use langweave::error::I18nError;
 use std::collections::HashMap;
 use std::sync::LazyLock;

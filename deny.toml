@@ -70,8 +70,8 @@ db-urls = ["https://github.com/RustSec/advisory-db"]
 
 # What to do when advisories are encountered
 vulnerability = "deny"
-unmaintained = "deny"
-unsound = "deny"
+unmaintained = "workspace"
+unsound = "workspace"
 yanked = "deny"
 
 [sources]

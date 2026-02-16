@@ -9,7 +9,7 @@ version = "0.0.6"                          # Initial version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.85.0"                    # Minimum supported Rust version
-license = "MIT OR Apache-2.0"              # Dual licensing strategy
+license = "Apache-2.0 OR MIT"              # Dual licensing strategy
 description = """
 A Rust library for generating structured data files and metadata for static sites, including HTML, RSS feeds, sitemaps, and SEO-optimized meta tags.
 """                                        # Short library description

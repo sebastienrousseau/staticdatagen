@@ -1,5 +1,5 @@
 #![allow(missing_docs)]
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! # Enhanced Benchmarks for the Static Data Gen Library
