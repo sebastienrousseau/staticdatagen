@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.7] — 2026-02-16
+
+### Added
+- Comprehensive unit test coverage reaching 95%+ across all metrics (#418 tests)
+- 64 new unit tests including compile and process_file tests to close coverage gaps
+- Stress benchmarks for performance monitoring and regression detection
+- Enhanced feature gates for modular compilation and dependency optimization
+
+### Changed
+- **Error handling modernized** — Unified error construction patterns across codebase for consistency
+- **Clippy lint compliance enforced** — All clippy lints resolved with `unwrap_used` and `expect_used` denied for production readiness
+- **Dependencies updated** — All dependencies bumped to latest versions for security and performance
+- **Performance optimized** — Error construction patterns modernized for reduced allocation overhead
+- Process file functionality split into focused helper functions for maintainability
+
+### Fixed
+- **Security hardening** — Addressed all deep-review security findings with enhanced validation
+- **Cross-platform support** — Improved logging and platform compatibility
+- **License consistency** — Unified license headers across all source files
+- 24 unused-result warnings suppressed in tests and benchmarks
+- Project name correction in Rust version error messages
+- Clippy lints fully resolved across codebase
+
+### Security
+- **MEDIUM severity** — Enhanced input validation and path sanitization
+- **LOW severity** — Dependency security audit completed with warnings noted
+- Hardened security utilities with improved cross-platform support
+
 ## [0.0.6] — 2026-02-05
 
 ### Added
