@@ -3,24 +3,21 @@
 
 //! Module for French translations.
 
-use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use langweave::error::I18nError;
 
-lazy_static! {
-    static ref TRANSLATIONS: HashMap<&'static str, &'static str> = {
-        let mut m = HashMap::new();
-        let _ = m.insert("Hello", "Bonjour");
-        let _ = m.insert("Goodbye", "Au revoir");
-        let _ = m.insert("main_logger_msg", "\nVeuillez lancer `ssg --help` pour plus d'informations.\n");
-        let _ = m.insert("lib_banner_log_msg", "Bannière imprimée avec succès");
-        let _ = m.insert("lib_args_log_msg", "Arguments traités avec succès");
-        let _ = m.insert("lib_server_log_msg", "Serveur démarré avec succès");
-        // Add more translations here as needed
-        m
-    };
-}
+static TRANSLATIONS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+    let _ = m.insert("Hello", "Bonjour");
+    let _ = m.insert("Goodbye", "Au revoir");
+    let _ = m.insert("main_logger_msg", "\nVeuillez lancer `ssg --help` pour plus d'informations.\n");
+    let _ = m.insert("lib_banner_log_msg", "Bannière imprimée avec succès");
+    let _ = m.insert("lib_args_log_msg", "Arguments traités avec succès");
+    let _ = m.insert("lib_server_log_msg", "Serveur démarré avec succès");
+    m
+});
 
 /// Translates the given text into French.
 ///

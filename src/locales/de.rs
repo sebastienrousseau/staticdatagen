@@ -3,24 +3,21 @@
 
 //! Module for German translations.
 
-use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use langweave::error::I18nError;
 
-lazy_static! {
-    static ref TRANSLATIONS: HashMap<&'static str, &'static str> = {
-        let mut m = HashMap::new();
-        let _ = m.insert("Hello", "Hallo");
-        let _ = m.insert("Goodbye", "Auf Wiedersehen");
-        let _ = m.insert("main_logger_msg", "\nFür weitere Informationen führen Sie bitte `ssg --help` aus.\n");
-        let _ = m.insert("lib_banner_log_msg", "Banner erfolgreich gedruckt");
-        let _ = m.insert("lib_args_log_msg", "Argumente erfolgreich verarbeitet");
-        let _ = m.insert("lib_server_log_msg", "Server erfolgreich gestartet");
-        // Add more translations here as needed
-        m
-    };
-}
+static TRANSLATIONS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+    let _ = m.insert("Hello", "Hallo");
+    let _ = m.insert("Goodbye", "Auf Wiedersehen");
+    let _ = m.insert("main_logger_msg", "\nFür weitere Informationen führen Sie bitte `ssg --help` aus.\n");
+    let _ = m.insert("lib_banner_log_msg", "Banner erfolgreich gedruckt");
+    let _ = m.insert("lib_args_log_msg", "Argumente erfolgreich verarbeitet");
+    let _ = m.insert("lib_server_log_msg", "Server erfolgreich gestartet");
+    m
+});
 
 /// Translates the given text into German.
 ///

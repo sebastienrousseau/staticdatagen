@@ -57,29 +57,20 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
             }
         })
         .map(|(file_name, content)| {
-            let rss = escape(&content).to_string();
-            let cname = escape(&content).to_string();
-            let keyword = escape(&content).to_string();
-            let manifest = escape(&content).to_string();
-            let human = content.clone();
-            let security = content.clone();
-            let sitemap = escape(&content).to_string();
-            let sitemap_news = escape(&content).to_string();
-            let txt = content.clone();
+            let escaped = escape(&content).to_string();
 
             FileData {
-                cname,
-                content,
-                manifest,
-                human,
-                keyword,
+                cname: escaped.clone(),
+                keyword: escaped.clone(),
+                manifest: escaped.clone(),
+                rss: escaped.clone(),
+                sitemap: escaped.clone(),
+                sitemap_news: escaped,
+                human: content.clone(),
+                security: content.clone(),
+                txt: content.clone(),
                 name: file_name,
-                rss,
-                security,
-                sitemap,
-                sitemap_news,
-                // tags,
-                txt,
+                content,
             }
         })
         .collect::<Vec<FileData>>();

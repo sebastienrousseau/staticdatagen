@@ -318,13 +318,13 @@ mod tests {
             ) {
                 let path = Path::new(&s);
                 if let Ok(result) = sanitize_path(path) {
-                    let result_str =
-                        result.to_string_lossy();
                     prop_assert!(
-                        !result_str.contains(".."),
+                        !result.components().any(|c| {
+                            c.as_os_str() == ".."
+                        }),
                         "Sanitized path must not contain \
-                         '..': {}",
-                        result_str
+                         '..' component: {}",
+                        result.display()
                     );
                 }
             }

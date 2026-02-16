@@ -9,7 +9,6 @@
 use log::{debug, info};
 use regex::Regex;
 use std::{
-    error::Error,
     fs, io,
     path::{Path, PathBuf},
     sync::LazyLock,
@@ -179,14 +178,14 @@ pub fn find_html_files(dir: &Path) -> io::Result<Vec<PathBuf>> {
 ///
 /// # Returns
 ///
-/// A `Result<(), Box<dyn Error>>` indicating success or failure.
+/// A `crate::Result<()>` indicating success or failure.
 ///
 /// # Behavior
 ///
 /// Any directories that exist in `directories` are removed, along with their contents.
 pub fn cleanup_directory(
     directories: &[&Path],
-) -> Result<(), Box<dyn Error>> {
+) -> crate::Result<()> {
     for directory in directories {
         if !directory.exists() {
             continue;
@@ -194,7 +193,13 @@ pub fn cleanup_directory(
 
         info!("Cleaning up directories");
 
-        fs::remove_dir_all(directory)?;
+        fs::remove_dir_all(directory).map_err(|e| crate::Error::Io {
+            source: e,
+            context: format!(
+                "Failed to remove directory '{}'",
+                directory.display()
+            ),
+        })?;
 
         info!("Done.");
     }
@@ -210,20 +215,26 @@ pub fn cleanup_directory(
 ///
 /// # Returns
 ///
-/// A `Result<(), Box<dyn Error>>` indicating success or failure.
+/// A `crate::Result<()>` indicating success or failure.
 ///
 /// # Behavior
 ///
 /// Directories that already exist are skipped.
 pub fn create_directory(
     directories: &[&Path],
-) -> Result<(), Box<dyn Error>> {
+) -> crate::Result<()> {
     for directory in directories {
         if directory.exists() {
             continue;
         }
 
-        fs::create_dir(directory)?;
+        fs::create_dir(directory).map_err(|e| crate::Error::Io {
+            source: e,
+            context: format!(
+                "Failed to create directory '{}'",
+                directory.display()
+            ),
+        })?;
     }
 
     Ok(())
@@ -442,7 +453,7 @@ pub fn truncate(path: &Path, length: usize) -> Option<String> {
 mod tests {
     use super::*;
     use regex::Regex;
-    use std::{fs, io::Write, path::Path};
+    use std::{error::Error, fs, io::Write, path::Path};
 
     /// Tests creating a directory that doesn't exist.
     #[test]

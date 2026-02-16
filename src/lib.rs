@@ -41,6 +41,7 @@ pub mod utilities;
 /// The `locales` module contains functionalities for handling multiple languages,
 /// including translations and localised templates. It assists with localised content
 /// generation tasks, ensuring that your static site can be adapted for various audiences.
+#[cfg(feature = "i18n")]
 pub mod locales;
 
 /// Macro definitions for repetitive or boilerplate-heavy operations reside in the
@@ -61,6 +62,7 @@ pub use compiler::service::compile;
 /// This server structure can be employed to host or serve generated
 /// static content. It is designed for performance and robustness,
 /// making it suitable for production environments.
+#[cfg(feature = "server")]
 pub use http_handle::Server;
 
 /// Re-exports the `generate_unique_string` function from [`utilities::uuid`].

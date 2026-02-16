@@ -3,7 +3,6 @@
 
 use crate::utilities::directory::update_class_attributes;
 use regex::Regex;
-use std::error::Error;
 
 /// Preprocesses the Markdown content to update class attributes and image tags.
 ///
@@ -15,13 +14,13 @@ use std::error::Error;
 ///
 /// # Returns
 ///
-/// A `Result` containing a `String` with the processed Markdown content, or a `Box<dyn Error>` if an error occurs.
+/// A `Result` containing a `String` with the processed Markdown content, or a `crate::Error` if an error occurs.
 ///
 pub fn preprocess_content(
     content: &str,
     class_regex: &Regex,
     img_regex: &Regex,
-) -> Result<String, Box<dyn Error>> {
+) -> crate::Result<String> {
     let processed_content: Vec<String> = content
         .lines()
         .map(|line| {

@@ -295,18 +295,18 @@ fn get_file_paths(file: &FileData) -> Vec<(&'static str, &str)> {
 /// # Returns
 ///
 /// A `String` containing the content of the requested file.
-fn get_file_content(file: &FileData, file_name: &str) -> String {
+fn get_file_content<'a>(file: &'a FileData, file_name: &str) -> &'a str {
     match file_name {
-        "CNAME" => file.cname.clone(),
-        "humans.txt" => file.human.clone(),
-        "index.html" => file.content.clone(),
-        "manifest.json" => file.manifest.clone(),
-        "robots.txt" => file.txt.clone(),
-        "rss.xml" => file.rss.clone(),
-        "security.txt" => file.security.clone(),
-        "sitemap.xml" => file.sitemap.clone(),
-        "news-sitemap.xml" => file.sitemap_news.clone(),
-        _ => String::new(),
+        "CNAME" => &file.cname,
+        "humans.txt" => &file.human,
+        "index.html" => &file.content,
+        "manifest.json" => &file.manifest,
+        "robots.txt" => &file.txt,
+        "rss.xml" => &file.rss,
+        "security.txt" => &file.security,
+        "sitemap.xml" => &file.sitemap,
+        "news-sitemap.xml" => &file.sitemap_news,
+        _ => "",
     }
 }
 
@@ -335,7 +335,7 @@ fn write_index_files(
         write_file(
             build_dir_path,
             file_name,
-            &get_file_content(file, file_name),
+            get_file_content(file, file_name),
             index_html_minified,
         )
         .with_context(|| {

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use regex::{Captures, Regex};
-use std::error::Error;
 
 /// Post-processes HTML content by performing various transformations.
 ///
@@ -28,7 +27,7 @@ use std::error::Error;
 /// # Returns
 ///
 /// A `Result` containing the transformed HTML content as a string if successful,
-/// or a `Box<dyn Error>` if an error occurs during regex compilation or processing.
+/// or a `crate::Error` if an error occurs during regex compilation or processing.
 ///
 /// # Errors
 ///
@@ -37,11 +36,17 @@ pub fn post_process_html(
     html: &str,
     class_regex: &Regex,
     img_regex: &Regex,
-) -> Result<String, Box<dyn Error>> {
+) -> crate::Result<String> {
     let alt_regex = Regex::new(r#"alt="([^"]*)""#)
-        .map_err(|e| format!("Failed to compile alt regex: {}", e))?;
+        .map_err(|e| crate::Error::ContentProcessing {
+            message: format!("Failed to compile alt regex: {}", e),
+            source: None,
+        })?;
     let _title_regex = Regex::new(r#"title="([^"]*)""#)
-        .map_err(|e| format!("Failed to compile title regex: {}", e))?;
+        .map_err(|e| crate::Error::ContentProcessing {
+            message: format!("Failed to compile title regex: {}", e),
+            source: None,
+        })?;
 
     let mut processed_html = String::new();
 
