@@ -18,6 +18,7 @@
 //! - Local server setup
 
 use anyhow::Result;
+#[cfg(feature = "server")]
 use http_handle::Server;
 use staticdatagen::{
     compiler::service::compile,
@@ -67,13 +68,16 @@ fn main() -> Result<()> {
     println!("📄 Processing file data...");
     handle_file_data()?;
 
-    println!("🌍 Starting local server...");
-    let server =
-        Server::new("127.0.0.1:3000", site_dir.to_str().unwrap());
-    server.start()?;
+    #[cfg(feature = "server")]
+    {
+        println!("🌍 Starting local server...");
+        let server =
+            Server::new("127.0.0.1:3000", site_dir.to_str().unwrap());
+        server.start()?;
+        println!("   Visit http://127.0.0.1:3000 to view your site.");
+    }
 
     println!("\n✨ StaticDataGen example completed successfully!");
-    println!("   Visit http://127.0.0.1:3000 to view your site.");
 
     Ok(())
 }

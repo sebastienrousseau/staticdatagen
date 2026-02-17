@@ -120,10 +120,7 @@ impl NewsSiteMapGenerator {
         match self.try_generate_xml() {
             Ok(xml) => xml,
             Err(e) => {
-                warn!(
-                    "Failed to generate news sitemap XML: {}",
-                    e
-                );
+                warn!("Failed to generate news sitemap XML: {}", e);
                 String::new()
             }
         }
@@ -151,55 +148,32 @@ impl NewsSiteMapGenerator {
                 ),
         )?;
 
-        writer.write(
-            XmlEvent::start_element("url"),
-        )?;
-        writer.write(
-            XmlEvent::start_element("loc"),
-        )?;
-        writer.write(XmlEvent::characters(
-            &news_data.news_loc,
-        ))?;
+        writer.write(XmlEvent::start_element("url"))?;
+        writer.write(XmlEvent::start_element("loc"))?;
+        writer.write(XmlEvent::characters(&news_data.news_loc))?;
         writer.write(XmlEvent::end_element())?;
 
-        writer.write(
-            XmlEvent::start_element("news:news"),
-        )?;
-        writer.write(
-            XmlEvent::start_element("news:publication"),
-        )?;
-        writer.write(
-            XmlEvent::start_element("news:name"),
-        )?;
+        writer.write(XmlEvent::start_element("news:news"))?;
+        writer.write(XmlEvent::start_element("news:publication"))?;
+        writer.write(XmlEvent::start_element("news:name"))?;
         writer.write(XmlEvent::characters(
             &news_data.news_publication_name,
         ))?;
         writer.write(XmlEvent::end_element())?;
-        writer.write(
-            XmlEvent::start_element("news:language"),
-        )?;
-        writer.write(XmlEvent::characters(
-            &news_data.news_language,
-        ))?;
+        writer.write(XmlEvent::start_element("news:language"))?;
+        writer.write(XmlEvent::characters(&news_data.news_language))?;
         writer.write(XmlEvent::end_element())?;
         writer.write(XmlEvent::end_element())?;
 
-        writer.write(
-            XmlEvent::start_element(
-                "news:publication_date",
-            ),
-        )?;
+        writer
+            .write(XmlEvent::start_element("news:publication_date"))?;
         writer.write(XmlEvent::characters(
             &news_data.news_publication_date,
         ))?;
         writer.write(XmlEvent::end_element())?;
 
-        writer.write(
-            XmlEvent::start_element("news:title"),
-        )?;
-        writer.write(XmlEvent::characters(
-            &news_data.news_title,
-        ))?;
+        writer.write(XmlEvent::start_element("news:title"))?;
+        writer.write(XmlEvent::characters(&news_data.news_title))?;
         writer.write(XmlEvent::end_element())?;
 
         writer.write(XmlEvent::end_element())?;

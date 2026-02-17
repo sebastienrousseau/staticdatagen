@@ -64,15 +64,12 @@ ignore = [
     "RUSTSEC-2025-0068",  # serde_yml - transitive dep, no direct replacement available
 ]
 
+# Use v2 configuration (vulnerability/unmaintained/unsound/yanked are deny by default)
+version = 2
+
 # Advisory database configuration
 db-path = "~/.cargo/advisory-db"
 db-urls = ["https://github.com/RustSec/advisory-db"]
-
-# What to do when advisories are encountered
-vulnerability = "deny"
-unmaintained = "workspace"
-unsound = "workspace"
-yanked = "deny"
 
 [sources]
 # Lint level for what to do when a crate from a git repository that is not

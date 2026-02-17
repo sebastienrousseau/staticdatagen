@@ -37,15 +37,21 @@ pub fn post_process_html(
     class_regex: &Regex,
     img_regex: &Regex,
 ) -> crate::Result<String> {
-    let alt_regex = Regex::new(r#"alt="([^"]*)""#)
-        .map_err(|e| crate::Error::ContentProcessing {
+    let alt_regex = Regex::new(r#"alt="([^"]*)""#).map_err(|e| {
+        crate::Error::ContentProcessing {
             message: format!("Failed to compile alt regex: {}", e),
             source: None,
-        })?;
-    let _title_regex = Regex::new(r#"title="([^"]*)""#)
-        .map_err(|e| crate::Error::ContentProcessing {
-            message: format!("Failed to compile title regex: {}", e),
-            source: None,
+        }
+    })?;
+    let _title_regex =
+        Regex::new(r#"title="([^"]*)""#).map_err(|e| {
+            crate::Error::ContentProcessing {
+                message: format!(
+                    "Failed to compile title regex: {}",
+                    e
+                ),
+                source: None,
+            }
         })?;
 
     let mut processed_html = String::new();
@@ -56,8 +62,7 @@ pub fn post_process_html(
 
         for class_captures in class_regex.captures_iter(&processed_line)
         {
-            let class_attribute = match class_captures.get(1)
-            {
+            let class_attribute = match class_captures.get(1) {
                 Some(m) => m.as_str(),
                 None => continue,
             };

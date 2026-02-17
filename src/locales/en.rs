@@ -5,16 +5,29 @@ use langweave::error::I18nError;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-static TRANSLATIONS: LazyLock<HashMap<&'static str, &'static str>> = LazyLock::new(|| {
-    let mut m = HashMap::new();
-    let _ = m.insert("Hello", "Hello");
-    let _ = m.insert("Goodbye", "Goodbye");
-    let _ = m.insert("main_logger_msg", "\nPlease run `ssg --help` for more information.\n");
-    let _ = m.insert("lib_banner_log_msg", "Banner printed successfully");
-    let _ = m.insert("lib_args_log_msg", "Arguments processed successfully");
-    let _ = m.insert("lib_server_log_msg", "Server started successfully");
-    m
-});
+static TRANSLATIONS: LazyLock<HashMap<&'static str, &'static str>> =
+    LazyLock::new(|| {
+        let mut m = HashMap::new();
+        let _ = m.insert("Hello", "Hello");
+        let _ = m.insert("Goodbye", "Goodbye");
+        let _ = m.insert(
+            "main_logger_msg",
+            "\nPlease run `ssg --help` for more information.\n",
+        );
+        let _ = m.insert(
+            "lib_banner_log_msg",
+            "Banner printed successfully",
+        );
+        let _ = m.insert(
+            "lib_args_log_msg",
+            "Arguments processed successfully",
+        );
+        let _ = m.insert(
+            "lib_server_log_msg",
+            "Server started successfully",
+        );
+        m
+    });
 
 /// Translates the given text into English.
 ///

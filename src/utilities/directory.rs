@@ -17,17 +17,14 @@ use std::{
 /// Pre-compiled regex for title case conversion.
 #[allow(clippy::expect_used)] // Static pattern validated at development time
 static TITLE_CASE_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"(?:^|\s)(\p{L})")
-        .expect("valid static regex pattern")
+    Regex::new(r"(?:^|\s)(\p{L})").expect("valid static regex pattern")
 });
 
 /// Pre-compiled regex for matching HTML header tags.
 #[allow(clippy::expect_used)] // Static pattern validated at development time
 static HEADER_TAG_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>",
-    )
-    .expect("valid static regex pattern")
+    Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>")
+        .expect("valid static regex pattern")
 });
 
 /// Ensures a directory exists, creating it if necessary.
@@ -183,9 +180,7 @@ pub fn find_html_files(dir: &Path) -> io::Result<Vec<PathBuf>> {
 /// # Behavior
 ///
 /// Any directories that exist in `directories` are removed, along with their contents.
-pub fn cleanup_directory(
-    directories: &[&Path],
-) -> crate::Result<()> {
+pub fn cleanup_directory(directories: &[&Path]) -> crate::Result<()> {
     for directory in directories {
         if !directory.exists() {
             continue;
@@ -193,12 +188,14 @@ pub fn cleanup_directory(
 
         info!("Cleaning up directories");
 
-        fs::remove_dir_all(directory).map_err(|e| crate::Error::Io {
-            source: e,
-            context: format!(
-                "Failed to remove directory '{}'",
-                directory.display()
-            ),
+        fs::remove_dir_all(directory).map_err(|e| {
+            crate::Error::Io {
+                source: e,
+                context: format!(
+                    "Failed to remove directory '{}'",
+                    directory.display()
+                ),
+            }
         })?;
 
         info!("Done.");
@@ -220,9 +217,7 @@ pub fn cleanup_directory(
 /// # Behavior
 ///
 /// Directories that already exist are skipped.
-pub fn create_directory(
-    directories: &[&Path],
-) -> crate::Result<()> {
+pub fn create_directory(directories: &[&Path]) -> crate::Result<()> {
     for directory in directories {
         if directory.exists() {
             continue;
@@ -257,11 +252,12 @@ pub fn create_directory(
 /// assert_eq!(to_title_case("hello world"), "Hello World");
 /// ```
 pub fn to_title_case(s: &str) -> String {
-    TITLE_CASE_RE.replace_all(s, |caps: &regex::Captures| {
-        format!(" {}", &caps[1].to_uppercase())
-    })
-    .trim_start()
-    .to_string()
+    TITLE_CASE_RE
+        .replace_all(s, |caps: &regex::Captures| {
+            format!(" {}", &caps[1].to_uppercase())
+        })
+        .trim_start()
+        .to_string()
 }
 
 /// Formats a header string with an ID and class attribute.

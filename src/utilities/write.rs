@@ -295,7 +295,10 @@ fn get_file_paths(file: &FileData) -> Vec<(&'static str, &str)> {
 /// # Returns
 ///
 /// A `String` containing the content of the requested file.
-fn get_file_content<'a>(file: &'a FileData, file_name: &str) -> &'a str {
+fn get_file_content<'a>(
+    file: &'a FileData,
+    file_name: &str,
+) -> &'a str {
     match file_name {
         "CNAME" => &file.cname,
         "humans.txt" => &file.human,
