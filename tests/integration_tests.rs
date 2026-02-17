@@ -1,6 +1,8 @@
 // Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 //! Integration tests for the staticdatagen library.
 //!
 //! These tests verify end-to-end functionality across multiple modules,

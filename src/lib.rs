@@ -8,6 +8,7 @@
     html_root_url = "https://docs.rs/staticdatagen"
 )]
 #![deny(missing_docs)]
+#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used))]
 
 use std::error::Error as StdError;
 use thiserror::Error;

@@ -14,6 +14,8 @@ allow = [
     "MPL-2.0",                # Mozilla Public License, used by cssparser
     "ISC",                    # ISC license, similar to MIT
     "CC0-1.0",                # Public domain dedication
+    "Unicode-3.0",            # Unicode License v3, used by ICU4X crates
+    "MITNFA",                 # MIT +no-false-attribs, used by fmt2io
 ]
 
 # Optional: Deny specific licenses if needed

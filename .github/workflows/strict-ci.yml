@@ -110,7 +110,7 @@ jobs:
       - name: Verify missing_docs lint is enforced in library crates
         run: |
           # Check that lib.rs contains #![deny(missing_docs)] or equivalent
-          if ! grep -r "#!\[.*deny.*missing_docs\]" src/lib.rs; then
+          if ! grep -q "deny(missing_docs)" src/lib.rs; then
             echo "ERROR: Library crate must enforce #![deny(missing_docs)]"
             echo "Add '#![deny(missing_docs)]' to src/lib.rs"
             exit 1

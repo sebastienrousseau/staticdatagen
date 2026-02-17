@@ -8,7 +8,7 @@ name = "staticdatagen"                     # The name of the library
 version = "0.0.7"                          # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
-rust-version = "1.85.0"                    # Minimum supported Rust version
+rust-version = "1.88.0"                    # Minimum supported Rust version
 license = "Apache-2.0 OR MIT"              # Dual licensing strategy
 description = """
 A Rust library for generating structured data files and metadata for static sites, including HTML, RSS feeds, sitemaps, and SEO-optimized meta tags.
@@ -228,9 +228,8 @@ variant_size_differences = "deny"           # Deny enum variants with significan
 # Clippy Lint Configuration (enforced by cargo clippy)
 # -----------------------------------------------------------------------------
 [lints.clippy]
-# Enforce strict error handling in production code
-unwrap_used = "deny"                         # Deny .unwrap() to ensure proper error handling
-expect_used = "deny"                         # Deny .expect() to ensure proper error handling
+# Note: unwrap_used/expect_used enforced via #![deny(...)] in src/lib.rs only,
+# so tests, examples, and benchmarks are not affected.
 
 # -----------------------------------------------------------------------------
 # Clippy Metadata (informational, for tooling reference)
