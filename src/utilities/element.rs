@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use quick_xml::{
@@ -21,10 +21,10 @@ use std::io::Cursor;
 /// # Returns
 ///
 /// * `Result<(), Box<dyn std::error::Error>>` - A result indicating success or
-///    failure.
-///    - `Ok(())` if the element was written successfully.
-///    - `Err(Box<dyn std::error::Error>)` if an error occurred during the
-///       writing process.
+///   failure.
+///   - `Ok(())` if the element was written successfully.
+///   - `Err(Box<dyn std::error::Error>)` if an error occurred during the
+///     writing process.
 ///
 pub fn write_element(
     writer: &mut Writer<Cursor<Vec<u8>>>,

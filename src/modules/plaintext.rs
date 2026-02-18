@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Plain Text Generation Module
@@ -41,7 +41,7 @@
 //! - Unicode character validation
 
 use anyhow::Result;
-use log::{debug, error, info};
+use log::{debug, info};
 use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -350,6 +350,216 @@ mod tests {
 
         assert!(title.contains("Title with alert"));
         assert!(!title.contains("<script>"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_plain_text_config_default() {
+        let config = PlainTextConfig::default();
+        assert_eq!(config.max_line_length, 80);
+        assert_eq!(config.list_bullet, "• ");
+        assert!(config.preserve_empty_lines);
+        assert!(!config.ascii_only);
+        assert!(config.replacements.is_empty());
+    }
+
+    #[test]
+    fn test_multiple_paragraphs() -> Result<()> {
+        let input =
+            "# First\n\nParagraph one.\n\n# Second\n\nParagraph two.";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+
+        // Multiple paragraphs should have line breaks between them
+        assert!(content.contains("First"));
+        assert!(content.contains("Paragraph one"));
+        assert!(content.contains("Second"));
+        assert!(content.contains("Paragraph two"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_soft_break_handling() -> Result<()> {
+        // Soft break is a single newline in markdown (doesn't become <br>)
+        let input = "Line one\nLine two";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+
+        // Content should be joined with space
+        assert!(
+            content.contains("Line one")
+                || content.contains("Line two")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_buffer_append() -> Result<()> {
+        // Test when buffer has content at the end
+        let input = "Just some text";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+
+        assert_eq!(content, "Just some text");
+        Ok(())
+    }
+
+    #[test]
+    fn test_sanitize_control_characters() -> Result<()> {
+        // Test control characters are filtered
+        let (_, title, ..) = generate_plain_text(
+            "",
+            "Title\x00with\x01control\x02chars",
+            "",
+            "",
+            "",
+            "",
+        )?;
+
+        assert!(!title.contains('\x00'));
+        assert!(!title.contains('\x01'));
+        assert!(!title.contains('\x02'));
+        assert!(title.contains("Title"));
+        assert!(title.contains("with"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_config_custom() {
+        let config = PlainTextConfig {
+            max_line_length: 120,
+            list_bullet: "- ".to_string(),
+            preserve_empty_lines: false,
+            ascii_only: true,
+            replacements: HashMap::from([(
+                "foo".to_string(),
+                "bar".to_string(),
+            )]),
+        };
+
+        assert_eq!(config.max_line_length, 120);
+        assert_eq!(config.list_bullet, "- ");
+        assert!(!config.preserve_empty_lines);
+        assert!(config.ascii_only);
+        assert_eq!(
+            config.replacements.get("foo"),
+            Some(&"bar".to_string())
+        );
+    }
+
+    #[test]
+    fn test_paragraph_separation() -> Result<()> {
+        // Test line 192: when starting new paragraph after existing content with buffer
+        let input = "# Heading One\n\nContent here.\n\n# Heading Two\n\nMore content.";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+
+        // Both headings and paragraphs should be present with separation
+        assert!(content.contains("Heading One"));
+        assert!(content.contains("Content here"));
+        assert!(content.contains("Heading Two"));
+        assert!(content.contains("More content"));
+        // Check content is not empty and has reasonable length
+        assert!(content.len() > 30, "Should have substantial content");
+        Ok(())
+    }
+
+    #[test]
+    fn test_inline_text_content() -> Result<()> {
+        // Test line 230: buffer has content at end that needs flushing
+        // Using emphasis which adds inline text without creating new paragraphs
+        let input = "Just *some* inline text";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+
+        assert!(content.contains("Just"));
+        assert!(content.contains("some"));
+        assert!(content.contains("inline text"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_consecutive_headings() -> Result<()> {
+        // Test consecutive headings to trigger paragraph separator
+        let input = "# First\n\n# Second\n\n# Third";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+
+        assert!(content.contains("First"));
+        assert!(content.contains("Second"));
+        assert!(content.contains("Third"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_plain_text_error_parse() {
+        let err = PlainTextError::ParseError("bad input".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Failed to parse content: bad input"
+        );
+    }
+
+    #[test]
+    fn test_plain_text_error_unicode() {
+        let err =
+            PlainTextError::UnicodeError("invalid byte".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Invalid Unicode in input: invalid byte"
+        );
+    }
+
+    #[test]
+    fn test_plain_text_error_content_too_long() {
+        let err = PlainTextError::ContentTooLong(2000, 1000);
+        assert_eq!(
+            format!("{}", err),
+            "Content exceeds maximum length: 2000 > 1000"
+        );
+    }
+
+    #[test]
+    fn test_plain_text_error_config() {
+        let err =
+            PlainTextError::ConfigError("invalid setting".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Invalid configuration: invalid setting"
+        );
+    }
+
+    #[test]
+    fn test_config_zero_line_length() {
+        let config = PlainTextConfig {
+            max_line_length: 0,
+            ..Default::default()
+        };
+        assert_eq!(config.max_line_length, 0);
+    }
+
+    #[test]
+    fn test_paragraph_separator_condition() -> Result<()> {
+        // Trigger line 192: plain_text non-empty AND buffer non-empty
+        // when new paragraph starts
+        let input = "First paragraph.\n\nSecond paragraph.";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+        assert!(content.contains("First paragraph"));
+        assert!(content.contains("Second paragraph"));
+        // Both should be present in output
+        assert!(content.len() > 20);
+        Ok(())
+    }
+
+    #[test]
+    fn test_trailing_buffer_flush() -> Result<()> {
+        // Trigger line 230: buffer has content at end
+        let input = "**bold text** at end";
+        let (content, ..) =
+            generate_plain_text(input, "", "", "", "", "")?;
+        assert!(content.contains("bold text"));
+        assert!(content.contains("at end"));
         Ok(())
     }
 }

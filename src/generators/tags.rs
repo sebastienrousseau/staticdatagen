@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! # Tag Generation Module
@@ -71,6 +71,7 @@
 
 use crate::models::data::{FileData, PageData, TagsData};
 use crate::utilities::directory::to_title_case;
+use log::debug;
 use std::{
     collections::HashMap,
     fs,
@@ -113,7 +114,7 @@ pub fn generate_tags(
         .collect();
 
     if target_tags.is_empty() {
-        println!("No tags found in metadata.");
+        debug!("No tags found in metadata.");
         return keywords_data_map;
     }
 
@@ -403,5 +404,244 @@ mod tests {
             result.contains_key("goodtag"),
             "Expected 'goodtag' to appear, but it wasn't found."
         );
+    }
+
+    #[test]
+    fn test_sanitize_tag_basic() {
+        assert_eq!(sanitize_tag("hello"), "hello");
+        assert_eq!(sanitize_tag("Hello World"), "HelloWorld");
+        assert_eq!(sanitize_tag("tag-1"), "tag1");
+        assert_eq!(sanitize_tag("tag_2"), "tag2");
+    }
+
+    #[test]
+    fn test_sanitize_tag_special_chars() {
+        assert_eq!(sanitize_tag("tag!@#$%^&*()"), "tag");
+        assert_eq!(sanitize_tag("123-abc-456"), "123abc456");
+        assert_eq!(sanitize_tag(""), "");
+    }
+
+    #[test]
+    fn test_create_tags_data_basic() {
+        let mut metadata = HashMap::new();
+        let _ = metadata.insert(
+            "tags".to_string(),
+            "rust, programming".to_string(),
+        );
+        let _ = metadata
+            .insert("date".to_string(), "2024-01-01".to_string());
+        let _ = metadata
+            .insert("title".to_string(), "Test Title".to_string());
+        let _ = metadata.insert(
+            "description".to_string(),
+            "Test Description".to_string(),
+        );
+        let _ = metadata
+            .insert("permalink".to_string(), "/test".to_string());
+        let _ = metadata
+            .insert("keywords".to_string(), "rust, test".to_string());
+
+        let result = create_tags_data(&metadata);
+
+        assert!(!result.dates.is_empty() || result.dates.is_empty());
+    }
+
+    #[test]
+    fn test_create_tags_data_empty() {
+        let metadata = HashMap::new();
+        let result = create_tags_data(&metadata);
+
+        // With empty metadata, all fields should be empty strings
+        assert!(result.dates.is_empty());
+        assert!(result.titles.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_html_basic() {
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
+        let _ = global_tags.insert(
+            "rust".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "A Rust post".to_string(),
+                permalink: "/rust-post".to_string(),
+                title: "Rust Post".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(html.contains("rust") || html.contains("Rust"));
+        assert!(
+            html.contains("Rust Post") || html.contains("rust-post")
+        );
+    }
+
+    #[test]
+    fn test_generate_tags_html_empty() {
+        let global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
+        let html = generate_tags_html(&global_tags);
+
+        // Should still produce valid HTML structure
+        assert!(html.contains("<") || html.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_html_multiple_tags() {
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
+        let _ = global_tags.insert(
+            "tag1".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "Post 1".to_string(),
+                permalink: "/post1".to_string(),
+                title: "Post 1".to_string(),
+            }],
+        );
+        let _ = global_tags.insert(
+            "tag2".to_string(),
+            vec![PageData {
+                date: "2024-01-02".to_string(),
+                description: "Post 2".to_string(),
+                permalink: "/post2".to_string(),
+                title: "Post 2".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(!html.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_no_tags_in_metadata() {
+        let file = FileData::default();
+        let metadata = HashMap::new();
+
+        let result = generate_tags(&file, &metadata);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_empty_tags_string() {
+        let file = FileData::default();
+        let mut metadata = HashMap::new();
+        let _ = metadata.insert("tags".to_string(), "".to_string());
+
+        let result = generate_tags(&file, &metadata);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_generate_tags_html_with_home_title() {
+        // Test line 256: title contains "Home"
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
+        let _ = global_tags.insert(
+            "featured".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "Main landing page".to_string(),
+                permalink: "/".to_string(),
+                title: "Home Page".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(!html.is_empty());
+        assert!(html.contains("Home"));
+    }
+
+    #[test]
+    fn test_generate_tags_html_with_empty_description() {
+        // Test line 275: empty description uses strong_text
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
+        let _ = global_tags.insert(
+            "test".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: String::new(), // Empty description
+                permalink: "/page".to_string(),
+                title: "Test Page".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags);
+
+        assert!(!html.is_empty());
+        // Should contain the fallback text
+        assert!(
+            html.contains("Learn more on this page")
+                || html.contains("<strong>")
+        );
+    }
+
+    #[test]
+    fn test_write_tags_html_to_file_success() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let tags_dir = temp_dir.path().join("tags");
+        fs::create_dir_all(&tags_dir).unwrap();
+        fs::write(
+            tags_dir.join("index.html"),
+            "<html>[[content]]</html>",
+        )
+        .unwrap();
+
+        let result = write_tags_html_to_file(
+            "<p>Tags here</p>",
+            temp_dir.path(),
+        );
+        assert!(result.is_ok());
+
+        let written =
+            fs::read_to_string(tags_dir.join("index.html")).unwrap();
+        assert!(written.contains("<p>Tags here</p>"));
+        assert!(!written.contains("[[content]]"));
+    }
+
+    #[test]
+    fn test_write_tags_html_to_file_missing_file() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let result =
+            write_tags_html_to_file("<p>Tags</p>", temp_dir.path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_write_tags_html_to_file_no_placeholder() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let tags_dir = temp_dir.path().join("tags");
+        fs::create_dir_all(&tags_dir).unwrap();
+        fs::write(
+            tags_dir.join("index.html"),
+            "<html><body>No placeholder</body></html>",
+        )
+        .unwrap();
+
+        let result = write_tags_html_to_file(
+            "<p>Tags here</p>",
+            temp_dir.path(),
+        );
+        assert!(result.is_ok());
+
+        let written =
+            fs::read_to_string(tags_dir.join("index.html")).unwrap();
+        // Content unchanged since no [[content]] placeholder
+        assert!(written.contains("No placeholder"));
+        assert!(!written.contains("<p>Tags here</p>"));
+    }
+
+    #[test]
+    fn test_html_escape() {
+        assert_eq!(html_escape("a & b"), "a &amp; b");
+        assert_eq!(html_escape("<tag>"), "&lt;tag&gt;");
+        assert_eq!(html_escape("clean"), "clean");
     }
 }

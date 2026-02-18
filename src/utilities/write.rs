@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen - Structured data for static sites.
+// Copyright © 2025-2026 Static Data Gen - Structured data for static sites.
 // All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
@@ -295,18 +295,21 @@ fn get_file_paths(file: &FileData) -> Vec<(&'static str, &str)> {
 /// # Returns
 ///
 /// A `String` containing the content of the requested file.
-fn get_file_content(file: &FileData, file_name: &str) -> String {
+fn get_file_content<'a>(
+    file: &'a FileData,
+    file_name: &str,
+) -> &'a str {
     match file_name {
-        "CNAME" => file.cname.clone(),
-        "humans.txt" => file.human.clone(),
-        "index.html" => file.content.clone(),
-        "manifest.json" => file.manifest.clone(),
-        "robots.txt" => file.txt.clone(),
-        "rss.xml" => file.rss.clone(),
-        "security.txt" => file.security.clone(),
-        "sitemap.xml" => file.sitemap.clone(),
-        "news-sitemap.xml" => file.sitemap_news.clone(),
-        _ => String::new(),
+        "CNAME" => &file.cname,
+        "humans.txt" => &file.human,
+        "index.html" => &file.content,
+        "manifest.json" => &file.manifest,
+        "robots.txt" => &file.txt,
+        "rss.xml" => &file.rss,
+        "security.txt" => &file.security,
+        "sitemap.xml" => &file.sitemap,
+        "news-sitemap.xml" => &file.sitemap_news,
+        _ => "",
     }
 }
 
@@ -335,7 +338,7 @@ fn write_index_files(
         write_file(
             build_dir_path,
             file_name,
-            &get_file_content(file, file_name),
+            get_file_content(file, file_name),
             index_html_minified,
         )
         .with_context(|| {
@@ -467,12 +470,501 @@ fn print_section_headers(
     let file_name =
         dir_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
     let duration = start_time.elapsed();
-    println!("\n❯ Generating the `{}` directory content.\n", file_name);
+    info!("Generating the `{}` directory content.", file_name);
     for header in section_headers {
-        println!("{}", header);
+        info!("{}", header);
     }
-    println!("\n❯ Done in {} microseconds.\n", duration.as_micros());
+    info!("Done in {} microseconds.", duration.as_micros());
 
     debug!("Section headers printed for '{}'", dir_path.display());
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_get_processed_file_name_md() {
+        let result = get_processed_file_name("index.md");
+        assert_eq!(result, "index");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_json() {
+        let result = get_processed_file_name("config.json");
+        assert_eq!(result, "config");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_txt() {
+        let result = get_processed_file_name("readme.txt");
+        assert_eq!(result, "readme");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_xml() {
+        let result = get_processed_file_name("sitemap.xml");
+        assert_eq!(result, "sitemap");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_toml() {
+        let result = get_processed_file_name("config.toml");
+        assert_eq!(result, "config");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_js() {
+        let result = get_processed_file_name("main.js");
+        assert_eq!(result, "main");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_unknown_ext() {
+        let result = get_processed_file_name("image.png");
+        assert_eq!(result, "image.png");
+    }
+
+    #[test]
+    fn test_get_processed_file_name_no_ext() {
+        let result = get_processed_file_name("CNAME");
+        assert_eq!(result, "CNAME");
+    }
+
+    #[test]
+    fn test_get_file_content_cname() {
+        let file = FileData {
+            cname: "example.com".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "CNAME");
+        assert_eq!(result, "example.com");
+    }
+
+    #[test]
+    fn test_get_file_content_humans() {
+        let file = FileData {
+            human: "Test Human".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "humans.txt");
+        assert_eq!(result, "Test Human");
+    }
+
+    #[test]
+    fn test_get_file_content_index() {
+        let file = FileData {
+            content: "<html></html>".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "index.html");
+        assert_eq!(result, "<html></html>");
+    }
+
+    #[test]
+    fn test_get_file_content_manifest() {
+        let file = FileData {
+            manifest: "{}".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "manifest.json");
+        assert_eq!(result, "{}");
+    }
+
+    #[test]
+    fn test_get_file_content_robots() {
+        let file = FileData {
+            txt: "User-agent: *".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "robots.txt");
+        assert_eq!(result, "User-agent: *");
+    }
+
+    #[test]
+    fn test_get_file_content_rss() {
+        let file = FileData {
+            rss: "<rss></rss>".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "rss.xml");
+        assert_eq!(result, "<rss></rss>");
+    }
+
+    #[test]
+    fn test_get_file_content_security() {
+        let file = FileData {
+            security: "Contact: test@example.com".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "security.txt");
+        assert_eq!(result, "Contact: test@example.com");
+    }
+
+    #[test]
+    fn test_get_file_content_sitemap() {
+        let file = FileData {
+            sitemap: "<urlset></urlset>".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "sitemap.xml");
+        assert_eq!(result, "<urlset></urlset>");
+    }
+
+    #[test]
+    fn test_get_file_content_news_sitemap() {
+        let file = FileData {
+            sitemap_news: "<urlset></urlset>".to_string(),
+            ..Default::default()
+        };
+        let result = get_file_content(&file, "news-sitemap.xml");
+        assert_eq!(result, "<urlset></urlset>");
+    }
+
+    #[test]
+    fn test_get_file_content_unknown() {
+        let file = FileData::default();
+        let result = get_file_content(&file, "unknown.file");
+        assert_eq!(result, "");
+    }
+
+    #[test]
+    fn test_get_file_paths() {
+        let file = FileData::default();
+        let paths = get_file_paths(&file);
+
+        assert_eq!(paths.len(), 6);
+        assert!(paths.iter().any(|(name, _)| *name == "index.html"));
+        assert!(paths.iter().any(|(name, _)| *name == "manifest.json"));
+        assert!(paths.iter().any(|(name, _)| *name == "robots.txt"));
+        assert!(paths.iter().any(|(name, _)| *name == "rss.xml"));
+        assert!(paths.iter().any(|(name, _)| *name == "sitemap.xml"));
+        assert!(paths
+            .iter()
+            .any(|(name, _)| *name == "news-sitemap.xml"));
+    }
+
+    #[test]
+    fn test_write_file_basic() {
+        let temp_dir = TempDir::new().unwrap();
+        let result = write_file(
+            temp_dir.path(),
+            "test.txt",
+            "Hello World",
+            false,
+        );
+
+        assert!(result.is_ok());
+        let content =
+            fs::read_to_string(temp_dir.path().join("test.txt"))
+                .unwrap();
+        assert_eq!(content, "Hello World");
+    }
+
+    #[test]
+    fn test_write_file_empty_content() {
+        let temp_dir = TempDir::new().unwrap();
+        let result =
+            write_file(temp_dir.path(), "empty.txt", "", false);
+
+        assert!(result.is_ok());
+        let content =
+            fs::read_to_string(temp_dir.path().join("empty.txt"))
+                .unwrap();
+        assert_eq!(content, "");
+    }
+
+    #[test]
+    fn test_write_content_files() {
+        let temp_dir = TempDir::new().unwrap();
+        let dir_name = temp_dir.path().join("content");
+
+        let file = FileData {
+            content: "<html></html>".to_string(),
+            manifest: "{}".to_string(),
+            txt: "robots".to_string(),
+            rss: "<rss></rss>".to_string(),
+            sitemap: "<sitemap></sitemap>".to_string(),
+            sitemap_news: "<news></news>".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_content_files(&dir_name, &file, false);
+
+        assert!(result.is_ok());
+        assert!(dir_name.exists());
+        assert!(dir_name.join("index.html").exists());
+        assert!(dir_name.join("manifest.json").exists());
+    }
+
+    #[test]
+    fn test_print_section_headers() {
+        let temp_dir = TempDir::new().unwrap();
+        fs::write(temp_dir.path().join("file1.txt"), "content")
+            .unwrap();
+        fs::write(temp_dir.path().join("file2.txt"), "content")
+            .unwrap();
+        fs::create_dir(temp_dir.path().join("subdir")).unwrap();
+
+        let start_time = Instant::now();
+        let result = print_section_headers(temp_dir.path(), start_time);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_write_file_with_minify_non_html() {
+        let temp_dir = TempDir::new().unwrap();
+        // minify flag is true but file is not index.html, so should not minify
+        let result = write_file(
+            temp_dir.path(),
+            "test.txt",
+            "Hello World",
+            true,
+        );
+
+        assert!(result.is_ok());
+        let content =
+            fs::read_to_string(temp_dir.path().join("test.txt"))
+                .unwrap();
+        assert_eq!(content, "Hello World");
+    }
+
+    #[test]
+    fn test_write_file_with_minify_index_html() {
+        let temp_dir = TempDir::new().unwrap();
+        // Write a simple HTML that can be minified
+        let html = "<html>  <body>   <p>Test</p>  </body>  </html>";
+        let result =
+            write_file(temp_dir.path(), "index.html", html, true);
+
+        assert!(result.is_ok());
+        // File should exist (minification may or may not change content)
+        assert!(temp_dir.path().join("index.html").exists());
+    }
+
+    #[test]
+    fn test_write_index_files() {
+        let temp_dir = TempDir::new().unwrap();
+        let file = FileData {
+            cname: "example.com".to_string(),
+            human: "/* TEAM */".to_string(),
+            content: "<html></html>".to_string(),
+            manifest: "{}".to_string(),
+            txt: "User-agent: *".to_string(),
+            rss: "<rss></rss>".to_string(),
+            security: "Contact: test@example.com".to_string(),
+            sitemap: "<urlset></urlset>".to_string(),
+            sitemap_news: "<news></news>".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_index_files(temp_dir.path(), &file, false);
+
+        assert!(result.is_ok());
+        assert!(temp_dir.path().join("CNAME").exists());
+        assert!(temp_dir.path().join("humans.txt").exists());
+        assert!(temp_dir.path().join("index.html").exists());
+        assert!(temp_dir.path().join("manifest.json").exists());
+        assert!(temp_dir.path().join("robots.txt").exists());
+        assert!(temp_dir.path().join("rss.xml").exists());
+        assert!(temp_dir.path().join("security.txt").exists());
+        assert!(temp_dir.path().join("sitemap.xml").exists());
+        assert!(temp_dir.path().join("news-sitemap.xml").exists());
+    }
+
+    #[test]
+    fn test_copy_template_file() {
+        let src_dir = TempDir::new().unwrap();
+        let dest_dir = TempDir::new().unwrap();
+
+        // Create source file
+        fs::write(
+            src_dir.path().join("test.js"),
+            "console.log('test');",
+        )
+        .unwrap();
+
+        let result = copy_template_file(
+            src_dir.path(),
+            dest_dir.path(),
+            "test.js",
+        );
+
+        assert!(result.is_ok());
+        assert!(dest_dir.path().join("test.js").exists());
+        let content =
+            fs::read_to_string(dest_dir.path().join("test.js"))
+                .unwrap();
+        assert_eq!(content, "console.log('test');");
+    }
+
+    #[test]
+    fn test_copy_template_file_nonexistent() {
+        let src_dir = TempDir::new().unwrap();
+        let dest_dir = TempDir::new().unwrap();
+
+        let result = copy_template_file(
+            src_dir.path(),
+            dest_dir.path(),
+            "nonexistent.js",
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_copy_auxiliary_files() {
+        let template_dir = TempDir::new().unwrap();
+        let build_dir = TempDir::new().unwrap();
+
+        // Create the auxiliary files that will be copied
+        fs::write(template_dir.path().join("main.js"), "main code")
+            .unwrap();
+        fs::write(template_dir.path().join("sw.js"), "service worker")
+            .unwrap();
+
+        let result =
+            copy_auxiliary_files(template_dir.path(), build_dir.path());
+
+        assert!(result.is_ok());
+        assert!(build_dir.path().join("main.js").exists());
+        assert!(build_dir.path().join("sw.js").exists());
+    }
+
+    #[test]
+    fn test_copy_auxiliary_files_missing() {
+        let template_dir = TempDir::new().unwrap();
+        let build_dir = TempDir::new().unwrap();
+
+        // Don't create the files - should fail
+        let result =
+            copy_auxiliary_files(template_dir.path(), build_dir.path());
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_write_files_to_build_directory_index() {
+        let build_dir = TempDir::new().unwrap();
+        let template_dir = TempDir::new().unwrap();
+
+        // Create the auxiliary files
+        fs::write(template_dir.path().join("main.js"), "main").unwrap();
+        fs::write(template_dir.path().join("sw.js"), "sw").unwrap();
+
+        let file = FileData {
+            name: "index.md".to_string(),
+            content: "<html></html>".to_string(),
+            cname: "example.com".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_files_to_build_directory(
+            build_dir.path(),
+            &file,
+            template_dir.path(),
+        );
+
+        assert!(result.is_ok());
+        assert!(build_dir.path().join("index.html").exists());
+        assert!(build_dir.path().join("main.js").exists());
+        assert!(build_dir.path().join("sw.js").exists());
+    }
+
+    #[test]
+    fn test_write_files_to_build_directory_content() {
+        let build_dir = TempDir::new().unwrap();
+        let template_dir = TempDir::new().unwrap();
+
+        let file = FileData {
+            name: "about.md".to_string(),
+            content: "<html><body>About</body></html>".to_string(),
+            manifest: "{}".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_files_to_build_directory(
+            build_dir.path(),
+            &file,
+            template_dir.path(),
+        );
+
+        assert!(result.is_ok());
+        // Should create "about" directory
+        assert!(build_dir.path().join("about").exists());
+        assert!(build_dir
+            .path()
+            .join("about")
+            .join("index.html")
+            .exists());
+    }
+
+    #[test]
+    fn test_minify_file() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("test.html");
+
+        // Write HTML content
+        let html = "<html>  <body>  <p>Test</p>  </body>  </html>";
+        fs::write(&file_path, html).unwrap();
+
+        let result = minify_file(&file_path);
+
+        assert!(result.is_ok());
+        // File should still exist
+        assert!(file_path.exists());
+    }
+
+    #[test]
+    fn test_minify_file_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("nonexistent.html");
+
+        let result = minify_file(&file_path);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_print_section_headers_empty_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let start_time = Instant::now();
+
+        let result = print_section_headers(temp_dir.path(), start_time);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_print_section_headers_nested() {
+        let temp_dir = TempDir::new().unwrap();
+        fs::create_dir(temp_dir.path().join("dir1")).unwrap();
+        fs::create_dir(temp_dir.path().join("dir2")).unwrap();
+        fs::write(temp_dir.path().join("file.txt"), "content").unwrap();
+        fs::write(
+            temp_dir.path().join("dir1").join("nested.txt"),
+            "nested",
+        )
+        .unwrap();
+
+        let start_time = Instant::now();
+        let result = print_section_headers(temp_dir.path(), start_time);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_write_content_files_creates_directory() {
+        let temp_dir = TempDir::new().unwrap();
+        let dir_name = temp_dir.path().join("new_dir").join("nested");
+
+        let file = FileData::default();
+        let result = write_content_files(&dir_name, &file, false);
+
+        assert!(result.is_ok());
+        assert!(dir_name.exists());
+    }
 }

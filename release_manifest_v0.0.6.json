@@ -1,0 +1,36 @@
+{
+  "project": "staticdatagen-v0.0.6-release",
+  "mode": "hierarchical",
+  "dispatches": [
+    {
+      "agent": "qa-coordinator",
+      "priority": "P0",
+      "task": "Execute full test campaign for staticdatagen v0.0.6 release - verify all 353 unit tests pass and benchmark suite runs successfully",
+      "verify_cmd": "cargo test --all-targets && cargo bench --bench criterion_benchmark"
+    },
+    {
+      "agent": "edge-hunter",
+      "priority": "P0",
+      "task": "Security audit for staticdatagen v0.0.6 - verify RFC 9116 compliance and security utilities validation",
+      "verify_cmd": "cargo clippy -- -D warnings && cargo audit"
+    },
+    {
+      "agent": "tech-writer",
+      "priority": "P1",
+      "task": "Verify documentation is current and complete for v0.0.6 release - check README.md, CHANGELOG.md, and API docs",
+      "verify_cmd": "cargo doc --no-deps && grep -q '0.0.6' README.md"
+    },
+    {
+      "agent": "perf-optimizer",
+      "priority": "P1",
+      "task": "Performance validation for v0.0.6 - confirm navigation optimization improvements and benchmark baseline",
+      "verify_cmd": "cargo bench --bench criterion_benchmark"
+    },
+    {
+      "agent": "compliance-officer",
+      "priority": "P2",
+      "task": "License and dependency audit for v0.0.6 release - verify MIT/Apache-2.0 compliance and dependency security",
+      "verify_cmd": "cargo tree --duplicates && cargo license"
+    }
+  ]
+}

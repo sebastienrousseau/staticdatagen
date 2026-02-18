@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! # StaticDataGen Navigation Examples
@@ -164,7 +164,7 @@ fn i18n_navigation_example() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🦀 Internationalized Navigation Example");
     println!("---------------------------------------------");
 
-    let files = vec![
+    let files = [
         // English
         FileData::new(
             "en/about.md".to_string(),

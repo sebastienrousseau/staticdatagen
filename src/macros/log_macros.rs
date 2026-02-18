@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! This module contains macros related to logging messages at various log levels and formats.
@@ -50,4 +50,51 @@ macro_rules! macro_log_info {
             $format,
         );
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    use rlg::log_format::LogFormat;
+    use rlg::log_level::LogLevel;
+
+    #[test]
+    fn test_macro_log_info_basic() {
+        let level = LogLevel::INFO;
+        let component = "TestComponent";
+        let description = "Test description";
+        let format = LogFormat::CLF;
+
+        // This should compile and run without errors
+        macro_log_info!(&level, component, description, &format);
+    }
+
+    #[test]
+    fn test_macro_log_info_debug_level() {
+        let level = LogLevel::DEBUG;
+        let component = "Debug";
+        let description = "Debug message";
+        let format = LogFormat::JSON;
+
+        macro_log_info!(&level, component, description, &format);
+    }
+
+    #[test]
+    fn test_macro_log_info_error_level() {
+        let level = LogLevel::ERROR;
+        let component = "ErrorHandler";
+        let description = "Error occurred";
+        let format = LogFormat::CLF;
+
+        macro_log_info!(&level, component, description, &format);
+    }
+
+    #[test]
+    fn test_macro_log_info_warning_level() {
+        let level = LogLevel::WARN;
+        let component = "Warning";
+        let description = "Warning message";
+        let format = LogFormat::CLF;
+
+        macro_log_info!(&level, component, description, &format);
+    }
 }

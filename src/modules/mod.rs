@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 /// The `json` module generates the JSON content.
@@ -6,9 +6,6 @@ pub mod json;
 
 /// The `navigation` module generates the navigation menu.
 pub mod navigation;
-
-// The `newssitemap` module generates the newssitemap content.
-// pub mod news_sitemap;
 
 /// The `plaintext` module contains functions for generating plaintext.
 pub mod plaintext;

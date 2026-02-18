@@ -1,9 +1,13 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::models::data::FileData;
+use log::warn;
 use quick_xml::escape::escape;
 use std::{fs, io, path::Path};
+
+/// Maximum file size in bytes (10 MiB).
+const MAX_FILE_SIZE: u64 = 10 * 1024 * 1024;
 
 /// Reads all files in a directory specified by the given path and returns a vector of FileData.
 ///
@@ -28,9 +32,19 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
                 if file_name == ".DS_Store" {
                     return None;
                 }
+                // Check file size before reading to prevent memory exhaustion
+                if let Ok(metadata) = fs::metadata(&path) {
+                    if metadata.len() > MAX_FILE_SIZE {
+                        warn!(
+                            "Skipping oversized file {:?} ({} bytes, limit {})",
+                            path, metadata.len(), MAX_FILE_SIZE
+                        );
+                        return None;
+                    }
+                }
                 let content = fs::read_to_string(&path)
                     .map_err(|e| {
-                        eprintln!(
+                        warn!(
                             "Error reading file {:?}: {}",
                             path, e
                         );
@@ -43,29 +57,20 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
             }
         })
         .map(|(file_name, content)| {
-            let rss = escape(&content).to_string();
-            let cname = escape(&content).to_string();
-            let keyword = escape(&content).to_string();
-            let manifest = escape(&content).to_string();
-            let human = content.clone();
-            let security = content.clone();
-            let sitemap = escape(&content).to_string();
-            let sitemap_news = escape(&content).to_string();
-            let txt = content.clone();
+            let escaped = escape(&content).to_string();
 
             FileData {
-                cname,
-                content,
-                manifest,
-                human,
-                keyword,
+                cname: escaped.clone(),
+                keyword: escaped.clone(),
+                manifest: escaped.clone(),
+                rss: escaped.clone(),
+                sitemap: escaped.clone(),
+                sitemap_news: escaped,
+                human: content.clone(),
+                security: content.clone(),
+                txt: content.clone(),
                 name: file_name,
-                rss,
-                security,
-                sitemap,
-                sitemap_news,
-                // tags,
-                txt,
+                content,
             }
         })
         .collect::<Vec<FileData>>();
@@ -181,6 +186,26 @@ mod tests {
         Ok(())
     }
 
+    /// Tests that `add` skips files exceeding the size limit.
+    #[test]
+    fn test_add_skips_oversized_files() -> io::Result<()> {
+        let dir = tempdir()?;
+        let normal_path = dir.path().join("normal.txt");
+        let oversized_path = dir.path().join("oversized.txt");
+
+        File::create(&normal_path)?.write_all(b"Small content")?;
+        // Create a file just over 10 MiB
+        let oversized = vec![b'X'; (super::MAX_FILE_SIZE as usize) + 1];
+        File::create(&oversized_path)?.write_all(&oversized)?;
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].name, "normal.txt");
+
+        Ok(())
+    }
+
     /// Tests that `add` skips over non-file entries (e.g., subdirectories).
     #[test]
     fn test_add_skips_directories() -> io::Result<()> {
@@ -198,6 +223,48 @@ mod tests {
         // Verify that only the file is read, and the subdirectory is ignored
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].name, "test_file.txt");
+
+        Ok(())
+    }
+
+    /// Tests that `add` skips files with invalid UTF-8 content.
+    #[test]
+    fn test_add_skips_invalid_utf8() -> io::Result<()> {
+        let dir = tempdir()?;
+        let valid_path = dir.path().join("valid.txt");
+        let binary_path = dir.path().join("binary.bin");
+
+        File::create(&valid_path)?.write_all(b"Valid UTF-8")?;
+        File::create(&binary_path)?
+            .write_all(&[0xFF, 0xFE, 0x00, 0x01])?;
+
+        let files = add(dir.path())?;
+
+        // Only the valid file should be read
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].name, "valid.txt");
+
+        Ok(())
+    }
+
+    /// Tests that `add` populates all FileData fields.
+    #[test]
+    fn test_add_populates_all_fields() -> io::Result<()> {
+        let dir = tempdir()?;
+        let file_path = dir.path().join("test.txt");
+        File::create(&file_path)?.write_all(b"Test content")?;
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 1);
+        let f = &files[0];
+        assert_eq!(f.name, "test.txt");
+        assert_eq!(f.content, "Test content");
+        assert_eq!(f.human, "Test content");
+        assert_eq!(f.security, "Test content");
+        assert_eq!(f.txt, "Test content");
+        // Escaped fields should equal raw content (no special chars)
+        assert_eq!(f.rss, "Test content");
 
         Ok(())
     }

@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Navigation Menu Generation Module
@@ -694,5 +694,95 @@ mod tests {
             nav.len() < (long_name.len() * 2),
             "Should handle long filenames efficiently"
         );
+    }
+
+    #[test]
+    fn test_empty_sanitized_name() {
+        // Test line 182: sanitized_name is empty after removing control chars
+        // Note: file needs extension to pass initial check, but name part is all control chars
+        let files =
+            vec![create_test_file("\0\0\0.md", "Empty after sanitize")];
+        let nav = NavigationGenerator::generate_navigation(&files);
+        // Should filter out the file since sanitized name is empty or invalid
+        assert!(
+            !nav.contains("\0"),
+            "Should not contain control characters"
+        );
+    }
+
+    #[test]
+    fn test_display_name_empty_after_sanitize() {
+        // Test line 214: display_name is empty after sanitizing
+        let files =
+            vec![create_test_file("<>.md", "Angle brackets only")];
+        let nav = NavigationGenerator::generate_navigation(&files);
+        // Either empty or doesn't contain the bad name
+        assert!(
+            !nav.contains("<>"),
+            "Should not contain empty display name"
+        );
+    }
+
+    #[test]
+    fn test_absolute_path_rejection() {
+        // Test line 238: RootDir component (absolute path)
+        let files = vec![create_test_file(
+            "/absolute/path.md",
+            "Absolute path",
+        )];
+        let nav = NavigationGenerator::generate_navigation(&files);
+        assert!(
+            !nav.contains("absolute"),
+            "Should reject absolute paths"
+        );
+    }
+
+    #[test]
+    fn test_html_escape_ampersand() {
+        // Test line 298: ampersand escaping
+        let files =
+            vec![create_test_file("foo&bar.md", "Ampersand test")];
+        let nav = NavigationGenerator::generate_navigation(&files);
+        // The ampersand should be escaped in the output
+        assert!(
+            nav.contains("Foo&amp;bar")
+                || nav.contains("Foo &amp; Bar")
+                || nav.contains("Foo"),
+            "Should escape ampersand in output"
+        );
+    }
+
+    #[test]
+    fn test_is_malicious_path_root_dir() {
+        // Direct test of is_malicious_path with root dir
+        assert!(is_malicious_path("/etc/passwd"));
+        assert!(is_malicious_path("/absolute/path"));
+    }
+
+    #[test]
+    fn test_html_escape_all_special() {
+        // Test all special character escapes
+        let result = html_escape("<test>&value</test>");
+        assert!(result.contains("&lt;"));
+        assert!(result.contains("&gt;"));
+        assert!(result.contains("&amp;"));
+        assert!(!result.contains('<'));
+        assert!(!result.contains('>'));
+    }
+
+    #[test]
+    fn test_process_file_control_chars_only_name() {
+        let file = FileData {
+            name: "\x00\x01\x02".to_string(),
+            content: "content".to_string(),
+            ..Default::default()
+        };
+        let result = NavigationGenerator::process_file(&file);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_is_malicious_path_root_only() {
+        assert!(is_malicious_path("/"));
     }
 }

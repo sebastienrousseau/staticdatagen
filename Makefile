@@ -61,7 +61,7 @@ outdated: ensure-cargo-outdated ## Check for outdated dependencies for the root 
 	@cargo outdated --root-deps-only
 
 # Installation checks and setups
-.PHONY: ensure-clippy ensure-rustfmt ensure-cargo-fix ensure-cargo-deny ensure-cargo-outdated
+.PHONY: ensure-clippy ensure-rustfmt ensure-cargo-fix ensure-cargo-deny ensure-cargo-outdated ensure-cargo-cyclonedx
 ensure-clippy:
 	@cargo clippy --version || rustup component add clippy
 
@@ -76,6 +76,16 @@ ensure-cargo-deny:
 
 ensure-cargo-outdated:
 	@command -v cargo-outdated || cargo install cargo-outdated
+
+ensure-cargo-cyclonedx:
+	@command -v cargo-cyclonedx || cargo install cargo-cyclonedx
+
+# Generate Software Bill of Materials (SBOM) in CycloneDX format.
+.PHONY: sbom
+sbom: ensure-cargo-cyclonedx ## Generate SBOM in CycloneDX format.
+	@echo "Generating SBOM..."
+	@cargo cyclonedx --all --format json
+	@echo "SBOM generated successfully."
 
 # Help target to display callable targets and their descriptions.
 .PHONY: help

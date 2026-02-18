@@ -5,11 +5,11 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.5"                          # Initial version of the crate
+version = "0.0.7"                          # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
-rust-version = "1.58.0"                    # Minimum supported Rust version
-license = "MIT OR Apache-2.0"              # Dual licensing strategy
+rust-version = "1.88.0"                    # Minimum supported Rust version
+license = "Apache-2.0 OR MIT"              # Dual licensing strategy
 description = """
 A Rust library for generating structured data files and metadata for static sites, including HTML, RSS feeds, sitemaps, and SEO-optimized meta tags.
 """                                        # Short library description
@@ -63,8 +63,31 @@ path = "src/lib.rs"                         # Path to the library entry point
 # -----------------------------------------------------------------------------
 [features]
 # Optional features that can be enabled or disabled.
-default = []                                # No default features enabled
-async = []                                  # Placeholder for future asynchronous feature support
+default = ["full"]                          # Full features enabled by default
+
+# Full feature set - includes all optional features
+full = ["rss", "sitemap", "i18n", "server"]
+
+# Minimal feature set - core functionality only
+minimal = []
+
+# Async/await support (placeholder for future implementation)
+async = []
+
+# RSS feed generation support
+rss = []
+
+# Sitemap generation support
+sitemap = []
+
+# Internationalization support
+i18n = ["langweave"]
+
+# Built-in HTTP server support
+server = ["http-handle"]
+
+# Serialization support (always enabled via serde dependency)
+serde = []
 
 # -----------------------------------------------------------------------------
 # Build Dependencies
@@ -78,7 +101,8 @@ version_check = "0.9.5"                       # Ensures that a compatible Rust v
 # -----------------------------------------------------------------------------
 [dev-dependencies]
 # Dependencies required for testing and development.
-criterion = "0.5.1"                           # Benchmarking library to test performance
+criterion = "0.8.2"                           # Benchmarking library to test performance
+proptest = "1.6"                              # Property-based testing framework
 
 # -----------------------------------------------------------------------------
 # Dependencies
@@ -94,25 +118,24 @@ rlg = "0.0.6"
 
 # CLI and configuration
 clap = "4.5"
-toml = "0.8"
+toml = "0.9"
 
 # Data processing
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Content generation
-comrak = "0.35"
+comrak = "0.50"
 pulldown-cmark = "0.12"
 html-generator = "0.0.3"
-minify-html = "0.15"
+minify-html = "0.18"
 
 # Web and networking
-http-handle = "0.0.2"
+http-handle = { version = "0.0.2", optional = true }
 url = "2.5"
 
 # Utilities
-langweave= "0.0.1"
-lazy_static = "1.5"
+langweave = { version = "0.0.1", optional = true }
 metadata-gen = "0.0.1"
 regex = "1.11.1"
 rss-gen = "0.0.3"
@@ -125,7 +148,7 @@ vrd = "0.0.8"
 
 # XML processing
 quick-xml = "0.37"
-xml-rs = "0.8"
+xml-rs = "1.0"
 
 # CNAME dependencies
 idna = "1.0.3"
@@ -170,7 +193,7 @@ elided_lifetimes_in_paths = "allow"         # Allow lifetimes to be elided in pa
 non_camel_case_types = "allow"              # Allow non-camel-case types
 non_upper_case_globals = "allow"            # Allow non-uppercase global variables
 trivial_bounds = "allow"                    # Allow trivial bounds in trait definitions
-unsafe_code = "allow"                       # Allow the usage of unsafe code blocks
+unsafe_code = "forbid"                       # Forbid the usage of unsafe code blocks
 
 ## Forbidden
 missing_debug_implementations = "forbid"    # Forbid missing `Debug` implementations
@@ -186,7 +209,6 @@ future_incompatible = { level = "deny", priority = -1 } # Handle future compatib
 keyword_idents = { level = "deny", priority = -1 }      # Deny usage of keywords as identifiers
 macro_use_extern_crate = "deny"             # Deny macro use of `extern crate`
 meta_variable_misuse = "deny"               # Deny misuse of meta variables in macros
-missing_fragment_specifier = "deny"         # Deny missing fragment specifiers in macros
 noop_method_call = "deny"                   # Deny method calls that have no effect
 rust_2018_idioms = { level = "deny", priority = -1 }    # Enforce Rust 2018 idioms
 rust_2021_compatibility = { level = "deny", priority = -1 } # Enforce Rust 2021 compatibility
@@ -203,7 +225,14 @@ unused_qualifications = "deny"              # Deny unnecessary type qualificatio
 variant_size_differences = "deny"           # Deny enum variants with significant size differences
 
 # -----------------------------------------------------------------------------
-# Clippy Configuration
+# Clippy Lint Configuration (enforced by cargo clippy)
+# -----------------------------------------------------------------------------
+[lints.clippy]
+# Note: unwrap_used/expect_used enforced via #![deny(...)] in src/lib.rs only,
+# so tests, examples, and benchmarks are not affected.
+
+# -----------------------------------------------------------------------------
+# Clippy Metadata (informational, for tooling reference)
 # -----------------------------------------------------------------------------
 [package.metadata.clippy]
 # Clippy lint configuration for enhanced code analysis.

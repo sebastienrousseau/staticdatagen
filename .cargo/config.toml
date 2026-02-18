@@ -1,0 +1,10 @@
+# Local Cargo configuration to override global LLD linker setting
+# This fixes the "clang: error: invalid linker name in argument '-fuse-ld=lld'" issue
+
+[target.aarch64-apple-darwin]
+# Use system linker instead of LLD
+rustflags = []
+
+[target.x86_64-apple-darwin]
+# Use system linker instead of LLD
+rustflags = []

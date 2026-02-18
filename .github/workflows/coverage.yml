@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -19,7 +19,7 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Run tests with coverage
-        run: cargo tarpaulin --out Lcov --all-features --no-fail-fast
+        run: cargo tarpaulin --out Lcov --all-features --no-fail-fast --fail-under 95
         env:
           CARGO_INCREMENTAL: '0'
           RUSTFLAGS: '-Ccodegen-units=1 -Clink-dead-code -Coverflow-checks=off'

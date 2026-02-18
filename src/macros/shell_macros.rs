@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Shell command execution macros and utilities
@@ -6,8 +6,19 @@
 //! This module provides utilities for executing shell commands, logging their execution,
 //! and handling errors in a safe and controlled manner.
 //!
+//! # Security Warning
+//!
+//! Commands are executed via a shell interpreter (`sh -c`).
+//! **Never pass unsanitized user input** as the command string,
+//! as this would create a **command injection vulnerability**.
+//! All command strings must be constructed from trusted,
+//! validated sources only.
+//!
+//! This module is intended for internal build/deployment
+//! tooling, not for processing external user input.
+//!
 //! # Features
-//! - Safe shell command execution
+//! - Safe shell command execution (with trusted inputs)
 //! - Comprehensive error handling
 //! - Command execution logging
 //! - Configurable shell interpreter
@@ -59,7 +70,14 @@ pub enum CommandError {
     OutputCaptureFailed(String),
 }
 
-/// Encapsulates command execution functionality with safety checks
+/// Encapsulates command execution functionality with safety checks.
+///
+/// # Security
+///
+/// This executor passes commands to a shell interpreter via `-c`.
+/// The command string is **not escaped or sanitized** — callers
+/// must ensure that command strings come from trusted sources.
+/// Passing unsanitized external input would allow command injection.
 #[derive(Debug)]
 pub struct CommandExecutor {
     /// The command to execute
@@ -141,14 +159,9 @@ macro_rules! macro_execute_and_log {
 
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
             let mut executor = CommandExecutor::new($interpreter)?;
-            executor.command($cmd);
+            let _ = executor.command($cmd);
 
             let output = executor.execute()?;
-
-            if !output.status.success() {
-                let error = String::from_utf8_lossy(&output.stderr);
-                return Err(format!("Command failed: {}", error).into());
-            }
 
             if let Some(dir) = $output_dir {
                 std::fs::write(
@@ -247,5 +260,117 @@ mod tests {
             }
             _ => panic!("Expected ExecutionFailed error"),
         }
+    }
+
+    #[test]
+    fn test_macro_log_start() {
+        macro_log_start!("test_op", "starting work");
+    }
+
+    #[test]
+    fn test_macro_log_complete() {
+        macro_log_complete!("test_op", "finished work");
+    }
+
+    #[test]
+    fn test_macro_log_error() {
+        macro_log_error!("test_op", "something went wrong");
+    }
+
+    #[test]
+    fn test_macro_execute_and_log_success() {
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "echo hello",
+            "echo_test",
+            "Running echo",
+            "Echo done",
+            "Echo failed",
+            None::<&str>,
+            Some("sh")
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_macro_execute_and_log_failure() {
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "false",
+            "fail_test",
+            "Running false",
+            "Should not reach",
+            "Command failed as expected",
+            None::<&str>,
+            Some("sh")
+        );
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_macro_execute_and_log_with_output_dir() {
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let dir_str = temp_dir.path().to_str().unwrap();
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "echo log_output",
+            "log_op",
+            "Running with output dir",
+            "Logged output",
+            "Failed to log",
+            Some(dir_str),
+            Some("sh")
+        );
+        assert!(result.is_ok());
+        let log_file = temp_dir.path().join("log_op.log");
+        assert!(log_file.exists());
+    }
+
+    #[test]
+    fn test_macro_execute_and_log_empty_command() {
+        let result: Result<(), Box<dyn std::error::Error>> = macro_execute_and_log!(
+            "",
+            "empty_cmd",
+            "Running empty",
+            "Should not complete",
+            "Empty command error",
+            None::<&str>,
+            Some("sh")
+        );
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_command_executor_invalid_interpreter() {
+        let mut executor =
+            CommandExecutor::new(Some("nonexistent_shell_xyz"))
+                .unwrap();
+        let _ = executor.command("echo test");
+        let err = executor.execute().unwrap_err();
+        match err {
+            CommandError::ExecutionFailed(_) => {}
+            _ => panic!("Expected ExecutionFailed error"),
+        }
+    }
+
+    #[test]
+    fn test_command_error_display() {
+        let err = CommandError::EmptyCommand;
+        assert_eq!(format!("{}", err), "Empty command provided");
+
+        let err = CommandError::ExecutionFailed("test".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Command execution failed: test"
+        );
+
+        let err = CommandError::InterpreterNotFound("zsh".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Shell interpreter not found: zsh"
+        );
+
+        let err = CommandError::OutputCaptureFailed("err".to_string());
+        assert_eq!(
+            format!("{}", err),
+            "Failed to capture command output: err"
+        );
     }
 }

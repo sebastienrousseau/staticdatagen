@@ -1,15 +1,16 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Security.txt Generation Module
 //!
 //! This module handles the creation and generation of security.txt files according to
-//! RFC 9116 (https://www.rfc-editor.org/rfc/rfc9116.html). The security.txt file
+//! RFC 9116 (<https://www.rfc-editor.org/rfc/rfc9116.html>). The security.txt file
 //! helps security researchers report security vulnerabilities by providing standard
 //! contact and policy information.
 
 use crate::models::data::SecurityData;
 use dtt::datetime::DateTime;
+use log::debug;
 use std::collections::HashMap;
 
 /// Creates a SecurityData object from metadata.
@@ -89,7 +90,7 @@ pub fn create_security_data(
 /// * `String` - The generated security.txt content
 pub fn generate_security_content(data: &SecurityData) -> String {
     if data.contact.is_empty() {
-        println!("Contact field is empty, no content generated."); // Debug print
+        debug!("Contact field is empty, no content generated.");
         return String::new();
     }
 
@@ -129,7 +130,7 @@ pub fn generate_security_content(data: &SecurityData) -> String {
         content.push_str(&format!("Encryption: {}\n", data.encryption));
     }
 
-    println!("Generated security.txt content:\n{}", content); // Debug print
+    debug!("Generated security.txt content:\n{}", content);
     content
 }
 
@@ -179,7 +180,7 @@ fn sanitize_expires(date: &str) -> String {
         return String::new();
     }
 
-    println!("Attempting to parse date: {}", date);
+    debug!("Attempting to parse date: {}", date);
 
     // First try parsing as RFC 3339/ISO 8601
     let formatted = match DateTime::parse(date) {
@@ -199,7 +200,7 @@ fn sanitize_expires(date: &str) -> String {
         }
     };
 
-    println!("Formatted date: {}", formatted);
+    debug!("Formatted date: {}", formatted);
     formatted
 }
 
@@ -415,5 +416,244 @@ mod tests {
         let data = create_security_data(&HashMap::new());
         assert!(data.contact.is_empty());
         assert!(data.expires.is_empty());
+    }
+
+    #[test]
+    fn test_generate_security_content_empty_contact() {
+        // Test line 91-93: empty contact returns empty string
+        let data = SecurityData {
+            contact: vec![],
+            expires: "2024-12-31T23:59:59Z".to_string(),
+            acknowledgments: String::new(),
+            preferred_languages: String::new(),
+            canonical: String::new(),
+            policy: String::new(),
+            hiring: String::new(),
+            encryption: String::new(),
+        };
+
+        let content = generate_security_content(&data);
+        assert!(content.is_empty());
+    }
+
+    #[test]
+    fn test_generate_security_content_all_fields() {
+        // Test lines 122-129: policy, hiring, encryption fields
+        let data = SecurityData {
+            contact: vec!["mailto:security@example.com".to_string()],
+            expires: "2024-12-31T23:59:59Z".to_string(),
+            acknowledgments: "https://example.com/thanks".to_string(),
+            preferred_languages: "en".to_string(),
+            canonical: "https://example.com/.well-known/security.txt"
+                .to_string(),
+            policy: "https://example.com/security-policy".to_string(),
+            hiring: "https://example.com/jobs".to_string(),
+            encryption: "https://example.com/pgp-key.txt".to_string(),
+        };
+
+        let content = generate_security_content(&data);
+        assert!(
+            content.contains("Contact: mailto:security@example.com")
+        );
+        assert!(content
+            .contains("Policy: https://example.com/security-policy"));
+        assert!(content.contains("Hiring: https://example.com/jobs"));
+        assert!(content
+            .contains("Encryption: https://example.com/pgp-key.txt"));
+    }
+
+    #[test]
+    fn test_sanitize_url_plain_text() {
+        // Test line 155-156: plain text without colons
+        assert_eq!(sanitize_url("Security Team"), "Security Team");
+        assert_eq!(sanitize_url("John Doe"), "John Doe");
+    }
+
+    #[test]
+    fn test_sanitize_url_with_angle_brackets() {
+        // Test that URLs with angle brackets are rejected
+        assert!(sanitize_url("text<script>").is_empty());
+        assert!(sanitize_url("text>more").is_empty());
+    }
+
+    #[test]
+    fn test_convert_rfc2822_invalid_month() {
+        // Test line 238: unknown month returns None
+        assert_eq!(
+            convert_rfc2822_to_iso8601("Tue, 20 Xyz 2024 15:15:15 GMT"),
+            None
+        );
+    }
+
+    #[test]
+    fn test_convert_rfc2822_insufficient_parts() {
+        // Test line 217-218: fewer than 5 parts returns None
+        assert_eq!(
+            convert_rfc2822_to_iso8601("Tue, 20 Feb 2024"),
+            None
+        );
+        assert_eq!(convert_rfc2822_to_iso8601("Tue, 20 Feb"), None);
+    }
+
+    #[test]
+    fn test_convert_rfc2822_all_months() {
+        // Test all month conversions (lines 226-237)
+        let months = [
+            ("Tue, 15 Jan 2024 10:00:00 GMT", "01"),
+            ("Tue, 15 Feb 2024 10:00:00 GMT", "02"),
+            ("Tue, 15 Mar 2024 10:00:00 GMT", "03"),
+            ("Tue, 15 Apr 2024 10:00:00 GMT", "04"),
+            ("Tue, 15 May 2024 10:00:00 GMT", "05"),
+            ("Tue, 15 Jun 2024 10:00:00 GMT", "06"),
+            ("Tue, 15 Jul 2024 10:00:00 GMT", "07"),
+            ("Tue, 15 Aug 2024 10:00:00 GMT", "08"),
+            ("Tue, 15 Sep 2024 10:00:00 GMT", "09"),
+            ("Tue, 15 Oct 2024 10:00:00 GMT", "10"),
+            ("Tue, 15 Nov 2024 10:00:00 GMT", "11"),
+            ("Tue, 15 Dec 2024 10:00:00 GMT", "12"),
+        ];
+
+        for (input, expected_month) in months {
+            let result = convert_rfc2822_to_iso8601(input);
+            assert!(result.is_some(), "Failed to parse: {}", input);
+            assert!(
+                result
+                    .as_ref()
+                    .unwrap()
+                    .contains(&format!("-{}-", expected_month)),
+                "Expected month {} in result {:?} for input {}",
+                expected_month,
+                result,
+                input
+            );
+        }
+    }
+
+    #[test]
+    fn test_sanitize_urls_filters_empty() {
+        // Test that sanitize_urls filters out empty results
+        let urls = vec![
+            "https://example.com",
+            "javascript:alert(1)",
+            "mailto:test@example.com",
+        ];
+        let result = sanitize_urls(urls);
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&"https://example.com".to_string()));
+        assert!(result.contains(&"mailto:test@example.com".to_string()));
+    }
+
+    #[test]
+    fn test_sanitize_languages_empty_tags() {
+        // Test that empty language tags are filtered
+        assert_eq!(sanitize_languages("en, , fr"), "en, fr");
+        assert_eq!(sanitize_languages(",  ,  "), "");
+    }
+
+    #[test]
+    fn test_sanitize_url_tel_scheme() {
+        // Test tel: scheme is accepted
+        assert_eq!(sanitize_url("tel:+1234567890"), "tel:+1234567890");
+    }
+
+    #[test]
+    fn test_sanitize_url_http_scheme() {
+        // Test http: scheme is accepted
+        assert_eq!(
+            sanitize_url("http://example.com"),
+            "http://example.com"
+        );
+    }
+
+    #[test]
+    fn test_create_security_data_all_fields() {
+        let mut metadata = HashMap::new();
+        let _ = metadata.insert(
+            "security_contact".to_string(),
+            "mailto:sec@example.com".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_expires".to_string(),
+            "2024-12-31T23:59:59Z".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_acknowledgments".to_string(),
+            "https://example.com/thanks".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_languages".to_string(),
+            "en, fr".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_canonical".to_string(),
+            "https://example.com/security.txt".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_policy".to_string(),
+            "https://example.com/policy".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_hiring".to_string(),
+            "https://example.com/jobs".to_string(),
+        );
+        let _ = metadata.insert(
+            "security_encryption".to_string(),
+            "https://example.com/pgp".to_string(),
+        );
+
+        let data = create_security_data(&metadata);
+        assert!(!data.contact.is_empty());
+        assert!(!data.expires.is_empty());
+        assert!(!data.acknowledgments.is_empty());
+        assert!(!data.preferred_languages.is_empty());
+        assert!(!data.canonical.is_empty());
+        assert!(!data.policy.is_empty());
+        assert!(!data.hiring.is_empty());
+        assert!(!data.encryption.is_empty());
+    }
+
+    #[test]
+    fn test_convert_rfc2822_non_numeric_day() {
+        // Non-numeric day causes day.parse::<u8>().ok()? to return None
+        assert_eq!(
+            convert_rfc2822_to_iso8601("Tue, XX Feb 2024 15:15:15 GMT"),
+            None
+        );
+    }
+
+    #[test]
+    fn test_sanitize_expires_rfc2822_inner_parse_failure() {
+        // An RFC 2822 date that converts to ISO but then fails DateTime::parse
+        // Day "99" is parseable as u8 but produces an invalid date
+        let result = sanitize_expires("Tue, 99 Feb 2024 15:15:15 GMT");
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_sanitize_url_empty() {
+        assert_eq!(sanitize_url(""), "");
+    }
+
+    #[test]
+    fn test_sanitize_languages_with_special_chars() {
+        // Languages with special chars should be filtered out
+        assert!(sanitize_languages("en!@#").is_empty());
+        assert_eq!(sanitize_languages("en, fr"), "en, fr");
+    }
+
+    #[test]
+    fn test_sanitize_expires_valid_iso8601() {
+        // Test a well-formed ISO 8601 date directly
+        let result = sanitize_expires("2025-06-15T10:30:00+00:00");
+        assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn test_convert_rfc2822_no_comma() {
+        // No comma means split(",").nth(1) returns None
+        assert_eq!(
+            convert_rfc2822_to_iso8601("20 Feb 2024 15:15:15 GMT"),
+            None
+        );
     }
 }

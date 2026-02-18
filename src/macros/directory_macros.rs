@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Directory operation macros for the static site generator
@@ -19,6 +19,10 @@
 /// * `_dir` - The path to check/create (as a `std::path::Path`)
 /// * `_name` - A string literal representing the directory name for error messages
 ///
+/// # Returns
+///
+/// Returns a `Result<(), anyhow::Error>` indicating success or failure.
+///
 /// # Example
 ///
 /// ```rust
@@ -27,19 +31,13 @@
 /// use std::fs;
 ///
 /// let path = Path::new("logs");
-/// macro_check_directory!(path, "logs");
+/// macro_check_directory!(path, "logs").unwrap();
 ///
 /// // Ensure the directory is removed after the test
 /// if path.exists() {
 ///     fs::remove_dir_all(path).expect("Failed to remove logs directory");
 /// }
 /// ```
-///
-/// # Panics
-///
-/// This macro will panic if:
-/// - The path exists but is not a directory
-/// - The directory cannot be created
 #[macro_export]
 macro_rules! macro_check_directory {
     ($_dir:expr, $_name:expr) => {{
@@ -49,24 +47,28 @@ macro_rules! macro_check_directory {
 
         if directory.exists() {
             if !directory.is_dir() {
-                log::error!("❌ '{}' is not a directory.", name);
-                panic!("❌ '{}' is not a directory.", name);
+                log::error!("'{}' is not a directory.", name);
+                Err(anyhow::anyhow!("'{}' is not a directory.", name))
+            } else {
+                Ok(())
             }
         } else {
             match std::fs::create_dir_all(directory) {
                 Ok(_) => {
-                    log::info!("✓ Created directory: {}", name);
+                    log::info!("Created directory: {}", name);
+                    Ok(())
                 }
                 Err(e) => {
                     log::error!(
-                        "❌ Cannot create '{}' directory: {}",
+                        "Cannot create '{}' directory: {}",
                         name,
                         e
                     );
-                    panic!(
-                        "❌ Cannot create '{}' directory: {}",
-                        name, e
-                    );
+                    Err(anyhow::anyhow!(
+                        "Cannot create '{}' directory: {}",
+                        name,
+                        e
+                    ))
                 }
             }
         }
@@ -163,9 +165,20 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let test_path = temp_dir.path().join("test_dir");
 
-        macro_check_directory!(&test_path, "test_dir");
+        macro_check_directory!(&test_path, "test_dir").unwrap();
         assert!(test_path.exists());
         assert!(test_path.is_dir());
+    }
+
+    #[test]
+    fn test_macro_check_directory_not_a_dir() {
+        let temp_dir = TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("a_file");
+        std::fs::write(&file_path, "data").unwrap();
+
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&file_path, "a_file");
+        assert!(result.is_err());
     }
 
     #[test]
@@ -189,5 +202,80 @@ mod tests {
         );
         assert!(test_path1.exists());
         assert!(test_path2.exists());
+    }
+
+    #[test]
+    fn test_macro_check_directory_existing() {
+        let temp_dir = TempDir::new().unwrap();
+        let test_path = temp_dir.path().join("existing_dir");
+        std::fs::create_dir(&test_path).unwrap();
+
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&test_path, "existing_dir");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_macro_cleanup_directories_nonexistent() {
+        let temp_dir = TempDir::new().unwrap();
+        let nonexistent = temp_dir.path().join("does_not_exist");
+
+        let result = macro_cleanup_directories!(&nonexistent);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_macro_create_directories_nested() {
+        let temp_dir = TempDir::new().unwrap();
+        let nested = temp_dir.path().join("a/b/c");
+
+        assert!(macro_create_directories!(&nested).is_ok());
+        assert!(nested.exists());
+    }
+
+    #[test]
+    fn test_macro_create_directories_single() {
+        let temp_dir = TempDir::new().unwrap();
+        let single = temp_dir.path().join("single_dir");
+
+        assert!(macro_create_directories!(&single).is_ok());
+        assert!(single.exists());
+    }
+
+    #[test]
+    fn test_macro_check_directory_creates_nested() {
+        let temp_dir = TempDir::new().unwrap();
+        let nested = temp_dir.path().join("x/y/z");
+
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&nested, "nested");
+        assert!(result.is_ok());
+        assert!(nested.exists());
+        assert!(nested.is_dir());
+    }
+
+    #[test]
+    fn test_macro_cleanup_then_verify_gone() {
+        let temp_dir = TempDir::new().unwrap();
+        let test_path = temp_dir.path().join("cleanup_target");
+        std::fs::create_dir(&test_path).unwrap();
+        // Add a file inside
+        std::fs::write(test_path.join("file.txt"), "data").unwrap();
+
+        assert!(macro_cleanup_directories!(&test_path).is_ok());
+        assert!(!test_path.exists());
+    }
+
+    #[test]
+    fn test_macro_check_directory_create_fails() {
+        let temp_dir = TempDir::new().unwrap();
+        // Create a file that blocks directory creation at a path component
+        let blocker = temp_dir.path().join("blocker_file");
+        std::fs::write(&blocker, "data").unwrap();
+        // Try to create a directory inside the file — create_dir_all will fail
+        let nested = blocker.join("subdir");
+        let result: Result<(), anyhow::Error> =
+            macro_check_directory!(&nested, "blocked");
+        assert!(result.is_err());
     }
 }

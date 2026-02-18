@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! News Sitemap Generation Module
@@ -31,6 +31,7 @@
 //! ```
 
 use crate::models::data::NewsData;
+use log::warn;
 use std::collections::HashMap;
 use time::{format_description, OffsetDateTime};
 use xml::writer::events::XmlEvent;
@@ -116,67 +117,70 @@ impl NewsSiteMapGenerator {
 
     /// Generates the news sitemap XML.
     pub fn generate_xml(&self) -> String {
+        match self.try_generate_xml() {
+            Ok(xml) => xml,
+            Err(e) => {
+                warn!("Failed to generate news sitemap XML: {}", e);
+                String::new()
+            }
+        }
+    }
+
+    /// Internal XML generation with proper error propagation.
+    fn try_generate_xml(
+        &self,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let news_data = self.config.to_news_data();
-        //eprintln!("NewsData: {:?}", news_data);
         let mut output = Vec::new();
         let mut writer = EmitterConfig::new()
             .perform_indent(true)
             .create_writer(&mut output);
 
-        writer
-        .write(XmlEvent::start_element("urlset")
-            .attr("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
-            .attr("xmlns:news", "http://www.google.com/schemas/sitemap-news/0.9"))
-        .unwrap();
+        writer.write(
+            XmlEvent::start_element("urlset")
+                .attr(
+                    "xmlns",
+                    "http://www.sitemaps.org/schemas/sitemap/0.9",
+                )
+                .attr(
+                    "xmlns:news",
+                    "http://www.google.com/schemas/sitemap-news/0.9",
+                ),
+        )?;
 
-        writer.write(XmlEvent::start_element("url")).unwrap();
-        writer.write(XmlEvent::start_element("loc")).unwrap();
-        writer
-            .write(XmlEvent::characters(&news_data.news_loc))
-            .unwrap();
-        writer.write(XmlEvent::end_element()).unwrap(); // End <loc>
+        writer.write(XmlEvent::start_element("url"))?;
+        writer.write(XmlEvent::start_element("loc"))?;
+        writer.write(XmlEvent::characters(&news_data.news_loc))?;
+        writer.write(XmlEvent::end_element())?;
 
-        writer.write(XmlEvent::start_element("news:news")).unwrap();
-        writer
-            .write(XmlEvent::start_element("news:publication"))
-            .unwrap();
-        writer.write(XmlEvent::start_element("news:name")).unwrap();
-        writer
-            .write(XmlEvent::characters(
-                &news_data.news_publication_name,
-            ))
-            .unwrap();
-        writer.write(XmlEvent::end_element()).unwrap(); // End <news:name>
-        writer
-            .write(XmlEvent::start_element("news:language"))
-            .unwrap();
-        writer
-            .write(XmlEvent::characters(&news_data.news_language))
-            .unwrap();
-        writer.write(XmlEvent::end_element()).unwrap(); // End <news:language>
-        writer.write(XmlEvent::end_element()).unwrap(); // End <news:publication>
+        writer.write(XmlEvent::start_element("news:news"))?;
+        writer.write(XmlEvent::start_element("news:publication"))?;
+        writer.write(XmlEvent::start_element("news:name"))?;
+        writer.write(XmlEvent::characters(
+            &news_data.news_publication_name,
+        ))?;
+        writer.write(XmlEvent::end_element())?;
+        writer.write(XmlEvent::start_element("news:language"))?;
+        writer.write(XmlEvent::characters(&news_data.news_language))?;
+        writer.write(XmlEvent::end_element())?;
+        writer.write(XmlEvent::end_element())?;
 
         writer
-            .write(XmlEvent::start_element("news:publication_date"))
-            .unwrap();
-        writer
-            .write(XmlEvent::characters(
-                &news_data.news_publication_date,
-            ))
-            .unwrap(); // Debug here if needed
-        writer.write(XmlEvent::end_element()).unwrap(); // End <news:publication_date>
+            .write(XmlEvent::start_element("news:publication_date"))?;
+        writer.write(XmlEvent::characters(
+            &news_data.news_publication_date,
+        ))?;
+        writer.write(XmlEvent::end_element())?;
 
-        writer.write(XmlEvent::start_element("news:title")).unwrap();
-        writer
-            .write(XmlEvent::characters(&news_data.news_title))
-            .unwrap();
-        writer.write(XmlEvent::end_element()).unwrap(); // End <news:title>
+        writer.write(XmlEvent::start_element("news:title"))?;
+        writer.write(XmlEvent::characters(&news_data.news_title))?;
+        writer.write(XmlEvent::end_element())?;
 
-        writer.write(XmlEvent::end_element()).unwrap(); // End <news:news>
-        writer.write(XmlEvent::end_element()).unwrap(); // End <url>
-        writer.write(XmlEvent::end_element()).unwrap(); // End <urlset>
+        writer.write(XmlEvent::end_element())?;
+        writer.write(XmlEvent::end_element())?;
+        writer.write(XmlEvent::end_element())?;
 
-        String::from_utf8(output).unwrap_or_default()
+        Ok(String::from_utf8(output)?)
     }
 }
 
@@ -190,7 +194,7 @@ fn format_publication_date(input: &str) -> String {
             .format(&format_description::well_known::Rfc3339)
             .unwrap_or_default(),
         Err(e) => {
-            eprintln!("Parsing failed: {}. Using fallback.", e);
+            warn!("Parsing failed: {}. Using fallback.", e);
             OffsetDateTime::now_utc()
                 .format(&format_description::well_known::Rfc3339)
                 .unwrap_or_default()
@@ -245,15 +249,35 @@ fn validate_language(lang: &str) -> String {
 
 /// Validates URLs to ensure they are well-formed and safe.
 fn validate_url(url: &str) -> String {
-    if url.starts_with("http://") || url.starts_with("https://") {
-        if url.contains('<') || url.contains('>') || url.contains('"') {
-            String::new()
-        } else {
-            url.to_string()
-        }
-    } else {
-        String::new()
+    // Reject non-HTTP(S) schemes
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return String::new();
     }
+
+    // Reject URLs with dangerous or invalid characters
+    let has_dangerous_chars = url.chars().any(|c| {
+        c == '<'
+            || c == '>'
+            || c == '"'
+            || c == '\''
+            || c == '\0'
+            || c.is_control()
+    });
+    if has_dangerous_chars {
+        return String::new();
+    }
+
+    // Reject URLs containing whitespace
+    if url.chars().any(|c| c.is_whitespace()) {
+        return String::new();
+    }
+
+    // Reject excessively long URLs
+    if url.len() > 2048 {
+        return String::new();
+    }
+
+    url.to_string()
 }
 
 /// Sanitizes text by removing control characters and limiting length.
@@ -681,5 +705,114 @@ mod tests {
             sanitize_text(input),
             "Text with controlcharactersandspaces."
         );
+    }
+
+    #[test]
+    fn test_validate_url_null_byte() {
+        assert!(validate_url("https://example.com/\0evil").is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_control_chars() {
+        assert!(validate_url("https://example.com/\npath").is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_whitespace() {
+        assert!(validate_url("https://example.com/path with spaces")
+            .is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_single_quote() {
+        assert!(validate_url("https://example.com/page'injection")
+            .is_empty());
+    }
+
+    #[test]
+    fn test_validate_url_too_long() {
+        let long_url =
+            format!("https://example.com/{}", "a".repeat(2048));
+        assert!(validate_url(&long_url).is_empty());
+    }
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn validate_url_never_panics(
+                s in ".*"
+            ) {
+                let _ = validate_url(&s);
+            }
+
+            #[test]
+            fn validate_url_rejects_non_http(
+                scheme in "[a-z]{2,10}",
+                rest in "[a-zA-Z0-9/._-]{0,50}"
+            ) {
+                let url = format!(
+                    "{}://{}",
+                    scheme,
+                    rest
+                );
+                if scheme != "http"
+                    && scheme != "https"
+                {
+                    prop_assert!(
+                        validate_url(&url).is_empty(),
+                        "Non-HTTP URL accepted: {}",
+                        url
+                    );
+                }
+            }
+
+            #[test]
+            fn validate_language_never_panics(
+                s in ".*"
+            ) {
+                let result = validate_language(&s);
+                prop_assert!(
+                    !result.is_empty(),
+                    "Language validation returned \
+                     empty for: {}",
+                    s
+                );
+            }
+
+            #[test]
+            fn validate_keywords_limits_to_ten(
+                kws in prop::collection::vec(
+                    "[a-z]{1,10}",
+                    0..30
+                )
+            ) {
+                let input = kws.join(",");
+                let result = validate_keywords(&input);
+                let count = if result.is_empty() {
+                    0
+                } else {
+                    result.split(", ").count()
+                };
+                prop_assert!(
+                    count <= 10,
+                    "Keywords exceeded limit: {}",
+                    count
+                );
+            }
+
+            #[test]
+            fn sanitize_text_never_panics(
+                s in ".*"
+            ) {
+                let result = sanitize_text(&s);
+                prop_assert!(
+                    result.len() <= 4000,
+                    "Sanitized text too long"
+                );
+            }
+        }
     }
 }

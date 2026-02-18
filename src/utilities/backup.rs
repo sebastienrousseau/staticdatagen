@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use std::{
@@ -66,6 +66,7 @@ mod tests {
     use super::*;
     use std::fs::{self, File};
     use std::io::{self, Write};
+    #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
     use std::path::Path;
     use tempfile::tempdir;
@@ -195,6 +196,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     /// Tests backup creation failure due to insufficient permissions
     fn test_backup_file_no_permission() -> io::Result<()> {
         let dir = tempdir()?;
@@ -253,8 +255,7 @@ mod tests {
         let original_file_path = dir.path().join(&long_name);
 
         // Check if the path length would be valid for the system
-        if original_file_path.to_str().map_or(false, |s| s.len() < 255)
-        {
+        if original_file_path.to_str().is_some_and(|s| s.len() < 255) {
             let mut file = File::create(&original_file_path)?;
             writeln!(file, "File with long name")?;
 
@@ -289,6 +290,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     /// Tests backup creation with readonly source file
     fn test_backup_readonly_source() -> io::Result<()> {
         let (_dir, original_file_path) =
@@ -427,6 +429,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     /// Tests backup when destination already exists and is readonly
     fn test_backup_readonly_destination() -> io::Result<()> {
         let (_dir, original_file_path) =

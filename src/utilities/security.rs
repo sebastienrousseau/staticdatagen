@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Security utilities for file and path handling
@@ -47,7 +47,7 @@ use std::path::{Path, PathBuf};
 ///
 /// let path = Path::new("content/../sensitive.txt");
 /// let safe_path = sanitize_path(path).unwrap();
-/// assert_eq!(safe_path.to_str().unwrap(), "content/sensitive.txt");
+/// assert_eq!(safe_path.to_str().unwrap(), "sensitive.txt");
 /// ```
 pub fn sanitize_path(path: &Path) -> Result<PathBuf> {
     let path_str = path.to_str().context("Invalid path encoding")?;
@@ -58,7 +58,7 @@ pub fn sanitize_path(path: &Path) -> Result<PathBuf> {
     }
 
     // Remove potentially dangerous characters
-    let safe_path = path_str
+    let safe_chars: String = path_str
         .chars()
         .filter(|&c| {
             c.is_alphanumeric()
@@ -67,26 +67,28 @@ pub fn sanitize_path(path: &Path) -> Result<PathBuf> {
                 || c == '-'
                 || c == '_'
         })
-        .collect::<String>();
-
-    // Split path into components and filter out dangerous parts
-    let components: Vec<&str> = safe_path
-        .split('/')
-        .filter(|component| {
-            !component.is_empty()
-                && *component != "."
-                && *component != ".."
-        })
         .collect();
 
-    // Reconstruct path
-    let safe_path = components.join("/");
-    if safe_path.is_empty() {
+    // Resolve path components using a stack to properly handle ".."
+    let mut stack: Vec<&str> = Vec::new();
+    for component in safe_chars.split('/') {
+        match component {
+            "" | "." => continue,
+            ".." => {
+                // Pop the last component (go up one directory)
+                // If stack is empty, just skip (prevents escaping root)
+                let _ = stack.pop();
+            }
+            part => stack.push(part),
+        }
+    }
+
+    let resolved = stack.join("/");
+    if resolved.is_empty() {
         return Err(anyhow::anyhow!("Invalid path after sanitization"));
     }
 
-    // Convert to PathBuf
-    Ok(PathBuf::from(safe_path))
+    Ok(PathBuf::from(resolved))
 }
 
 /// Validates a directory for security and accessibility.
@@ -164,9 +166,27 @@ mod tests {
 
     #[test]
     fn test_sanitize_path_traversal() {
+        // "content/../../../etc/passwd" resolves as:
+        // content → [content], .. → [], .. → [], .. → [], etc → [etc], passwd → [etc, passwd]
         let path = Path::new("content/../../../etc/passwd");
         let result = sanitize_path(path).unwrap();
-        assert_eq!(result.to_str().unwrap(), "content/etc/passwd");
+        assert_eq!(result.to_str().unwrap(), "etc/passwd");
+    }
+
+    #[test]
+    fn test_sanitize_path_resolves_dotdot_semantically() {
+        // a/b/../c should resolve to a/c (not a/b/c)
+        let path = Path::new("a/b/../c");
+        let result = sanitize_path(path).unwrap();
+        assert_eq!(result.to_str().unwrap(), "a/c");
+    }
+
+    #[test]
+    fn test_sanitize_path_dotdot_at_root_is_noop() {
+        // ../file.txt → just file.txt (can't escape above root)
+        let path = Path::new("../file.txt");
+        let result = sanitize_path(path).unwrap();
+        assert_eq!(result.to_str().unwrap(), "file.txt");
     }
 
     #[test]
@@ -205,5 +225,124 @@ mod tests {
         let file_path = temp_dir.path().join("test.txt");
         std::fs::write(&file_path, "test").unwrap();
         assert!(validate_directory(&file_path, "test").is_err());
+    }
+
+    #[test]
+    fn test_sanitize_path_only_dots_and_slashes() {
+        // Test line 85: path becomes empty after sanitization
+        let path = Path::new("../../../");
+        let result = sanitize_path(path);
+        assert!(
+            result.is_err(),
+            "Should return error for path that becomes empty"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_path_only_dots() {
+        // Test line 85: path with only dot components
+        let path = Path::new("./././.");
+        let result = sanitize_path(path);
+        assert!(
+            result.is_err(),
+            "Should return error for dots-only path"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_path_with_unicode() {
+        // Test path with unicode characters that get filtered
+        let path = Path::new("content/日本語/test.md");
+        let result = sanitize_path(path).unwrap();
+        // Unicode chars are filtered out, leaving "content//test.md" which becomes "content/test.md"
+        assert!(result.to_str().unwrap().contains("content"));
+        assert!(result.to_str().unwrap().contains("test.md"));
+    }
+
+    #[test]
+    fn test_validate_directory_error_message() {
+        // Test error messages for directory validation
+        let path = Path::new("definitely_not_existing_dir_12345");
+        let result = validate_directory(path, "content");
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("content"),
+            "Error should mention purpose"
+        );
+    }
+
+    #[test]
+    fn test_validate_directory_unreadable() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let temp_dir = TempDir::new().unwrap();
+        let restricted = temp_dir.path().join("restricted");
+        std::fs::create_dir(&restricted).unwrap();
+        // Remove all permissions
+        std::fs::set_permissions(
+            &restricted,
+            std::fs::Permissions::from_mode(0o000),
+        )
+        .unwrap();
+
+        let result = validate_directory(&restricted, "test");
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("Cannot access"));
+
+        // Restore permissions for cleanup
+        let _ = std::fs::set_permissions(
+            &restricted,
+            std::fs::Permissions::from_mode(0o755),
+        );
+    }
+
+    mod proptests {
+        use super::*;
+        use proptest::prelude::*;
+
+        proptest! {
+            #[test]
+            fn sanitize_path_never_panics(
+                s in ".*"
+            ) {
+                let path = Path::new(&s);
+                // Should never panic, only return Ok or Err
+                let _ = sanitize_path(path);
+            }
+
+            #[test]
+            fn sanitize_path_never_contains_dotdot(
+                s in "[a-zA-Z0-9/._-]{1,100}"
+            ) {
+                let path = Path::new(&s);
+                if let Ok(result) = sanitize_path(path) {
+                    prop_assert!(
+                        !result.components().any(|c| {
+                            c.as_os_str() == ".."
+                        }),
+                        "Sanitized path must not contain \
+                         '..' component: {}",
+                        result.display()
+                    );
+                }
+            }
+
+            #[test]
+            fn sanitize_path_no_absolute_output(
+                s in "[a-zA-Z0-9/._-]{1,100}"
+            ) {
+                let path = Path::new(&s);
+                if let Ok(result) = sanitize_path(path) {
+                    prop_assert!(
+                        !result
+                            .to_string_lossy()
+                            .starts_with('/'),
+                        "Sanitized path must be relative"
+                    );
+                }
+            }
+        }
     }
 }

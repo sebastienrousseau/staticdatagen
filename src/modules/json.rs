@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! JSON and data file generation functionality
@@ -399,7 +399,9 @@ fn process_file(
                 .map_err(to_io_error)?; // close <url>
 
             // Collect the escaped and properly encoded XML string
-            urls.push(String::from_utf8(buffer).expect("Valid UTF-8"));
+            urls.push(String::from_utf8(buffer).map_err(|e| {
+                io::Error::new(io::ErrorKind::InvalidData, e)
+            })?);
         }
     }
     Ok(())
@@ -407,7 +409,7 @@ fn process_file(
 
 /// Helper function to convert `xml::writer::Error` to `std::io::Error`
 fn to_io_error(err: xml::writer::Error) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, err)
+    io::Error::other(err)
 }
 
 /// Helper function to visit directories for news sitemap generation
@@ -482,8 +484,12 @@ pub fn sitemap(
             "Directory path is not valid UTF-8",
         )
     })?;
-    let base_dir =
-        sanitize_path(dir_str).expect("Failed to sanitize path");
+    let base_dir = sanitize_path(dir_str).map_err(|e| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("Failed to sanitize path: {}", e),
+        )
+    })?;
     let mut urls = vec![];
     visit_dirs(
         &base_dir,
@@ -685,5 +691,369 @@ mod tests {
             .contains("<example attr1=\"value1\" attr2=\"value2\">"));
         assert!(result.contains("content"));
         assert!(result.contains("</example>"));
+    }
+
+    #[test]
+    fn test_generate_xml_element() {
+        let mut buffer = Vec::new();
+        let mut writer = EmitterConfig::new()
+            .perform_indent(true)
+            .create_writer(&mut buffer);
+
+        generate_xml_element(&mut writer, "tag", "content")
+            .expect("XML generation should succeed");
+
+        let result = String::from_utf8(buffer).expect("Valid UTF-8");
+        assert!(result.contains("<tag>"));
+        assert!(result.contains("content"));
+        assert!(result.contains("</tag>"));
+    }
+
+    #[test]
+    fn test_manifest_generation() {
+        use crate::models::data::IconData;
+
+        let mut options = ManifestData {
+            name: "Test App".to_string(),
+            short_name: "Test".to_string(),
+            start_url: "/".to_string(),
+            display: "standalone".to_string(),
+            background_color: "#ffffff".to_string(),
+            theme_color: "#000000".to_string(),
+            description: "A test application".to_string(),
+            orientation: "portrait".to_string(),
+            scope: "/".to_string(),
+            icons: vec![],
+        };
+
+        // Add an icon
+        let mut icon = IconData::new(
+            "/icon.png".to_string(),
+            "192x192".to_string(),
+        );
+        icon.icon_type = Some("image/png".to_string());
+        icon.purpose = Some("any".to_string());
+        options.icons.push(icon);
+
+        let result = manifest(&options);
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("Test App"));
+        assert!(content.contains("standalone"));
+        assert!(content.contains("#ffffff"));
+        assert!(content.contains("192x192"));
+        assert!(content.contains("image/png"));
+        assert!(content.contains("any"));
+    }
+
+    #[test]
+    fn test_manifest_empty_icons() {
+        let options = ManifestData {
+            name: "Test App".to_string(),
+            short_name: "Test".to_string(),
+            start_url: "/".to_string(),
+            display: "standalone".to_string(),
+            background_color: "#ffffff".to_string(),
+            theme_color: "#000000".to_string(),
+            description: "".to_string(),
+            orientation: "".to_string(),
+            scope: "".to_string(),
+            icons: vec![],
+        };
+
+        let result = manifest(&options);
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("\"icons\": []"));
+    }
+
+    #[test]
+    fn test_news_sitemap_generation() {
+        let options = NewsData {
+            news_genres: "Blog".to_string(),
+            news_keywords: "test, news".to_string(),
+            news_language: "en".to_string(),
+            news_loc: "https://example.com/news".to_string(),
+            news_publication_date: "2024-01-01".to_string(),
+            news_publication_name: "Test News".to_string(),
+            news_title: "Test Article".to_string(),
+            news_image_loc: "https://example.com/image.jpg".to_string(),
+        };
+
+        let content = news_sitemap(options);
+        assert!(content.contains("<?xml version"));
+        assert!(content.contains("urlset"));
+        assert!(content.contains("https://example.com/news"));
+        assert!(content.contains("Test News"));
+        assert!(content.contains("en"));
+        assert!(content.contains("Blog"));
+        assert!(content.contains("Test Article"));
+        assert!(content.contains("test, news"));
+        assert!(content.contains("https://example.com/image.jpg"));
+    }
+
+    #[test]
+    fn test_generate_news_sitemap_entry() {
+        let options = NewsVisitOptions {
+            base_url: "https://example.com/article",
+            news_genres: "Blog",
+            news_keywords: "test, entry",
+            news_publication_date: "2024-01-01",
+            news_publication_name: "Test Publication",
+            news_language: "en",
+            news_title: "Test Title",
+        };
+
+        let entry = generate_news_sitemap_entry(&options);
+        assert!(entry.contains("<url>"));
+        assert!(entry.contains("https://example.com/article"));
+        assert!(entry.contains("2024-01-01"));
+        assert!(entry.contains("Test Publication"));
+        assert!(entry.contains("en"));
+        assert!(entry.contains("Test Title"));
+    }
+
+    #[test]
+    fn test_to_io_error() {
+        // Create an XML error and convert it
+        let xml_err =
+            xml::writer::Error::Io(io::Error::other("test error"));
+        let io_err = to_io_error(xml_err);
+        assert_eq!(io_err.kind(), io::ErrorKind::Other);
+    }
+
+    #[test]
+    fn test_human_txt_empty_fields() {
+        let options = HumansData {
+            author: "".to_string(),
+            author_website: "".to_string(),
+            author_twitter: "".to_string(),
+            author_location: "".to_string(),
+            thanks: "".to_string(),
+            site_last_updated: "".to_string(),
+            site_standards: "".to_string(),
+            site_components: "".to_string(),
+            site_software: "".to_string(),
+        };
+        let content = human(&options);
+        assert!(content.contains("/* TEAM */"));
+        assert!(content.contains("/* THANKS */"));
+        assert!(content.contains("/* SITE */"));
+        // Should not contain the field labels if empty
+        assert!(!content.contains("Name:"));
+        assert!(!content.contains("Website:"));
+    }
+
+    #[test]
+    fn test_human_txt_partial_fields() {
+        let options = HumansData {
+            author: "Author Name".to_string(),
+            author_website: "".to_string(),
+            author_twitter: "@twitter".to_string(),
+            author_location: "".to_string(),
+            thanks: "Thanks everyone".to_string(),
+            site_last_updated: "".to_string(),
+            site_standards: "HTML5, CSS3".to_string(),
+            site_components: "".to_string(),
+            site_software: "".to_string(),
+        };
+        let content = human(&options);
+        assert!(content.contains("Name: Author Name"));
+        assert!(content.contains("Twitter: @twitter"));
+        assert!(content.contains("Thanks: Thanks everyone"));
+        assert!(content.contains("Standards: HTML5, CSS3"));
+        assert!(!content.contains("Website:"));
+        assert!(!content.contains("Location:"));
+    }
+
+    #[test]
+    fn test_sitemap_invalid_path() {
+        use sitemap_gen::SiteMapData;
+        use std::path::PathBuf;
+        use url::Url;
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Daily,
+            lastmod: "2024-01-01".to_string(),
+        };
+
+        let dir =
+            PathBuf::from("/nonexistent/path/that/does/not/exist");
+        let result = sitemap(options, &dir);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_sitemap_with_temp_dir() {
+        use sitemap_gen::SiteMapData;
+        use std::fs;
+        use url::Url;
+
+        let temp_dir = std::env::temp_dir().join("sitemap_test");
+        let _ = fs::create_dir_all(&temp_dir);
+
+        // Create an index.html file
+        let _ = fs::write(temp_dir.join("index.html"), "<html></html>");
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Daily,
+            lastmod: "2024-01-01".to_string(),
+        };
+
+        let result = sitemap(options, &temp_dir);
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("<?xml version"));
+        assert!(content.contains("urlset"));
+
+        // Cleanup
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_sitemap_with_subdirs() {
+        use sitemap_gen::SiteMapData;
+        use std::fs;
+        use url::Url;
+
+        let temp_dir =
+            std::env::temp_dir().join("sitemap_test_subdirs");
+        let subdir = temp_dir.join("subdir");
+        let _ = fs::create_dir_all(&subdir);
+
+        // Create index.html in root and subdir
+        let _ = fs::write(temp_dir.join("index.html"), "<html></html>");
+        let _ = fs::write(subdir.join("index.html"), "<html></html>");
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Weekly,
+            lastmod: "2024-02-01".to_string(),
+        };
+
+        let result = sitemap(options, &temp_dir);
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("https://example.com"));
+        assert!(content.contains("weekly"));
+        assert!(content.contains("2024-02-01"));
+
+        // Cleanup
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_manifest_with_multiple_icons() {
+        use crate::models::data::IconData;
+
+        let options = ManifestData {
+            name: "Multi Icon App".to_string(),
+            short_name: "MIA".to_string(),
+            start_url: "/".to_string(),
+            display: "standalone".to_string(),
+            background_color: "#fff".to_string(),
+            theme_color: "#000".to_string(),
+            description: "App with multiple icons".to_string(),
+            orientation: "portrait".to_string(),
+            scope: "/".to_string(),
+            icons: vec![
+                {
+                    let mut i = IconData::new(
+                        "/icon-192.png".to_string(),
+                        "192x192".to_string(),
+                    );
+                    i.icon_type = Some("image/png".to_string());
+                    i
+                },
+                {
+                    let mut i = IconData::new(
+                        "/icon-512.png".to_string(),
+                        "512x512".to_string(),
+                    );
+                    i.icon_type = Some("image/png".to_string());
+                    i.purpose = Some("maskable".to_string());
+                    i
+                },
+            ],
+        };
+
+        let result = manifest(&options).unwrap();
+        assert!(result.contains("192x192"));
+        assert!(result.contains("512x512"));
+        assert!(result.contains("maskable"));
+    }
+
+    #[test]
+    fn test_manifest_icon_without_optional_fields() {
+        use crate::models::data::IconData;
+
+        let options = ManifestData {
+            name: "Minimal Icon".to_string(),
+            short_name: "MI".to_string(),
+            start_url: "/".to_string(),
+            display: "standalone".to_string(),
+            background_color: "#fff".to_string(),
+            theme_color: "#000".to_string(),
+            description: "Test".to_string(),
+            orientation: "portrait".to_string(),
+            scope: "/".to_string(),
+            icons: vec![IconData::new(
+                "/icon.svg".to_string(),
+                "any".to_string(),
+            )],
+        };
+
+        let result = manifest(&options).unwrap();
+        assert!(result.contains("/icon.svg"));
+        assert!(result.contains("any"));
+    }
+
+    #[test]
+    fn test_sitemap_with_deeply_nested_dirs() {
+        use sitemap_gen::SiteMapData;
+        use std::fs;
+        use url::Url;
+
+        let temp_dir =
+            std::env::temp_dir().join("sitemap_test_deep_nest");
+        let deep = temp_dir.join("a/b/c");
+        let _ = fs::create_dir_all(&deep);
+        let _ = fs::write(deep.join("index.html"), "<html></html>");
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Monthly,
+            lastmod: "2024-03-01".to_string(),
+        };
+
+        let result = sitemap(options, &temp_dir);
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("a/b/c/index.html"));
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_sitemap_empty_dir() {
+        use sitemap_gen::SiteMapData;
+        use url::Url;
+
+        let temp_dir = tempfile::TempDir::new().unwrap();
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Daily,
+            lastmod: "2024-01-01".to_string(),
+        };
+
+        let result = sitemap(options, temp_dir.path());
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        // Should have XML header but no URL entries
+        assert!(content.contains("<?xml version"));
+        assert!(!content.contains("<loc>"));
     }
 }

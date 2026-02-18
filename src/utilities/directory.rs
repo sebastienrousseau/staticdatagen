@@ -1,4 +1,4 @@
-// Copyright © 2025 Static Data Gen. All rights reserved.
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Utility functions for directory operations
@@ -6,12 +6,26 @@
 //! This module provides various functions for working with directories,
 //! including creation, cleanup, file discovery, and path manipulation.
 
+use log::{debug, info};
 use regex::Regex;
 use std::{
-    error::Error,
     fs, io,
     path::{Path, PathBuf},
+    sync::LazyLock,
 };
+
+/// Pre-compiled regex for title case conversion.
+#[allow(clippy::expect_used)] // Static pattern validated at development time
+static TITLE_CASE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:^|\s)(\p{L})").expect("valid static regex pattern")
+});
+
+/// Pre-compiled regex for matching HTML header tags.
+#[allow(clippy::expect_used)] // Static pattern validated at development time
+static HEADER_TAG_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>")
+        .expect("valid static regex pattern")
+});
 
 /// Ensures a directory exists, creating it if necessary.
 ///
@@ -79,9 +93,9 @@ pub fn move_output_directory(
     site_name: &str,
     out_dir: &Path,
 ) -> io::Result<()> {
-    println!("❯ Moving output directory...");
-    eprintln!(
-        "DEBUG: site_name = '{}', out_dir = '{}'",
+    info!("Moving output directory...");
+    debug!(
+        "site_name = '{}', out_dir = '{}'",
         site_name,
         out_dir.display()
     );
@@ -89,43 +103,34 @@ pub fn move_output_directory(
     let public_dir = Path::new("public");
 
     if public_dir.exists() {
-        eprintln!(
-            "DEBUG: Removing existing public directory '{}'",
+        debug!(
+            "Removing existing public directory '{}'",
             public_dir.display()
         );
         fs::remove_dir_all(public_dir)?;
     }
 
     fs::create_dir(public_dir)?;
-    eprintln!(
-        "DEBUG: Created public directory '{}'",
-        public_dir.display()
-    );
+    debug!("Created public directory '{}'", public_dir.display());
 
     let site_name = site_name.replace(' ', "_");
     let new_project_dir = public_dir.join(&site_name);
 
-    eprintln!(
-        "DEBUG: new_project_dir = '{}'",
-        new_project_dir.display()
-    );
+    debug!("new_project_dir = '{}'", new_project_dir.display());
     fs::create_dir_all(&new_project_dir)?;
 
-    let out_dir_name = out_dir.file_name().ok_or_else(|| {
-        io::Error::new(io::ErrorKind::Other, "Invalid out_dir")
-    })?;
+    let out_dir_name = out_dir
+        .file_name()
+        .ok_or_else(|| io::Error::other("Invalid out_dir"))?;
 
-    eprintln!(
-        "DEBUG: out_dir_name = '{}'",
-        out_dir_name.to_string_lossy()
-    );
+    debug!("out_dir_name = '{}'", out_dir_name.to_string_lossy());
 
     let target = new_project_dir.join(out_dir_name);
-    eprintln!("DEBUG: Target = '{}'", target.display());
+    debug!("Target = '{}'", target.display());
 
     fs::rename(out_dir, &target)?;
 
-    println!("  Done.\n");
+    info!("Done.");
 
     Ok(())
 }
@@ -170,24 +175,30 @@ pub fn find_html_files(dir: &Path) -> io::Result<Vec<PathBuf>> {
 ///
 /// # Returns
 ///
-/// A `Result<(), Box<dyn Error>>` indicating success or failure.
+/// A `crate::Result<()>` indicating success or failure.
 ///
 /// # Behavior
 ///
 /// Any directories that exist in `directories` are removed, along with their contents.
-pub fn cleanup_directory(
-    directories: &[&Path],
-) -> Result<(), Box<dyn Error>> {
+pub fn cleanup_directory(directories: &[&Path]) -> crate::Result<()> {
     for directory in directories {
         if !directory.exists() {
             continue;
         }
 
-        println!("\n❯ Cleaning up directories");
+        info!("Cleaning up directories");
 
-        fs::remove_dir_all(directory)?;
+        fs::remove_dir_all(directory).map_err(|e| {
+            crate::Error::Io {
+                source: e,
+                context: format!(
+                    "Failed to remove directory '{}'",
+                    directory.display()
+                ),
+            }
+        })?;
 
-        println!("  Done.\n");
+        info!("Done.");
     }
 
     Ok(())
@@ -201,20 +212,24 @@ pub fn cleanup_directory(
 ///
 /// # Returns
 ///
-/// A `Result<(), Box<dyn Error>>` indicating success or failure.
+/// A `crate::Result<()>` indicating success or failure.
 ///
 /// # Behavior
 ///
 /// Directories that already exist are skipped.
-pub fn create_directory(
-    directories: &[&Path],
-) -> Result<(), Box<dyn Error>> {
+pub fn create_directory(directories: &[&Path]) -> crate::Result<()> {
     for directory in directories {
         if directory.exists() {
             continue;
         }
 
-        fs::create_dir(directory)?;
+        fs::create_dir(directory).map_err(|e| crate::Error::Io {
+            source: e,
+            context: format!(
+                "Failed to create directory '{}'",
+                directory.display()
+            ),
+        })?;
     }
 
     Ok(())
@@ -237,12 +252,12 @@ pub fn create_directory(
 /// assert_eq!(to_title_case("hello world"), "Hello World");
 /// ```
 pub fn to_title_case(s: &str) -> String {
-    let re = Regex::new(r"(?:^|\s)(\p{L})").unwrap();
-    re.replace_all(s, |caps: &regex::Captures| {
-        format!(" {}", &caps[1].to_uppercase())
-    })
-    .trim_start()
-    .to_string()
+    TITLE_CASE_RE
+        .replace_all(s, |caps: &regex::Captures| {
+            format!(" {}", &caps[1].to_uppercase())
+        })
+        .trim_start()
+        .to_string()
 }
 
 /// Formats a header string with an ID and class attribute.
@@ -271,11 +286,7 @@ pub fn format_header_with_id_class(
     header_str: &str,
     id_regex: &Regex,
 ) -> String {
-    // Match HTML header tags with a named capture group for the tag name and allow empty content.
-    let re = Regex::new(r"<(?P<tag>\w+)([^>]*)>(?P<content>.*?)</\w+>")
-        .unwrap();
-
-    re.replace(header_str, |caps: &regex::Captures| {
+    HEADER_TAG_RE.replace(header_str, |caps: &regex::Captures| {
         let tag = caps.name("tag").map_or("", |m| m.as_str());
         let attrs = caps.get(2).map_or("", |m| m.as_str());
         let content = caps.name("content").map_or("", |m| m.as_str());
@@ -331,13 +342,13 @@ pub fn extract_front_matter(content: &str) -> &str {
     content
 }
 
-/// Creates and returns a `comrak::ComrakOptions` instance with custom settings.
+/// Creates and returns a `comrak::Options` instance with custom settings.
 ///
 /// # Returns
 ///
-/// A `comrak::ComrakOptions` instance with non-standard Markdown features enabled.
-pub fn create_comrak_options() -> comrak::ComrakOptions<'static> {
-    let mut options = comrak::ComrakOptions::default();
+/// A `comrak::Options` instance with non-standard Markdown features enabled.
+pub fn create_comrak_options() -> comrak::Options<'static> {
+    let mut options = comrak::Options::default();
     options.extension.autolink = true;
     options.extension.description_lists = true;
     options.extension.footnotes = true;
@@ -350,7 +361,7 @@ pub fn create_comrak_options() -> comrak::ComrakOptions<'static> {
     options.parse.smart = true;
     options.render.github_pre_lang = true;
     options.render.hardbreaks = false;
-    options.render.unsafe_ = true;
+    options.render.r#unsafe = true;
     options
 }
 
@@ -376,8 +387,14 @@ pub fn update_class_attributes(
     img_regex: &Regex,
 ) -> String {
     if line.contains(".class=&quot;") && line.contains("<img") {
-        let captures = class_regex.captures(line).unwrap();
-        let class_value = captures.get(1).unwrap().as_str();
+        let captures = match class_regex.captures(line) {
+            Some(c) => c,
+            None => return line.to_owned(),
+        };
+        let class_value = match captures.get(1) {
+            Some(m) => m.as_str(),
+            None => return line.to_owned(),
+        };
         let updated_line = class_regex.replace(line, "");
         img_regex
             .replace(
@@ -432,7 +449,7 @@ pub fn truncate(path: &Path, length: usize) -> Option<String> {
 mod tests {
     use super::*;
     use regex::Regex;
-    use std::{fs, io::Write, path::Path};
+    use std::{error::Error, fs, io::Write, path::Path};
 
     /// Tests creating a directory that doesn't exist.
     #[test]
@@ -461,50 +478,46 @@ mod tests {
     /// Tests moving output directory to a public directory.
     #[test]
     fn test_move_output_directory() {
-        let out_dir = Path::new("test_output");
+        use uuid::Uuid;
+
+        // Use UUID for truly unique names to avoid CI conflicts
+        let unique_id = Uuid::new_v4().to_string().replace('-', "")
+            [..8]
+            .to_string();
+        let out_dir_name = format!("test_out_{}", unique_id);
+        let site_name = format!("site_{}", unique_id);
+        let out_dir = Path::new(&out_dir_name);
         let public_dir = Path::new("public");
 
-        // Ensure a clean environment before the test
-        if public_dir.exists() {
-            remove_dir_all_with_retry(public_dir, 3)
-            .expect("Failed to remove existing 'public' directory before test");
-        }
-        if out_dir.exists() {
-            remove_dir_all_with_retry(out_dir, 3)
-            .expect("Failed to remove existing 'test_output' directory before test");
-        }
+        // Ensure clean state - remove any existing directories
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
 
-        // Create the output directory and a dummy file to ensure it's not empty
+        // Create the output directory and a dummy file
         fs::create_dir_all(out_dir)
             .expect("Failed to create test output directory");
         fs::write(out_dir.join("dummy.txt"), b"test")
-            .expect("Failed to write dummy file to test_output");
+            .expect("Failed to write dummy file");
 
-        eprintln!("DEBUG: out_dir = '{}'", out_dir.display());
+        let result = move_output_directory(&site_name, out_dir);
 
-        let result = move_output_directory("test_site", out_dir);
-        eprintln!("DEBUG: move_output_directory result = {:?}", result);
+        // Cleanup first, then assert (to avoid leaving state on failure)
+        let public_site_dir = public_dir.join(&site_name);
+        let dir_exists =
+            public_site_dir.exists() && public_site_dir.is_dir();
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
 
         assert!(
             result.is_ok(),
-            "The move_output_directory operation should succeed"
+            "move_output_directory should succeed: {:?}",
+            result
         );
-
-        let public_test_site_dir = public_dir.join("test_site");
-        eprintln!(
-            "DEBUG: public_dir = '{}'",
-            public_test_site_dir.display()
-        );
-
         assert!(
-            public_test_site_dir.exists()
-                && public_test_site_dir.is_dir(),
-            "The public/test_site directory should exist after moving"
+            dir_exists,
+            "public/{} should exist after moving",
+            site_name
         );
-
-        // Use retry logic on cleanup, since the OS may still hold file locks
-        remove_dir_all_with_retry(public_dir, 3)
-            .expect("Failed to clean up test public directory");
     }
 
     /// Helper function that retries `remove_dir_all` up to `retries` times.
@@ -669,7 +682,7 @@ mod tests {
         assert!(options.parse.smart);
         assert!(options.render.github_pre_lang);
         assert!(!options.render.hardbreaks);
-        assert!(options.render.unsafe_);
+        assert!(options.render.r#unsafe);
     }
 
     /// Tests updating class attributes in a line containing an <img> tag.
@@ -905,5 +918,80 @@ mod tests {
         let truncated = truncate(path, 3);
         // Only 1 component, can't get 3, should return None.
         assert_eq!(truncated, None);
+    }
+
+    #[test]
+    fn test_directory_create_on_file_path() {
+        // Test line 58: directory() when create_dir_all fails
+        // because a file exists at a parent path component
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let file_path = temp_dir.path().join("blocker");
+        std::fs::write(&file_path, "data").unwrap();
+        // Try to create a dir inside a file — will fail
+        let nested = file_path.join("subdir");
+        let result = directory(&nested, "test");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_move_output_directory_root_out_dir() {
+        // Test line 116: out_dir.file_name() returns None for "/"
+        let result = move_output_directory("test", Path::new("/"));
+        assert!(result.is_err());
+    }
+
+    /// Tests moving output directory when public/ already exists (covers the remove branch).
+    #[test]
+    fn test_move_output_directory_with_existing_public() {
+        use uuid::Uuid;
+
+        let unique_id = Uuid::new_v4().to_string().replace('-', "")
+            [..8]
+            .to_string();
+        let out_dir_name = format!("test_out_pub_{}", unique_id);
+        let site_name = format!("site_pub_{}", unique_id);
+        let out_dir = Path::new(&out_dir_name);
+        let public_dir = Path::new("public");
+
+        // Clean up first
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
+
+        // Create a pre-existing public directory with some content
+        fs::create_dir_all(public_dir.join("old_site"))
+            .expect("Failed to create pre-existing public dir");
+        fs::write(
+            public_dir.join("old_site").join("old_file.txt"),
+            "old data",
+        )
+        .expect("Failed to write old file");
+
+        // Create the output directory
+        fs::create_dir_all(out_dir)
+            .expect("Failed to create test output directory");
+        fs::write(out_dir.join("dummy.txt"), b"test")
+            .expect("Failed to write dummy file");
+
+        let result = move_output_directory(&site_name, out_dir);
+
+        // Cleanup first, then assert
+        let public_site_dir = public_dir.join(&site_name);
+        let dir_exists =
+            public_site_dir.exists() && public_site_dir.is_dir();
+        let old_gone = !public_dir.join("old_site").exists();
+        let _ = remove_dir_all_with_retry(public_dir, 3);
+        let _ = remove_dir_all_with_retry(out_dir, 3);
+
+        assert!(
+            result.is_ok(),
+            "move_output_directory should succeed: {:?}",
+            result
+        );
+        assert!(
+            dir_exists,
+            "public/{} should exist after moving",
+            site_name
+        );
+        assert!(old_gone, "Old public/old_site should be removed");
     }
 }

@@ -1,0 +1,53 @@
+{
+  "project": "staticdatagen-v0.0.6",
+  "dispatches": [
+    {
+      "agent": "bug-fixer",
+      "priority": "P0",
+      "task": "Fix unused import error in src/modules/plaintext.rs line 44 (remove 'error' from imports)",
+      "verify_cmd": "cargo build --lib"
+    },
+    {
+      "agent": "bug-fixer",
+      "priority": "P0",
+      "task": "Remove deprecated 'missing_fragment_specifier' lint from Cargo.toml lints configuration",
+      "verify_cmd": "cargo clippy --all -- -D warnings"
+    },
+    {
+      "agent": "tech-writer",
+      "priority": "P1",
+      "task": "Fix documentation overindentation issues in build.rs lines 19 and 21 (use 2 spaces instead of 3)",
+      "verify_cmd": "cargo clippy --all -- -D clippy::doc-overindented-list-items"
+    },
+    {
+      "agent": "tech-writer",
+      "priority": "P1",
+      "task": "Update version references from 0.0.5 to 0.0.6 in README.md and Cargo.toml",
+      "verify_cmd": "grep -q '0.0.6' README.md && grep -q 'version = \"0.0.6\"' Cargo.toml"
+    },
+    {
+      "agent": "unit-tester",
+      "priority": "P2",
+      "task": "Run comprehensive test suite validation and verify all 20+ test modules pass",
+      "verify_cmd": "cargo test --lib --all-targets"
+    },
+    {
+      "agent": "edge-hunter",
+      "priority": "P2",
+      "task": "Security review of modules/security.rs and utilities/security.rs for RFC 9116 compliance",
+      "verify_cmd": "cargo clippy -- -D warnings"
+    },
+    {
+      "agent": "perf-optimizer",
+      "priority": "P3",
+      "task": "Analyze and optimize compiler/service.rs performance bottlenecks in file processing loop",
+      "verify_cmd": "cargo bench --bench criterion_benchmark"
+    },
+    {
+      "agent": "release-manager",
+      "priority": "P0",
+      "task": "Coordinate v0.0.6 release after all P0-P1 fixes are complete, update changelog",
+      "verify_cmd": "git tag | grep -q 'v0.0.6'"
+    }
+  ]
+}
