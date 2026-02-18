@@ -93,14 +93,22 @@ pub fn move_output_directory(
     site_name: &str,
     out_dir: &Path,
 ) -> io::Result<()> {
+    move_output_directory_to(site_name, out_dir, Path::new("public"))
+}
+
+/// Core implementation of [`move_output_directory`] with a configurable
+/// public directory path. Used internally and in tests.
+fn move_output_directory_to(
+    site_name: &str,
+    out_dir: &Path,
+    public_dir: &Path,
+) -> io::Result<()> {
     info!("Moving output directory...");
     debug!(
         "site_name = '{}', out_dir = '{}'",
         site_name,
         out_dir.display()
     );
-
-    let public_dir = Path::new("public");
 
     if public_dir.exists() {
         debug!(
@@ -478,70 +486,34 @@ mod tests {
     /// Tests moving output directory to a public directory.
     #[test]
     fn test_move_output_directory() {
-        use uuid::Uuid;
-
-        // Use UUID for truly unique names to avoid CI conflicts
-        let unique_id = Uuid::new_v4().to_string().replace('-', "")
-            [..8]
-            .to_string();
-        let out_dir_name = format!("test_out_{}", unique_id);
-        let site_name = format!("site_{}", unique_id);
-        let out_dir = Path::new(&out_dir_name);
-        let public_dir = Path::new("public");
-
-        // Ensure clean state - remove any existing directories
-        let _ = remove_dir_all_with_retry(public_dir, 3);
-        let _ = remove_dir_all_with_retry(out_dir, 3);
+        // Use temp dirs for isolation — avoids parallel test conflicts
+        let tmp =
+            tempfile::tempdir().expect("Failed to create temp dir");
+        let out_dir = tmp.path().join("out");
+        let public_dir = tmp.path().join("public");
+        let site_name = "test_site";
 
         // Create the output directory and a dummy file
-        fs::create_dir_all(out_dir)
+        fs::create_dir_all(&out_dir)
             .expect("Failed to create test output directory");
         fs::write(out_dir.join("dummy.txt"), b"test")
             .expect("Failed to write dummy file");
 
-        let result = move_output_directory(&site_name, out_dir);
-
-        // Cleanup first, then assert (to avoid leaving state on failure)
-        let public_site_dir = public_dir.join(&site_name);
-        let dir_exists =
-            public_site_dir.exists() && public_site_dir.is_dir();
-        let _ = remove_dir_all_with_retry(public_dir, 3);
-        let _ = remove_dir_all_with_retry(out_dir, 3);
+        let result =
+            move_output_directory_to(site_name, &out_dir, &public_dir);
 
         assert!(
             result.is_ok(),
             "move_output_directory should succeed: {:?}",
             result
         );
+
+        let public_site_dir = public_dir.join(site_name);
         assert!(
-            dir_exists,
+            public_site_dir.exists() && public_site_dir.is_dir(),
             "public/{} should exist after moving",
             site_name
         );
-    }
-
-    /// Helper function that retries `remove_dir_all` up to `retries` times.
-    /// This allows the OS some time to release locks on newly created/moved files.
-    fn remove_dir_all_with_retry(
-        dir: &Path,
-        retries: u32,
-    ) -> io::Result<()> {
-        for i in 0..=retries {
-            match fs::remove_dir_all(dir) {
-                Ok(_) => return Ok(()),
-                Err(e) => {
-                    // If this was our last attempt, bubble the error up
-                    if i == retries {
-                        return Err(e);
-                    }
-                    // Wait briefly and then retry
-                    std::thread::sleep(
-                        std::time::Duration::from_millis(200),
-                    );
-                }
-            }
-        }
-        Ok(())
     }
 
     /// Tests finding HTML files in a directory with subdirectories.
@@ -730,11 +702,16 @@ mod tests {
     /// Tests moving output directory when it does not exist.
     #[test]
     fn test_move_output_directory_nonexistent() {
-        let out_dir = Path::new("non_existent_output");
-        // Do not create out_dir
+        let tmp =
+            tempfile::tempdir().expect("Failed to create temp dir");
+        let out_dir = tmp.path().join("non_existent_output");
+        let public_dir = tmp.path().join("public");
 
-        let result =
-            move_output_directory("test_site_nonexistent", out_dir);
+        let result = move_output_directory_to(
+            "test_site_nonexistent",
+            &out_dir,
+            &public_dir,
+        );
         assert!(result.is_err());
     }
 
@@ -935,27 +912,26 @@ mod tests {
 
     #[test]
     fn test_move_output_directory_root_out_dir() {
-        // Test line 116: out_dir.file_name() returns None for "/"
-        let result = move_output_directory("test", Path::new("/"));
+        let tmp =
+            tempfile::tempdir().expect("Failed to create temp dir");
+        let public_dir = tmp.path().join("public");
+        // out_dir.file_name() returns None for "/"
+        let result = move_output_directory_to(
+            "test",
+            Path::new("/"),
+            &public_dir,
+        );
         assert!(result.is_err());
     }
 
     /// Tests moving output directory when public/ already exists (covers the remove branch).
     #[test]
     fn test_move_output_directory_with_existing_public() {
-        use uuid::Uuid;
-
-        let unique_id = Uuid::new_v4().to_string().replace('-', "")
-            [..8]
-            .to_string();
-        let out_dir_name = format!("test_out_pub_{}", unique_id);
-        let site_name = format!("site_pub_{}", unique_id);
-        let out_dir = Path::new(&out_dir_name);
-        let public_dir = Path::new("public");
-
-        // Clean up first
-        let _ = remove_dir_all_with_retry(public_dir, 3);
-        let _ = remove_dir_all_with_retry(out_dir, 3);
+        let tmp =
+            tempfile::tempdir().expect("Failed to create temp dir");
+        let out_dir = tmp.path().join("out");
+        let public_dir = tmp.path().join("public");
+        let site_name = "test_site";
 
         // Create a pre-existing public directory with some content
         fs::create_dir_all(public_dir.join("old_site"))
@@ -967,31 +943,29 @@ mod tests {
         .expect("Failed to write old file");
 
         // Create the output directory
-        fs::create_dir_all(out_dir)
+        fs::create_dir_all(&out_dir)
             .expect("Failed to create test output directory");
         fs::write(out_dir.join("dummy.txt"), b"test")
             .expect("Failed to write dummy file");
 
-        let result = move_output_directory(&site_name, out_dir);
-
-        // Cleanup first, then assert
-        let public_site_dir = public_dir.join(&site_name);
-        let dir_exists =
-            public_site_dir.exists() && public_site_dir.is_dir();
-        let old_gone = !public_dir.join("old_site").exists();
-        let _ = remove_dir_all_with_retry(public_dir, 3);
-        let _ = remove_dir_all_with_retry(out_dir, 3);
+        let result =
+            move_output_directory_to(site_name, &out_dir, &public_dir);
 
         assert!(
             result.is_ok(),
             "move_output_directory should succeed: {:?}",
             result
         );
+
+        let public_site_dir = public_dir.join(site_name);
         assert!(
-            dir_exists,
+            public_site_dir.exists() && public_site_dir.is_dir(),
             "public/{} should exist after moving",
             site_name
         );
-        assert!(old_gone, "Old public/old_site should be removed");
+        assert!(
+            !public_dir.join("old_site").exists(),
+            "Old public/old_site should be removed"
+        );
     }
 }

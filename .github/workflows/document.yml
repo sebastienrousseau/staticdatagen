@@ -28,7 +28,7 @@ jobs:
       - name: Update libssl
         run: |
           sudo apt-get update
-          sudo apt-get install -y libssl1.1
+          sudo apt-get install -y libssl-dev
 
       - name: Generate documentation for all features and publish it
         run: |
