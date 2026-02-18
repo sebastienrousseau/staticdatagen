@@ -118,7 +118,7 @@ rlg = "0.0.6"
 
 # CLI and configuration
 clap = "4.5"
-toml = "0.9"
+toml = "1.0"
 
 # Data processing
 serde = { version = "1.0", features = ["derive"] }
@@ -147,7 +147,7 @@ uuid = { version = "1.11", features = ["v4"] }
 vrd = "0.0.8"
 
 # XML processing
-quick-xml = "0.37"
+quick-xml = "0.39"
 xml-rs = "1.0"
 
 # CNAME dependencies
