@@ -131,7 +131,7 @@ html-generator = "0.0.3"
 minify-html = "0.18"
 
 # Web and networking
-http-handle = { version = "0.0.2", optional = true }
+http-handle = { version = "0.0.4", optional = true }
 url = "2.5"
 
 # Utilities
