@@ -34,21 +34,13 @@ macro_rules! macro_log_info {
     ($level:expr, $component:expr, $description:expr, $format:expr) => {{
         use dtt::datetime::DateTime;
         use rlg::log::Log;
-        use vrd::random::Random;
 
         let date = DateTime::new();
-        let mut rng = Random::default();
-        let session_id = rng.rand().to_string();
-
-        // Create the log and call `.ok()` to discard the unused result
-        let _log = Log::new(
-            &session_id,
-            &date.to_string(),
-            $level,
-            $component,
-            $description,
-            $format,
-        );
+        let mut entry = Log::build(*$level, $description)
+            .time(&date.to_string())
+            .component($component);
+        entry.format = *$format;
+        let _log = entry;
     }};
 }
 

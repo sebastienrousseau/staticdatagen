@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.7"                          # Current version of the crate
+version = "0.0.8"                          # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.88.0"                    # Minimum supported Rust version
@@ -114,7 +114,7 @@ proptest = "1.6"                              # Property-based testing framework
 anyhow = "1.0"
 thiserror = "2.0"
 log = { version = "0.4", features = ["std"] }
-rlg = "0.0.6"
+rlg = "0.0.8"
 
 # CLI and configuration
 clap = "4.5"
@@ -127,7 +127,7 @@ serde_json = "1.0"
 # Content generation
 comrak = "0.50"
 pulldown-cmark = "0.12"
-html-generator = "0.0.3"
+html-generator = "0.0.4"
 minify-html = "0.18"
 
 # Web and networking
@@ -136,7 +136,7 @@ url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.1", optional = true }
-metadata-gen = "0.0.1"
+metadata-gen = "0.0.2"
 regex = "1.11.1"
 rss-gen = "0.0.3"
 sitemap-gen = "0.0.1"
@@ -144,7 +144,7 @@ staticweaver = "0.0.1"
 tempfile = "3.14"
 time = "0.3"
 uuid = { version = "1.11", features = ["v4"] }
-vrd = "0.0.8"
+vrd = "0.0.9"
 
 # XML processing
 quick-xml = "0.39"
