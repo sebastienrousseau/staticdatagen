@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.8] — 2026-03-11
+
+### Added
+- Integrated `euxis-commons` local dependency for shared utilities
+- Updated GitHub Actions: `upload-artifact` to v7 and `download-artifact` to v8
+
+### Changed
+- **Dependencies updated** — Updated `rlg` to 0.0.8, `comrak` to 0.51, `pulldown-cmark` to 0.13, `http-handle` to 0.0.4, and `langweave` to 0.0.2
+- **Logging modernization** — Updated `macro_log_info!` to use the new `rlg` 0.0.8 builder API and fire-and-forget pattern
+- **CI/CD hardening** — Enhanced release and strict-ci workflows with latest artifact actions
+
 ## [0.0.7] — 2026-02-16
 
 ### Added
