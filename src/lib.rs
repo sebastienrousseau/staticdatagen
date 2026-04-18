@@ -4,8 +4,8 @@
 #![forbid(unsafe_code)]
 #![doc = include_str!("../README.md")]
 #![doc(
-    html_favicon_url = "https://kura.pro/staticdatagen/images/favicon.ico",
-    html_logo_url = "https://kura.pro/staticdatagen/images/logos/staticdatagen.svg",
+    html_favicon_url = "https://cloudcdn.pro/staticdatagen/v1/favicon.ico",
+    html_logo_url = "https://cloudcdn.pro/staticdatagen/v1/logos/staticdatagen.svg",
     html_root_url = "https://docs.rs/staticdatagen"
 )]
 #![deny(missing_docs)]

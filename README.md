@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://kura.pro/staticdatagen/images/logos/staticdatagen.svg" alt="StaticDataGen logo" width="128" />
+  <img src="https://cloudcdn.pro/staticdatagen/v1/logos/staticdatagen.svg" alt="StaticDataGen logo" width="128" />
 </p>
 
 <h1 align="center">StaticDataGen</h1>

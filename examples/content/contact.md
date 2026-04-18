@@ -6,7 +6,7 @@ author: "jane.doe@kaishi.one (Jane Doe)" ## The author of the page. (max 64 char
 banner_alt: "Snow Mountain With Aurora Borealis" ## The banner alt of the site.
 banner_height: "398" ## The banner height of the site.
 banner_width: "1440" ## The banner width of the site.
-banner: "https://kura.pro/stock/images/banners/bernardo-lorena-ponte-cEp2Tow6XKk.webp" ## The banner of the site.
+banner: "https://kura.pro/stock/images/banners/bernardo-lorena-ponte-cEp2Tow6XKk.svg" ## The banner of the site.
 cdn: "https://kura.pro" ## The CDN of the site.
 changefreq: "weekly" ## The changefreq of the site.
 charset: "utf-8" ## The charset of the site. (default: utf-8)
@@ -23,7 +23,7 @@ id: "https://kaishi.one" ## The id of the site.
 image_alt: "Logo of Kaishi, a starter template for static sites" ## The image alt of the site.
 image_height: "630" ## The image height of the site.
 image_width: "1200" ## The image width of the site.
-image: "https://kura.pro/kaishi/images/banners/banner-kaishi.webp" ## The main image of the site in SVG format.
+image: "https://kura.pro/kaishi/images/banners/banner-kaishi.svg" ## The main image of the site in SVG format.
 keywords: "contact us, contact form, get in touch, contact page, contact information, customer service, support, feedback, questions, inquiries, help" ## The keywords of the site. (max 160 characters)
 language: "en-GB" ## The language of the site. (default: en-GB)
 layout: "contact" ## The layout of the site.
@@ -50,7 +50,7 @@ viewport: "width=device-width, initial-scale=1, shrink-to-fit=no" ## The viewpor
 news_genres: "Blog" ## The genres of the site. (PressRelease|Satire|Blog|OpEd|Opinion|UserGenerated)
 news_keywords: "kaishi, shokunin static site generator, static site generator, minimalist website template, modern website template, responsive website template, website starter template, freelance creative, startup founder, small business owner, online presence" ## The keywords of the site. (comma separated, max 10 keywords)
 news_language: "en" ## The language of the site. (default: en)
-news_image_loc: "https://kura.pro/stock/images/banners/bernardo-lorena-ponte-cEp2Tow6XKk.webp" ## The image loc of the site.
+news_image_loc: "https://kura.pro/stock/images/banners/bernardo-lorena-ponte-cEp2Tow6XKk.svg" ## The image loc of the site.
 news_loc: "https://kaishi.one" ## The loc of the site.
 news_publication_date: "Tue, 20 Feb 2024 15:15:15 GMT" ## The publication date of the site.
 news_publication_name: "Kaishi" ## The news publication name of the site.

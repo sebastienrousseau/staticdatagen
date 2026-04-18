@@ -6,7 +6,7 @@ author: "jane.doe@kaishi.one (Jane Doe)" ## The author of the page. (max 64 char
 banner_alt: "Green And Black Tiled Wall" ## The banner alt of the site.
 banner_height: "398" ## The banner height of the site.
 banner_width: "1440" ## The banner width of the site.
-banner: "https://kura.pro/stock/images/banners/bernardo-lorena-ponte-cEp2Tow6XKk.webp" ## The banner of the site.
+banner: "https://kura.pro/stock/images/banners/bernardo-lorena-ponte-cEp2Tow6XKk.svg" ## The banner of the site.
 cdn: "https://kura.pro" ## The CDN of the site.
 changefreq: "weekly" ## The changefreq of the site.
 charset: "utf-8" ## The charset of the site. (default: utf-8)
@@ -22,7 +22,7 @@ id: "https://kaishi.one" ## The id of the site.
 image_alt: "Logo of Kaishi, a starter template for static sites" ## The image alt of the site.
 image_height: "630" ## The image height of the site.
 image_width: "1200" ## The image width of the site.
-image: "https://kura.pro/kaishi/images/banners/banner-kaishi.webp" ## The main image of the site in SVG format.
+image: "https://kura.pro/kaishi/images/banners/banner-kaishi.svg" ## The main image of the site in SVG format.
 keywords: "kaishi starter templates, shokunin static site generator, static site generator, starter templates, bootstrap, bootstrap css, bootstrap javascript, content security policy, open graph meta tags, responsive navigation bar, schema.org meta tags" ## The keywords of the site. (max 160 characters)
 language: "en-GB" ## The language of the site. (default: en-GB)
 layout: "feature" ## The layout of the site.
