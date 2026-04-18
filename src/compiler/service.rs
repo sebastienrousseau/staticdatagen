@@ -9,9 +9,8 @@
 
 use anyhow::{Context, Result};
 use html_generator::{generate_html, HtmlConfig};
-use log::{error, warn};
+use log::{error, info, warn};
 use metadata_gen::extract_and_prepare_metadata;
-use rlg::{log_format::LogFormat, log_level::LogLevel};
 use rss_gen::{
     data::{RssData, RssItem},
     generate_rss, macro_set_rss_data_fields,
@@ -29,7 +28,7 @@ use crate::{
         tags::*,
     },
     macro_cleanup_directories, macro_create_directories,
-    macro_log_info, macro_metadata_option,
+    macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
         json::{security, sitemap, txt},
@@ -100,16 +99,9 @@ pub fn compile(
         .collect();
 
     // Log compilation completion message.
-    let cli_description = format!(
-        "<Notice>: Successfully generated, compiled, and minified all HTML to the `{:?}` directory",
+    info!(
+        "Successfully generated, compiled, and minified all HTML to the `{}` directory",
         site_path.display()
-    );
-
-    macro_log_info!(
-        &LogLevel::INFO,
-        "compiler.rs",
-        &cli_description,
-        &LogFormat::CLF
     );
 
     // Write each compiled file to the output directory.
@@ -1297,9 +1289,9 @@ Content here"#;
 
     #[test]
     fn test_compile_invalid_utf8_template_path() {
-        use std::ffi::OsStr;
         #[cfg(unix)]
         {
+            use std::ffi::OsStr;
             use std::os::unix::ffi::OsStrExt;
 
             let build_dir = tempfile::TempDir::new().unwrap();

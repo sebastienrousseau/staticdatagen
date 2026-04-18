@@ -66,10 +66,11 @@ pub fn directory(dir: &Path, name: &str) -> Result<String, String> {
                 name
             ));
         }
-    } else {
-        fs::create_dir_all(dir).map_err(|e| {
-            format!("❌ Error: Cannot create {} directory: {}", name, e)
-        })?;
+    } else if let Err(e) = fs::create_dir_all(dir) {
+        return Err(format!(
+            "❌ Error: Cannot create {} directory: {}",
+            name, e
+        ));
     }
     Ok(String::new())
 }
@@ -301,14 +302,12 @@ pub fn format_header_with_id_class(
 
         let binding = content.to_lowercase();
         let id = id_regex.replace_all(&binding, "-");
-        let class = id.clone();
 
         format!(
-            r#"<{0}{1} id="{0}-{2}" class="{3}" tabindex="0" aria-label="{4} Heading" {5}>{6}</{0}>"#,
+            r#"<{0}{1} id="{0}-{2}" class="{2}" tabindex="0" aria-label="{3} Heading" {4}>{5}</{0}>"#,
             tag,
             attrs,
             id,
-            class,
             to_title_case(content),
             if tag == "h1" { r#"itemprop="headline""# } else { r#"itemprop="name""# },
             content
@@ -432,8 +431,8 @@ pub fn update_class_attributes(
 /// use std::path::Path;
 /// use staticdatagen::utilities::directory::truncate;
 ///
-/// let path = Path::new("/a/b/c/d/e");
-/// assert_eq!(truncate(path, 3), Some("c/d/e".to_string()));
+/// # #[cfg(unix)]
+/// assert_eq!(truncate(Path::new("/a/b/c/d/e"), 3), Some("c/d/e".to_string()));
 /// ```
 pub fn truncate(path: &Path, length: usize) -> Option<String> {
     if length == 0 {
@@ -442,15 +441,15 @@ pub fn truncate(path: &Path, length: usize) -> Option<String> {
 
     let components: Vec<_> =
         path.components().rev().take(length).collect();
-    if components.len() == length {
-        let truncated_path: PathBuf =
-            components.into_iter().rev().collect();
-        let truncated_path =
-            truncated_path.strip_prefix("/").unwrap_or(&truncated_path);
-        Some(truncated_path.to_string_lossy().into_owned())
-    } else {
-        None
+    if components.len() != length {
+        return None;
     }
+
+    let truncated_path: PathBuf =
+        components.into_iter().rev().collect();
+    let truncated_path =
+        truncated_path.strip_prefix("/").unwrap_or(&truncated_path);
+    Some(truncated_path.to_string_lossy().into_owned())
 }
 
 #[cfg(test)]
@@ -631,8 +630,12 @@ mod tests {
     fn test_truncate_short_path() {
         let path = Path::new("/a/b");
         let truncated = truncate(path, 2);
-        let expected = Some("a/b".to_string());
-        assert_eq!(truncated, expected);
+        if cfg!(unix) {
+            assert_eq!(truncated, Some("a/b".to_string()));
+        } else {
+            // On Windows "/a/b" parses as a single component
+            assert!(truncated.is_some());
+        }
     }
 
     /// Tests creating a comrak options configuration.
@@ -966,6 +969,122 @@ mod tests {
         assert!(
             !public_dir.join("old_site").exists(),
             "Old public/old_site should be removed"
+        );
+    }
+
+    #[test]
+    fn test_extract_front_matter_various_delimiters() {
+        let cases = vec![
+            ("---\nkey: val\n---\nbody", "body"),
+            ("+++\nkey: val\n+++\nbody", "body"),
+            ("{\nkey: val\n}\nbody", "body"),
+            ("no front matter", "no front matter"),
+            ("---\nno closing", ""),
+        ];
+        for (input, expected) in cases {
+            assert_eq!(extract_front_matter(input), expected);
+        }
+    }
+
+    #[test]
+    fn test_find_html_files_recursive() {
+        let tmp = tempfile::tempdir().unwrap();
+        let sub = tmp.path().join("a/b/c");
+        fs::create_dir_all(&sub).unwrap();
+        fs::write(sub.join("test.html"), "data").unwrap();
+        fs::write(tmp.path().join("root.html"), "data").unwrap();
+        fs::write(tmp.path().join("skip.txt"), "data").unwrap();
+
+        let files = find_html_files(tmp.path()).unwrap();
+        assert_eq!(files.len(), 2);
+    }
+
+    #[test]
+    fn move_output_directory_creates_public_with_site_content() {
+        // Arrange
+        let tmp = tempfile::tempdir().unwrap();
+        let out_dir = tmp.path().join("output");
+        fs::create_dir_all(&out_dir).unwrap();
+        fs::write(out_dir.join("index.html"), "<h1>Hi</h1>").unwrap();
+        let public_dir = tmp.path().join("public");
+
+        // Act
+        let result =
+            move_output_directory_to("mysite", &out_dir, &public_dir);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(public_dir.join("mysite").exists());
+    }
+
+    #[test]
+    fn move_output_directory_replaces_existing_public() {
+        // Arrange
+        let tmp = tempfile::tempdir().unwrap();
+        let out_dir = tmp.path().join("output");
+        fs::create_dir_all(&out_dir).unwrap();
+        let public_dir = tmp.path().join("public");
+        fs::create_dir_all(&public_dir).unwrap();
+        fs::write(public_dir.join("old.txt"), "stale").unwrap();
+
+        // Act
+        let result =
+            move_output_directory_to("site", &out_dir, &public_dir);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(!public_dir.join("old.txt").exists());
+    }
+
+    #[test]
+    fn cleanup_directory_removes_existing_dirs() {
+        // Arrange
+        let tmp = tempfile::tempdir().unwrap();
+        let dir1 = tmp.path().join("dir1");
+        let dir2 = tmp.path().join("dir2");
+        fs::create_dir_all(&dir1).unwrap();
+        fs::create_dir_all(&dir2).unwrap();
+
+        // Act
+        let result = cleanup_directory(&[&dir1, &dir2]);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(!dir1.exists());
+        assert!(!dir2.exists());
+    }
+
+    #[test]
+    fn create_directory_creates_missing_dirs() {
+        // Arrange
+        let tmp = tempfile::tempdir().unwrap();
+        let new_dir = tmp.path().join("new_dir");
+
+        // Act
+        let result = create_directory(&[new_dir.as_path()]);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(new_dir.exists());
+    }
+
+    #[test]
+    fn update_class_attributes_with_img_and_class() {
+        // Arrange
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]*)&quot;"#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(/>)"#).unwrap();
+        let line = r#"<p>.class=&quot;myclass&quot;</p> <img src="test.png" />"#;
+
+        // Act
+        let result =
+            update_class_attributes(line, &class_regex, &img_regex);
+
+        // Assert
+        assert!(
+            result.contains("class=\"myclass\""),
+            "Should have applied class, got: {}",
+            result
         );
     }
 }
