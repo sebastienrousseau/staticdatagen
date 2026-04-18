@@ -268,4 +268,31 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn add_skips_oversized_files() -> io::Result<()> {
+        // Arrange
+        let dir = tempdir()?;
+        let big_file = dir.path().join("big.txt");
+        // Create a file larger than MAX_FILE_SIZE (10 MiB)
+        let mut f = File::create(&big_file)?;
+        // Write 11 MiB of zeros
+        let chunk = vec![0u8; 1024 * 1024];
+        for _ in 0..11 {
+            f.write_all(&chunk)?;
+        }
+        drop(f);
+
+        // Also create a small file to verify it's included
+        let small_file = dir.path().join("small.txt");
+        fs::write(&small_file, "hello")?;
+
+        // Act
+        let files = add(dir.path())?;
+
+        // Assert
+        assert_eq!(files.len(), 1, "Oversized file should be skipped");
+        assert_eq!(files[0].name, "small.txt");
+        Ok(())
+    }
 }

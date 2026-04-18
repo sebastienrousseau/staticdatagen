@@ -1963,41 +1963,129 @@ mod tests {
     }
 
     #[test]
-    fn test_page_data() {
-        // Test valid case
-        let valid_page = PageData::new(
-            "Test Title".to_string(),
-            "Test Description".to_string(),
-            "2024-02-20T12:00:00Z".to_string(),
-            "/test-page".to_string(),
-        );
-        assert!(valid_page.validate().is_ok());
+    fn test_news_data_additional() {
+        let default_news = NewsData::create_default();
+        assert_eq!(default_news.news_title, "");
 
-        // Test required fields
-        let missing_title = PageData::new(
-            "".to_string(),
-            "Description".to_string(),
-            "2024-02-20T12:00:00Z".to_string(),
-            "/page".to_string(),
-        );
-        assert!(matches!(
-            missing_title.validate(),
-            Err(DataError::MissingField(field)) if field == "title"
-        ));
+        let news = NewsData {
+            news_genres: "Blog, OpEd".to_string(),
+            ..Default::default()
+        };
+        let genres = news.genres_list();
+        assert_eq!(genres, vec!["Blog", "OpEd"]);
+    }
 
-        // Test invalid date
-        let invalid_date = PageData::new(
-            "Title".to_string(),
-            "Description".to_string(),
-            "invalid-date".to_string(),
-            "/page".to_string(),
+    #[test]
+    fn test_news_visit_options_basic() {
+        let opts = NewsVisitOptions::new(
+            "https://example.com",
+            "Blog",
+            "news",
+            "en",
+            "2024-02-20T12:00:00Z",
+            "Name",
+            "Title",
         );
-        assert!(matches!(
-            invalid_date.validate(),
-            Err(DataError::InvalidDate(_))
-        ));
+        assert!(opts.validate().is_ok());
+    }
 
-        // Test invalid permalink
+    #[test]
+    fn test_validation_helpers_exhaustive() {
+        use validation::*;
+        // validate_text_length boundary
+        assert!(validate_text_length("12345", 5, "test").is_ok());
+        assert!(validate_text_length("123456", 5, "test").is_err());
+
+        // sanitize_path error
+        assert!(sanitize_path("path/../traversal").is_err());
+
+        // validate_language_code error
+        assert!(validate_language_code("english").is_err());
+        assert!(validate_language_code("12").is_err());
+
+        // validate_color error
+        assert!(validate_color("not-a-color").is_err());
+        assert!(validate_color("#GGGGGG").is_err());
+        assert!(validate_color("rgb(256,0,0)").is_err());
+
+        // validate_twitter_handle error
+        assert!(validate_twitter_handle("no-at-sign").is_err());
+        assert!(validate_twitter_handle(
+            "@too-long-handle-exceeding-fifteen-chars"
+        )
+        .is_err());
+        assert!(validate_twitter_handle("@invalid!chars").is_err());
+
+        // validate_image_size error
+        assert!(validate_image_size("192x").is_err());
+        assert!(validate_image_size("x192").is_err());
+        assert!(validate_image_size("abcxdef").is_err());
+    }
+
+    #[test]
+    fn test_data_error_display_exhaustive() {
+        let errors = vec![
+            (
+                DataError::InvalidDomain("d".into()),
+                "Invalid domain name: d",
+            ),
+            (
+                DataError::MissingField("f".into()),
+                "Missing required field: f",
+            ),
+            (
+                DataError::InvalidDate("d".into()),
+                "Invalid date format: d",
+            ),
+            (DataError::InvalidUrl("u".into()), "Invalid URL: u"),
+            (
+                DataError::InvalidLanguage("l".into()),
+                "Invalid language code: l",
+            ),
+            (
+                DataError::InvalidColor("c".into()),
+                "Invalid color code: c",
+            ),
+            (
+                DataError::InvalidEmail("e".into()),
+                "Invalid email format: e",
+            ),
+            (
+                DataError::InvalidFileName("n".into()),
+                "Invalid file name: n",
+            ),
+            (
+                DataError::InvalidContent("c".into()),
+                "Invalid content: c",
+            ),
+            (
+                DataError::InvalidMetadata("m".into()),
+                "Invalid metadata: m",
+            ),
+            (
+                DataError::InvalidSize("s".into()),
+                "Invalid size format: s",
+            ),
+            (
+                DataError::InvalidTwitterHandle("t".into()),
+                "Invalid Twitter handle: t",
+            ),
+            (
+                DataError::ContentTooLong(10),
+                "Content exceeds maximum length of 10 characters",
+            ),
+            (
+                DataError::SecurityValidation("s".into()),
+                "Security validation failed: s",
+            ),
+        ];
+        for (err, expected) in errors {
+            assert_eq!(format!("{}", err), expected);
+        }
+    }
+
+    #[test]
+    fn test_page_data_invalid_permalink() {
         let invalid_permalink = PageData::new(
             "Title".to_string(),
             "Description".to_string(),
@@ -3609,5 +3697,79 @@ mod tests {
         assert!(result.is_err());
         let err_msg = format!("{}", result.unwrap_err());
         assert!(err_msg.contains("Twitter card type"));
+    }
+
+    #[test]
+    fn page_data_validate_empty_title_returns_error() {
+        // Arrange
+        let page = PageData::new(
+            "".to_string(),
+            "desc".to_string(),
+            "2024-01-01T00:00:00Z".to_string(),
+            "/test".to_string(),
+        );
+
+        // Act
+        let result = page.validate();
+
+        // Assert
+        assert!(result.is_err());
+        assert!(
+            format!("{}", result.unwrap_err()).contains("title"),
+            "Error should mention title"
+        );
+    }
+
+    #[test]
+    fn page_data_validate_valid_data_returns_ok() {
+        // Arrange
+        let page = PageData::new(
+            "Title".to_string(),
+            "Description".to_string(),
+            "2024-01-01T00:00:00Z".to_string(),
+            "/test".to_string(),
+        );
+
+        // Act & Assert
+        assert!(page.validate().is_ok());
+    }
+
+    #[test]
+    fn news_visit_options_validate_valid_genres_succeeds() {
+        // Arrange
+        let opts = NewsVisitOptions::new(
+            "https://example.com",
+            "Blog,OpEd",
+            "tech",
+            "en",
+            "2024-01-01T00:00:00Z",
+            "Test Pub",
+            "Test Title",
+        );
+
+        // Act & Assert
+        assert!(opts.validate().is_ok());
+    }
+
+    #[test]
+    fn news_visit_options_validate_invalid_genre_returns_error() {
+        // Arrange
+        let opts = NewsVisitOptions::new(
+            "https://example.com",
+            "InvalidGenre",
+            "tech",
+            "en",
+            "2024-01-01T00:00:00Z",
+            "Test Pub",
+            "Test Title",
+        );
+
+        // Act
+        let result = opts.validate();
+
+        // Assert
+        assert!(result.is_err());
+        assert!(format!("{}", result.unwrap_err())
+            .contains("Invalid news genre"),);
     }
 }

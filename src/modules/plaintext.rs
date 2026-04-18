@@ -553,13 +553,41 @@ mod tests {
     }
 
     #[test]
-    fn test_trailing_buffer_flush() -> Result<()> {
-        // Trigger line 230: buffer has content at end
-        let input = "**bold text** at end";
+    fn test_list_and_break_events() -> Result<()> {
+        // Trigger list events and breaks
+        let input = "- Item 1\n- Item 2\n\nLine 1\\\nLine 2";
         let (content, ..) =
             generate_plain_text(input, "", "", "", "", "")?;
-        assert!(content.contains("bold text"));
-        assert!(content.contains("at end"));
+        assert!(content.contains("• Item 1"));
+        assert!(content.contains("• Item 2"));
+        assert!(content.contains("Line 1 Line 2"));
+        Ok(())
+    }
+
+    #[test]
+    fn convert_headings_with_paragraphs_separates_sections(
+    ) -> Result<()> {
+        // Arrange - heading followed by paragraph text triggers the
+        // double-newline insertion path when buffer has accumulated content
+        // before a new heading starts
+        let input =
+            "# Heading 1\n\nSome text.\n\n# Heading 2\n\nMore text.";
+
+        // Act
+        let (content, ..) =
+            generate_plain_text(input, "t", "d", "a", "c", "k")?;
+
+        // Assert
+        assert!(
+            content.contains("Heading 1"),
+            "Should contain first heading, got: {}",
+            content
+        );
+        assert!(
+            content.contains("Some text."),
+            "Should contain paragraph text, got: {}",
+            content
+        );
         Ok(())
     }
 }

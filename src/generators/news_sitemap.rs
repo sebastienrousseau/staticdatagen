@@ -815,4 +815,23 @@ mod tests {
             }
         }
     }
+
+    /// Tests the error fallback path in generate_xml when try_generate_xml
+    /// would fail - we verify that empty metadata still produces valid XML
+    /// (the error path is hard to trigger with valid XML writer, so we test
+    /// the boundary where generate_xml handles the result).
+    #[test]
+    fn generate_xml_with_minimal_metadata_returns_xml() {
+        // Arrange
+        let metadata = HashMap::new();
+        let config = NewsSiteMapConfig::new(metadata);
+        let generator = NewsSiteMapGenerator::new(config);
+
+        // Act
+        let result = generator.generate_xml();
+
+        // Assert - even with empty metadata, XML generation should succeed
+        // with default values, not hit the error path
+        assert!(!result.is_empty());
+    }
 }

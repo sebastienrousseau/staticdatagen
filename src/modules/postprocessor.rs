@@ -60,20 +60,13 @@ pub fn post_process_html(
         let mut processed_line = line.to_string();
         let mut modified_line = processed_line.clone();
 
-        for class_captures in class_regex.captures_iter(&processed_line)
-        {
-            let class_attribute = match class_captures.get(1) {
-                Some(m) => m.as_str(),
-                None => continue,
-            };
-            modified_line = class_regex
-                .replace(
-                    &modified_line,
-                    format!("<p class=\"{}\">", class_attribute)
-                        .as_str(),
-                )
-                .to_string();
-        }
+        modified_line = class_regex
+            .replace_all(&modified_line, |caps: &Captures<'_>| {
+                let class_attribute =
+                    caps.get(1).map_or("", |m| m.as_str());
+                format!("<p class=\"{}\">", class_attribute)
+            })
+            .to_string();
 
         if let Some(class_value) = img_regex
             .captures(&processed_line)
@@ -443,13 +436,16 @@ mod tests {
     }
 
     #[test]
-    fn test_post_process_html_only_whitespace_lines() {
+    fn test_post_process_html_multiple_classes() {
         let class_regex =
-            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+            Regex::new(r#"<p.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
-        let html = "   \n  \n   ";
-        let result = post_process_html(html, &class_regex, &img_regex);
-        assert!(result.is_ok());
+        // Multiple matches on one line
+        let html = r#"<p.class="a">One</p> <p.class="b">Two</p>"#;
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
+        assert!(result.contains("class=\"a\""));
+        assert!(result.contains("class=\"b\""));
     }
 }

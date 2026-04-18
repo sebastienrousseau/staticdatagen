@@ -1,6 +1,7 @@
 // Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+#![forbid(unsafe_code)]
 #![doc = include_str!("../README.md")]
 #![doc(
     html_favicon_url = "https://kura.pro/staticdatagen/images/favicon.ico",
@@ -1616,13 +1617,50 @@ mod tests {
         assert_static::<Error>();
 
         // Test specific error conversion traits
-        fn assert_from_string<T: From<String>>() {}
-        assert_from_string::<Error>();
+        let _: Error = "test".into();
+        let _: Error = String::from("test").into();
+        let _: Error = io::Error::other("test").into();
+    }
 
-        fn assert_from_str<T: From<&'static str>>() {}
-        assert_from_str::<Error>();
+    #[test]
+    fn content_processing_builder_with_context_formats_message() {
+        // Arrange
+        let builder = ContentProcessingErrorBuilder::new()
+            .message("base error")
+            .context("ctx1")
+            .context("ctx2");
 
-        fn assert_from_io_error<T: From<io::Error>>() {}
-        assert_from_io_error::<Error>();
+        // Act
+        let error = builder.build();
+
+        // Assert
+        let msg = format!("{}", error);
+        assert!(
+            msg.contains("(Context: ctx1, ctx2)"),
+            "Expected context in message, got: {}",
+            msg
+        );
+    }
+
+    #[test]
+    fn io_error_builder_build_returns_io_variant() {
+        // Arrange
+        let builder = IoErrorBuilder::new()
+            .operation("read")
+            .path("/tmp/test")
+            .context("extra info");
+
+        // Act
+        let error = builder.build();
+
+        // Assert
+        match &error {
+            Error::Io { context, .. } => {
+                assert!(context.contains("Operation: read"));
+                assert!(context.contains("Path: /tmp/test"));
+                assert!(context.contains("extra info"));
+            }
+            other => panic!("Expected Error::Io, got {:?}", other),
+        }
     }
 }

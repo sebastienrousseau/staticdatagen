@@ -785,4 +785,25 @@ mod tests {
     fn test_is_malicious_path_root_only() {
         assert!(is_malicious_path("/"));
     }
+
+    #[test]
+    fn test_remove_control_chars_comprehensive() {
+        let input = "a\nb\tc\0\u{FEFF}\x01";
+        let result = remove_control_chars(input);
+        assert_eq!(result, "a\nb\tc");
+    }
+
+    #[test]
+    fn test_sanitize_and_titlecase_truncation() {
+        let long_stem = "a".repeat(100);
+        let result = sanitize_and_titlecase(&long_stem);
+        assert!(result.ends_with('…'));
+        assert_eq!(result.chars().count(), MAX_DISPLAY_LEN + 1);
+    }
+
+    #[test]
+    fn is_malicious_path_absolute_returns_true() {
+        // Arrange & Act & Assert
+        assert!(is_malicious_path("/etc/passwd"));
+    }
 }

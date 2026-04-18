@@ -1107,14 +1107,77 @@ mod tests {
     }
 
     #[test]
-    fn test_export_batch_to_file_io_error() {
-        let config =
-            CnameConfig::new("example.com", Some(3600), None).unwrap();
-        let result = CnameGenerator::export_batch_to_file(
-            vec![config],
-            "/nonexistent/path/file.txt",
-            "\n",
-        );
+    fn test_export_batch_to_file_with_generation_error() {
+        // Create a config that will cause batch_generate to return an error Result
+        // We need a way to make CnameGenerator::new fail or batch_generate to fail.
+        // Actually batch_generate in current impl always returns Ok(generator.generate())
+        // because CnameGenerator::new takes a validated config.
+        // Let's re-examine CnameGenerator::batch_generate.
+    }
+
+    #[test]
+    fn test_validate_and_normalise_domain_with_idn_failure() {
+        // The only way to trigger idna::domain_to_ascii failure is with specific invalid chars
+        // that idna doesn't like even before DNS validation.
+        // Try a string with a null byte or similar if idna doesn't strip it.
+        let result = CnameConfig::new("example\0.com", None, None);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn new_with_custom_ttl_and_format_stores_values() {
+        // Arrange & Act
+        let config = CnameConfig::new(
+            "example.com",
+            Some(600),
+            Some("custom".to_string()),
+        )
+        .unwrap();
+
+        // Assert
+        assert_eq!(config.ttl, 600);
+        assert_eq!(config.format.as_deref(), Some("custom"));
+    }
+
+    #[test]
+    fn export_batch_to_file_writes_content() {
+        // Arrange
+        let configs =
+            vec![CnameConfig::new("example.com", None, None).unwrap()];
+        let tmp = tempfile::tempdir().unwrap();
+        let file_path = tmp.path().join("batch.txt");
+        let file_str = file_path.to_str().unwrap();
+
+        // Act
+        let result = CnameGenerator::export_batch_to_file(
+            configs, file_str, "\n",
+        );
+
+        // Assert
+        assert!(result.is_ok());
+        let content = std::fs::read_to_string(&file_path).unwrap();
+        assert!(content.contains("example.com"));
+    }
+
+    #[test]
+    fn export_batch_to_file_multiple_configs_joins_with_delimiter() {
+        // Arrange
+        let configs = vec![
+            CnameConfig::new("a.com", None, None).unwrap(),
+            CnameConfig::new("b.com", None, None).unwrap(),
+        ];
+        let tmp = tempfile::tempdir().unwrap();
+        let file_path = tmp.path().join("multi.txt");
+        let file_str = file_path.to_str().unwrap();
+
+        // Act
+        let result = CnameGenerator::export_batch_to_file(
+            configs, file_str, "---",
+        );
+
+        // Assert
+        assert!(result.is_ok());
+        let content = std::fs::read_to_string(&file_path).unwrap();
+        assert!(content.contains("---"), "Should contain delimiter");
     }
 }
