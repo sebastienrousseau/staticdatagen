@@ -1,0 +1,84 @@
+name: CI
+on:
+  push:
+    branches: [main, feat/**]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Primary: stable, all checks, cross-platform ──────────────────
+  ci:
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    with:
+      rust-version: 'stable'
+      run-coverage: true
+      run-cross-platform: true
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ── MSRV: minimum supported Rust version ─────────────────────────
+  msrv:
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    with:
+      rust-version: '1.88.0'
+      run-fmt: false
+      run-clippy: false
+      run-audit: false
+      run-coverage: false
+      run-cross-platform: false
+
+  # ── Nightly: catch upcoming breakage early ────────────────────────
+  nightly:
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    with:
+      rust-version: 'nightly'
+      run-fmt: false
+      run-clippy: false
+      run-audit: false
+      run-coverage: false
+      run-cross-platform: false
+
+  # ── Security: audit, deny, CodeQL, dependency review ──────────────
+  security:
+    uses: sebastienrousseau/pipelines/.github/workflows/security.yml@main
+    with:
+      language: rust
+      allow-ghsas: GHSA-2m76-cwhg-7wv6, GHSA-gfxp-f68g-8x78, GHSA-hhw4-xg65-fp2x
+
+  # ── Miri: detect undefined behaviour ──────────────────────────────
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri
+      - uses: Swatinem/rust-cache@v2
+      - run: |
+          cargo miri test models -- --skip proptest
+          cargo miri test utilities::element
+          cargo miri test utilities::uuid
+          cargo miri test locales
+          cargo miri test macros::directory
+          cargo miri test macros::custom
+        env:
+          MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-tree-borrows
+
+  # ── Semver: prevent accidental breaking changes ───────────────────
+  semver:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: obi1kenobi/cargo-semver-checks-action@v2
+
+  # ── Docs: build and deploy to GitHub Pages ────────────────────────
+  docs:
+    if: github.ref == 'refs/heads/main'
+    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@main
+    with:
+      type: rust
+      redirect-crate: staticdatagen
