@@ -590,4 +590,49 @@ mod tests {
         );
         Ok(())
     }
+
+    #[test]
+    fn generate_plain_text_returns_sanitized_metadata() {
+        let result = generate_plain_text(
+            "# Hello\nWorld",
+            "Title",
+            "Desc",
+            "Author",
+            "Creator",
+            "keywords",
+        );
+        assert!(result.is_ok());
+        let (content, title, desc, author, creator, kw) =
+            result.unwrap();
+        assert!(content.contains("Hello"));
+        assert_eq!(title, "Title");
+        assert_eq!(desc, "Desc");
+        assert_eq!(author, "Author");
+        assert_eq!(creator, "Creator");
+        assert_eq!(kw, "keywords");
+    }
+
+    #[test]
+    fn convert_to_plain_text_multiple_paragraphs_inserts_newlines() {
+        let md = "First paragraph\n\nSecond paragraph";
+        let result = convert_to_plain_text(md).unwrap();
+        assert!(result.contains("First paragraph"), "Got: {}", result);
+        assert!(result.contains("Second paragraph"), "Got: {}", result);
+    }
+
+    #[test]
+    fn convert_to_plain_text_inline_code_falls_through() {
+        // Inline code events hit the `_ => {}` catch-all arm
+        let md = "Use `code` here";
+        let result = convert_to_plain_text(md).unwrap();
+        // Code tokens are stripped by the catch-all; only text events emit
+        assert!(result.contains("Use"), "Got: {}", result);
+    }
+
+    #[test]
+    fn convert_to_plain_text_trailing_buffer_flushed() {
+        let md = "Just some text";
+        let result = convert_to_plain_text(md).unwrap();
+        assert!(!result.is_empty());
+    }
 }

@@ -3772,4 +3772,22 @@ mod tests {
         assert!(format!("{}", result.unwrap_err())
             .contains("Invalid news genre"),);
     }
+
+    #[test]
+    fn sanitize_path_traversal_returns_error() {
+        let result = validation::sanitize_path("../../../etc/passwd");
+        assert!(result.is_err());
+        let err = format!("{}", result.unwrap_err());
+        assert!(
+            err.contains("traversal"),
+            "Should mention traversal, got: {}",
+            err
+        );
+    }
+
+    #[test]
+    fn sanitize_path_valid_returns_ok() {
+        let result = validation::sanitize_path("content/index.md");
+        assert!(result.is_ok());
+    }
 }

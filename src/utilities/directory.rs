@@ -1087,4 +1087,82 @@ mod tests {
             result
         );
     }
+
+    #[test]
+    fn move_output_directory_to_moves_dir_into_public() {
+        let workspace = tempfile::TempDir::new().unwrap();
+        let out_dir = workspace.path().join("output");
+        std::fs::create_dir(&out_dir).unwrap();
+        std::fs::write(out_dir.join("file.txt"), "data").unwrap();
+
+        let public_dir = workspace.path().join("public");
+        let result =
+            move_output_directory_to("mysite", &out_dir, &public_dir);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(public_dir.join("mysite/output/file.txt").exists());
+    }
+
+    #[test]
+    fn move_output_directory_to_replaces_existing_public() {
+        let workspace = tempfile::TempDir::new().unwrap();
+        let out_dir = workspace.path().join("output");
+        std::fs::create_dir(&out_dir).unwrap();
+        std::fs::write(out_dir.join("f.txt"), "d").unwrap();
+
+        let public_dir = workspace.path().join("public");
+        std::fs::create_dir(&public_dir).unwrap();
+        std::fs::write(public_dir.join("old.txt"), "old").unwrap();
+
+        let result =
+            move_output_directory_to("my site", &out_dir, &public_dir);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(!public_dir.join("old.txt").exists());
+        assert!(public_dir.join("my_site/output/f.txt").exists());
+    }
+
+    #[test]
+    fn cleanup_directory_removes_populated_dir() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let sub = dir.path().join("to_remove");
+        std::fs::create_dir(&sub).unwrap();
+        std::fs::write(sub.join("f.txt"), "x").unwrap();
+
+        let result = cleanup_directory(&[sub.as_path()]);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(!sub.exists());
+    }
+
+    #[test]
+    fn create_directory_creates_single_dir() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let new_dir = dir.path().join("new_child");
+
+        let result = create_directory(&[new_dir.as_path()]);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(new_dir.exists());
+    }
+
+    #[test]
+    fn update_class_attributes_applies_class_to_img() {
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]*)&quot;"#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^/]*) />"#).unwrap();
+        let line = r#"<img src="x.png" .class=&quot;hero&quot; />"#;
+
+        let result =
+            update_class_attributes(line, &class_regex, &img_regex);
+        assert!(result.contains("class=\"hero\""), "Got: {}", result);
+    }
+
+    #[test]
+    fn update_class_attributes_no_match_returns_unchanged() {
+        let class_regex =
+            Regex::new(r#"\.class=&quot;([^&]*)&quot;"#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^/]*) />"#).unwrap();
+        let line = "<p>No images here</p>";
+
+        let result =
+            update_class_attributes(line, &class_regex, &img_regex);
+        assert_eq!(result, line);
+    }
 }

@@ -806,4 +806,19 @@ mod tests {
         // Arrange & Act & Assert
         assert!(is_malicious_path("/etc/passwd"));
     }
+
+    #[test]
+    fn is_malicious_path_parent_dir_returns_true() {
+        assert!(is_malicious_path("../../etc/passwd"));
+    }
+
+    #[test]
+    fn is_malicious_path_current_dir_returns_true() {
+        assert!(is_malicious_path("./hidden"));
+    }
+
+    #[test]
+    fn is_malicious_path_safe_returns_false() {
+        assert!(!is_malicious_path("about.md"));
+    }
 }

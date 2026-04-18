@@ -448,4 +448,30 @@ mod tests {
         assert!(result.contains("class=\"a\""));
         assert!(result.contains("class=\"b\""));
     }
+
+    #[test]
+    fn post_process_html_multiline_processes_all_lines() {
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = "<p>Line 1</p>\n<p>Line 2</p>\n<img src=\"a.png\" alt=\"photo\">";
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
+        assert!(result.contains("Line 1"));
+        assert!(result.contains("Line 2"));
+        assert!(result.contains("alt=\"photo\""));
+    }
+
+    #[test]
+    fn post_process_html_compiles_internal_regexes() {
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = "<p>Simple paragraph</p>";
+        let result = post_process_html(html, &class_regex, &img_regex);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().trim(), "<p>Simple paragraph</p>");
+    }
 }
