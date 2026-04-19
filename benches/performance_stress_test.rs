@@ -1,6 +1,7 @@
-#![allow(missing_docs, clippy::unwrap_used, clippy::expect_used)]
 // Copyright © 2025-2026 Static Data Gen. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
+
+#![allow(missing_docs, clippy::unwrap_used, clippy::expect_used)]
 
 //! # Performance Stress Testing and Baseline Benchmarks
 //!
