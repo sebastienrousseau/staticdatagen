@@ -261,7 +261,7 @@ fn remove_control_chars(input: &str) -> String {
 /// [`to_title_case`], and truncates to a max length (`MAX_DISPLAY_LEN`).
 fn sanitize_and_titlecase(file_stem: &str) -> String {
     // Remove `<` or `>` to prevent injection
-    let filtered = file_stem.replace('<', "").replace(['<', '>'], "");
+    let filtered = file_stem.replace(['<', '>'], "");
 
     // Split on multiple delimiters
     let parts: Vec<&str> = filtered

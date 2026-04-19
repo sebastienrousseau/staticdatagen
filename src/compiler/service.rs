@@ -73,7 +73,7 @@ pub fn compile(
         NavigationGenerator::generate_navigation(&source_files);
 
     let mut global_tags_data: HashMap<String, Vec<PageData>> =
-        HashMap::new();
+        HashMap::with_capacity(source_files.len());
 
     // Initialize the templating engine with caching.
     let template_path_str =

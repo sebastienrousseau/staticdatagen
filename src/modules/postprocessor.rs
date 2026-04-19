@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use regex::{Captures, Regex};
+use std::sync::LazyLock;
+
+/// Pre-compiled regex for extracting alt attributes from img tags.
+///
+/// # Safety
+/// The pattern is a compile-time constant validated by tests.
+#[allow(clippy::unwrap_used)]
+static ALT_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"alt="([^"]*)""#).unwrap());
 
 /// Post-processes HTML content by performing various transformations.
 ///
@@ -37,24 +46,7 @@ pub fn post_process_html(
     class_regex: &Regex,
     img_regex: &Regex,
 ) -> crate::Result<String> {
-    let alt_regex = Regex::new(r#"alt="([^"]*)""#).map_err(|e| {
-        crate::Error::ContentProcessing {
-            message: format!("Failed to compile alt regex: {}", e),
-            source: None,
-        }
-    })?;
-    let _title_regex =
-        Regex::new(r#"title="([^"]*)""#).map_err(|e| {
-            crate::Error::ContentProcessing {
-                message: format!(
-                    "Failed to compile title regex: {}",
-                    e
-                ),
-                source: None,
-            }
-        })?;
-
-    let mut processed_html = String::new();
+    let mut processed_html = String::with_capacity(html.len());
 
     for line in html.lines() {
         let mut processed_line = line.to_string();
@@ -87,7 +79,7 @@ pub fn post_process_html(
 
                 let mut new_img_tag = img_tag_start.to_string();
 
-                let alt_value = alt_regex
+                let alt_value = ALT_REGEX
                     .captures(img_tag_start)
                     .map_or(String::new(), |c| {
                         c.get(1).map_or(String::new(), |m| {

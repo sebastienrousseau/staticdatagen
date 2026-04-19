@@ -168,8 +168,8 @@ pub fn generate_plain_text(
 
 /// Converts formatted content to plain text.
 fn convert_to_plain_text(content: &str) -> Result<String> {
-    let mut plain_text = String::new();
-    let mut buffer = String::new();
+    let mut plain_text = String::with_capacity(content.len());
+    let mut buffer = String::with_capacity(256);
     let mut last_was_text = false;
 
     let parser = Parser::new(content);
