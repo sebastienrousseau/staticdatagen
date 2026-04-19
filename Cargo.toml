@@ -115,7 +115,6 @@ tempfile = "3"                                # Temporary file/directory creatio
 anyhow = "1.0"
 thiserror = "2.0"
 log = { version = "0.4", features = ["std"] }
-rlg = "0.0.8"
 
 # Data processing
 serde = { version = "1.0", features = ["derive"] }
@@ -137,9 +136,8 @@ regex = "1.11.1"
 rss-gen = "0.0.3"
 sitemap-gen = "0.0.1"
 staticweaver = "0.0.1"
-time = "0.3"
+time = { version = "0.3", features = ["formatting", "parsing"] }
 uuid = { version = "1.11", features = ["v4"] }
-vrd = "0.0.9"
 
 # XML processing
 quick-xml = "0.39"
@@ -148,9 +146,6 @@ xml-rs = "1.0"
 # CNAME dependencies
 idna = "1.0.3"
 rayon = "1.10.0"
-
-#Humans.txt dependencies
-dtt = "0.0.9"
 
 # -----------------------------------------------------------------------------
 # Criterion Benchmark

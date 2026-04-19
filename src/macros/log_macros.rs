@@ -3,84 +3,67 @@
 
 //! This module contains macros related to logging messages at various log levels and formats.
 //!
-//! It includes a custom logging macro, `macro_log_info`, which allows logging messages with
-//! specified log levels, components, descriptions, and formats.
+//! It includes a custom logging macro, `macro_log_info`, which logs messages
+//! using the standard `log` crate with component and timestamp context.
 
-/// Custom logging macro for various log levels and formats.
+/// Custom logging macro for structured log messages.
 ///
 /// # Parameters
 ///
-/// * `$level`: The log level of the message.
+/// * `$level`: A log level string (e.g., `"INFO"`, `"DEBUG"`, `"ERROR"`, `"WARN"`).
 /// * `$component`: The component where the log is coming from.
 /// * `$description`: A description of the log message.
-/// * `$format`: The format of the log message.
+/// * `$format`: A format identifier string (e.g., `"CLF"`, `"JSON"`).
 ///
 /// # Example
 ///
 /// ```
 /// use staticdatagen::macro_log_info;
-/// use rlg::log_level::LogLevel;
-/// use rlg::log_format::LogFormat;
 ///
-/// let level = &LogLevel::INFO;
-/// let component = "TestComponent";
-/// let description = "Test description";
-/// let format = &LogFormat::CLF;
-///
-/// let log = macro_log_info!(level, component, description, format);
+/// macro_log_info!("INFO", "TestComponent", "Test message", "CLF");
 /// ```
 #[macro_export]
 macro_rules! macro_log_info {
     ($level:expr, $component:expr, $description:expr, $format:expr) => {{
-        use dtt::datetime::DateTime;
-        use rlg::log::Log;
-
-        let date = DateTime::new();
-        let mut entry = Log::build(*$level, $description)
-            .time(&date.to_string())
-            .component($component);
-        entry.format = *$format;
-        let _log = entry;
+        log::info!(
+            "[{}] [{}] {} (format={})",
+            $component,
+            $level,
+            $description,
+            $format
+        );
     }};
 }
 
 #[cfg(test)]
 mod tests {
-    use rlg::log::Log;
-    use rlg::log_format::LogFormat;
-    use rlg::log_level::LogLevel;
-
-    /// Verify log construction at each level without firing the rlg
-    /// flusher (which triggers a macOS os_log assertion on process exit).
     #[test]
-    fn test_log_build_info() {
-        let log = Log::build(LogLevel::INFO, "info message")
-            .component("TestComponent")
-            .format(LogFormat::CLF);
-        assert_eq!(log.level, LogLevel::INFO);
+    fn test_macro_log_info_compiles() {
+        macro_log_info!(
+            "INFO",
+            "TestComponent",
+            "Test description",
+            "CLF"
+        );
     }
 
     #[test]
-    fn test_log_build_debug() {
-        let log = Log::build(LogLevel::DEBUG, "debug message")
-            .component("Debug")
-            .format(LogFormat::JSON);
-        assert_eq!(log.level, LogLevel::DEBUG);
+    fn test_macro_log_info_debug_level() {
+        macro_log_info!("DEBUG", "Debug", "Debug message", "JSON");
     }
 
     #[test]
-    fn test_log_build_error() {
-        let log = Log::build(LogLevel::ERROR, "error occurred")
-            .component("ErrorHandler")
-            .format(LogFormat::CLF);
-        assert_eq!(log.level, LogLevel::ERROR);
+    fn test_macro_log_info_error_level() {
+        macro_log_info!(
+            "ERROR",
+            "ErrorHandler",
+            "Error occurred",
+            "CLF"
+        );
     }
 
     #[test]
-    fn test_log_build_warning() {
-        let log = Log::build(LogLevel::WARN, "warning message")
-            .component("Warning")
-            .format(LogFormat::CLF);
-        assert_eq!(log.level, LogLevel::WARN);
+    fn test_macro_log_info_warning_level() {
+        macro_log_info!("WARN", "Warning", "Warning message", "CLF");
     }
 }

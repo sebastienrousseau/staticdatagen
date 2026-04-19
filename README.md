@@ -76,6 +76,37 @@ fn main() -> anyhow::Result<()> {
 }
 ```
 
+### Error Handling
+
+All operations return typed errors that can be matched:
+
+```rust,no_run
+use staticdatagen::{compiler::service::compile, Error};
+use std::path::Path;
+
+fn main() {
+    let result = compile(
+        Path::new("build"),
+        Path::new("content"),
+        Path::new("public"),
+        Path::new("templates"),
+    );
+
+    match result {
+        Ok(()) => println!("Success!"),
+        Err(ref e) => match e.downcast_ref::<Error>() {
+            Some(Error::Io { context, .. }) => {
+                eprintln!("IO error: {context}");
+            }
+            Some(Error::Template(msg)) => {
+                eprintln!("Template error: {msg}");
+            }
+            _ => eprintln!("Error: {e}"),
+        },
+    }
+}
+```
+
 ---
 
 ## Development
