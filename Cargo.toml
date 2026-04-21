@@ -136,7 +136,7 @@ url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.1", optional = true }
-metadata-gen = "0.0.2"
+metadata-gen = "0.0.3"
 regex = "1.11.1"
 rss-gen = "0.0.3"
 sitemap-gen = "0.0.1"
