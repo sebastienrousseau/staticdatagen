@@ -127,7 +127,7 @@ serde_json = "1.0"
 # Content generation
 comrak = "0.50"
 pulldown-cmark = "0.12"
-html-generator = "0.0.4"
+html-generator = "0.0.5"
 minify-html = "0.18"
 
 # Web and networking
