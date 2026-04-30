@@ -144,7 +144,7 @@ staticweaver = "0.0.1"
 tempfile = "3.14"
 time = "0.3"
 uuid = { version = "1.11", features = ["v4"] }
-vrd = "0.0.9"
+vrd = "0.0.10"
 
 # XML processing
 quick-xml = "0.39"
