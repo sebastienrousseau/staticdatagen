@@ -140,7 +140,7 @@ metadata-gen = "0.0.2"
 regex = "1.11.1"
 rss-gen = "0.0.3"
 sitemap-gen = "0.0.1"
-staticweaver = "0.0.1"
+staticweaver = "0.0.2"
 tempfile = "3.14"
 time = "0.3"
 uuid = { version = "1.11", features = ["v4"] }
