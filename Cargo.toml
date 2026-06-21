@@ -131,11 +131,11 @@ url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.2", optional = true }
-metadata-gen = "0.0.3"
+metadata-gen = "0.0.4"
 regex = "1.11.1"
-rss-gen = "0.0.3"
+rss-gen = "0.0.5"
 sitemap-gen = "0.0.2"
-staticweaver = "0.0.1"
+staticweaver = "0.0.2"
 time = { version = "0.3", features = ["formatting", "parsing"] }
 uuid = { version = "1.11", features = ["v4"] }
 

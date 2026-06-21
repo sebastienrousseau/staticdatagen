@@ -16,7 +16,7 @@ use rss_gen::{
     generate_rss, macro_set_rss_data_fields,
 };
 use sitemap_gen::create_site_map_data;
-use staticweaver::{Context as TemplateContext, Engine, PageOptions};
+use staticweaver::{Context as TemplateContext, Engine};
 use std::{collections::HashMap, fs, path::Path, time::Duration};
 
 use crate::{
@@ -197,6 +197,7 @@ fn generate_html_content(body: &str) -> Result<String> {
         language: "en".to_string(),
         max_input_size: usize::MAX,
         syntax_theme: None,
+        ..HtmlConfig::default()
     };
 
     generate_html(body, &config)
@@ -427,24 +428,19 @@ fn process_file(
     // Generate HTML content
     let html_content = generate_html_content(&body)?;
 
-    // Setup template context (inline to handle meta_tags properly)
-    let mut page_options = PageOptions::new();
-    for (key, value) in metadata.iter() {
-        page_options.set(key.to_string(), value.to_string());
-    }
-
-    page_options.set("apple".to_string(), all_meta_tags.apple.clone());
-    page_options.set("content".to_string(), html_content);
-    page_options.set("microsoft".to_string(), all_meta_tags.ms.clone());
-    page_options.set("navigation".to_string(), navigation.to_owned());
-    page_options.set("opengraph".to_string(), all_meta_tags.og);
-    page_options.set("primary".to_string(), all_meta_tags.primary);
-    page_options.set("twitter".to_string(), all_meta_tags.twitter);
-
+    // Setup template context directly (staticweaver 0.0.2 removed PageOptions).
     let mut context = TemplateContext::new();
-    for (key, value) in page_options.elements.iter() {
+    for (key, value) in metadata.iter() {
         context.set(key.to_string(), value.to_string());
     }
+
+    context.set("apple".to_string(), all_meta_tags.apple.clone());
+    context.set("content".to_string(), html_content);
+    context.set("microsoft".to_string(), all_meta_tags.ms.clone());
+    context.set("navigation".to_string(), navigation.to_owned());
+    context.set("opengraph".to_string(), all_meta_tags.og);
+    context.set("primary".to_string(), all_meta_tags.primary);
+    context.set("twitter".to_string(), all_meta_tags.twitter);
 
     let content = engine.render_page(
         &context,
@@ -726,6 +722,7 @@ mod tests {
             language: "fr".to_string(),
             max_input_size: 100,
             syntax_theme: Some("monokai".to_string()),
+            ..HtmlConfig::default()
         };
 
         let body = "Test content";

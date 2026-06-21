@@ -8,7 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.9] — 2026-06-21
 
 ### Changed
-- **Dependencies** — Bumped `html-generator` to 0.0.6, `metadata-gen` to 0.0.3, and `sitemap-gen` to 0.0.2. The transitive chain now consumes `noyalib` (pure-Rust, zero unsafe) instead of `serde_yml`/`libyml`, dropping the unmaintained C-FFI YAML stack and resolving RUSTSEC-2025-0067 / RUSTSEC-2025-0068 for downstream consumers.
+- **Dependencies** — Bumped `html-generator` to 0.0.6, `metadata-gen` to 0.0.4, and `sitemap-gen` to 0.0.2. The transitive chain now consumes `noyalib` (pure-Rust, zero unsafe) instead of `serde_yml`/`libyml`, dropping the unmaintained C-FFI YAML stack and resolving RUSTSEC-2025-0067 / RUSTSEC-2025-0068 for downstream consumers. (Pinning `metadata-gen 0.0.4` rather than the on-registry `0.0.3` is required — the published `0.0.3` predates the noyalib migration; only `0.0.4` carries it.)
+- **`rss-gen` 0.0.3 → 0.0.5** — Picks up the upstream `dtt` 0.0.10 API fix (the private `DateTime::offset` field that was breaking Strict CI on `main`). Restores compilation under stable, nightly, MSRV (1.88.0), and the cross-platform matrix.
+- **`staticweaver` 0.0.1 → 0.0.2** — Tera-tier templating engine with template inheritance, expression language, 23 built-in filters, and SIMD HTML escape. Adapted `compiler::service` to the removed `PageOptions` type (write directly into `Context`).
+- **`HtmlConfig` migration** — Adapted call sites to the new fields added in `html-generator` 0.0.6 (`allow_unsafe_html`, `sanitize_html`, `generate_full_document`, `max_buffer_size`, `encoding`, `enable_math`, `enable_diagrams`) using struct-update syntax (`..HtmlConfig::default()`).
+- **`actions/checkout` v4 → v7** — Updated raw checkout references in the consolidated `ci.yml` (miri and semver jobs); other workflow callers run through the shared `pipelines` repo and inherit the bump centrally.
+
+### Absorbed (dependabot)
+- #52 `pulldown-cmark` 0.12 → 0.13 (already on branch)
+- #53 `staticweaver` 0.0.1 → 0.0.2
+- #56 `peaceiris/actions-gh-pages` 4.0.0 → 4.1.0 (no longer referenced after workflow consolidation)
+- #57 `codecov/codecov-action` 5 → 7 (no longer referenced after workflow consolidation)
+- #58 `actions/checkout` 6 → 7 (applied to ci.yml)
+
+### Closed as obsolete
+- #51 `metadata-gen` 0.0.2 → 0.0.3 — superseded; branch pins `metadata-gen 0.0.4` (the on-registry `0.0.3` predates the noyalib migration, so the bump goes straight to `0.0.4`).
+- #54 `vrd` 0.0.9 → 0.0.10 — `vrd` was removed entirely in 8bb3e2f as part of the dep-graph slim-down.
+- #55 `html-generator` 0.0.4 → 0.0.5 — branch already at 0.0.6.
 
 ## [0.0.8] — 2026-03-11
 
