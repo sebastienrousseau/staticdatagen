@@ -114,7 +114,7 @@ proptest = "1.6"                              # Property-based testing framework
 anyhow = "1.0"
 thiserror = "2.0"
 log = { version = "0.4", features = ["std"] }
-rlg = "0.0.8"
+rlg = "0.0.10"
 
 # CLI and configuration
 clap = "4.5"
