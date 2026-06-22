@@ -3059,15 +3059,6 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.39.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd58c6a1fc307e1092aa0bb23d204ca4d1f021764142cd0424dccc84d2d5d106"
-dependencies = [
- "memchr",
-]
-
-[[package]]
-name = "quick-xml"
 version = "0.40.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2474bd2e5029e7ccb6abb2ba48cf2383a333851dedf495901544281590c7da7f"
@@ -3656,7 +3647,7 @@ dependencies = [
  "metadata-gen",
  "proptest",
  "pulldown-cmark",
- "quick-xml 0.39.1",
+ "quick-xml 0.40.1",
  "rayon",
  "regex",
  "rss-gen",
