@@ -9,15 +9,14 @@
 
 use anyhow::{Context, Result};
 use html_generator::{generate_html, HtmlConfig};
-use log::{error, warn};
+use log::{error, info, warn};
 use metadata_gen::extract_and_prepare_metadata;
-use rlg::{log_format::LogFormat, log_level::LogLevel};
 use rss_gen::{
     data::{RssData, RssItem},
     generate_rss, macro_set_rss_data_fields,
 };
 use sitemap_gen::create_site_map_data;
-use staticweaver::{Context as TemplateContext, Engine, PageOptions};
+use staticweaver::{Context as TemplateContext, Engine};
 use std::{collections::HashMap, fs, path::Path, time::Duration};
 
 use crate::{
@@ -29,7 +28,7 @@ use crate::{
         tags::*,
     },
     macro_cleanup_directories, macro_create_directories,
-    macro_log_info, macro_metadata_option,
+    macro_metadata_option,
     models::data::{FileData, PageData},
     modules::{
         json::{security, sitemap, txt},
@@ -74,7 +73,7 @@ pub fn compile(
         NavigationGenerator::generate_navigation(&source_files);
 
     let mut global_tags_data: HashMap<String, Vec<PageData>> =
-        HashMap::new();
+        HashMap::with_capacity(source_files.len());
 
     // Initialize the templating engine with caching.
     let template_path_str =
@@ -100,16 +99,9 @@ pub fn compile(
         .collect();
 
     // Log compilation completion message.
-    let cli_description = format!(
-        "<Notice>: Successfully generated, compiled, and minified all HTML to the `{:?}` directory",
+    info!(
+        "Successfully generated, compiled, and minified all HTML to the `{}` directory",
         site_path.display()
-    );
-
-    macro_log_info!(
-        &LogLevel::INFO,
-        "compiler.rs",
-        &cli_description,
-        &LogFormat::CLF
     );
 
     // Write each compiled file to the output directory.
@@ -205,6 +197,7 @@ fn generate_html_content(body: &str) -> Result<String> {
         language: "en".to_string(),
         max_input_size: usize::MAX,
         syntax_theme: None,
+        ..HtmlConfig::default()
     };
 
     generate_html(body, &config)
@@ -435,24 +428,19 @@ fn process_file(
     // Generate HTML content
     let html_content = generate_html_content(&body)?;
 
-    // Setup template context (inline to handle meta_tags properly)
-    let mut page_options = PageOptions::new();
-    for (key, value) in metadata.iter() {
-        page_options.set(key.to_string(), value.to_string());
-    }
-
-    page_options.set("apple".to_string(), all_meta_tags.apple.clone());
-    page_options.set("content".to_string(), html_content);
-    page_options.set("microsoft".to_string(), all_meta_tags.ms.clone());
-    page_options.set("navigation".to_string(), navigation.to_owned());
-    page_options.set("opengraph".to_string(), all_meta_tags.og);
-    page_options.set("primary".to_string(), all_meta_tags.primary);
-    page_options.set("twitter".to_string(), all_meta_tags.twitter);
-
+    // Setup template context directly (staticweaver 0.0.2 removed PageOptions).
     let mut context = TemplateContext::new();
-    for (key, value) in page_options.elements.iter() {
+    for (key, value) in metadata.iter() {
         context.set(key.to_string(), value.to_string());
     }
+
+    context.set("apple".to_string(), all_meta_tags.apple.clone());
+    context.set("content".to_string(), html_content);
+    context.set("microsoft".to_string(), all_meta_tags.ms.clone());
+    context.set("navigation".to_string(), navigation.to_owned());
+    context.set("opengraph".to_string(), all_meta_tags.og);
+    context.set("primary".to_string(), all_meta_tags.primary);
+    context.set("twitter".to_string(), all_meta_tags.twitter);
 
     let content = engine.render_page(
         &context,
@@ -734,6 +722,7 @@ mod tests {
             language: "fr".to_string(),
             max_input_size: 100,
             syntax_theme: Some("monokai".to_string()),
+            ..HtmlConfig::default()
         };
 
         let body = "Test content";
@@ -1297,9 +1286,9 @@ Content here"#;
 
     #[test]
     fn test_compile_invalid_utf8_template_path() {
-        use std::ffi::OsStr;
         #[cfg(unix)]
         {
+            use std::ffi::OsStr;
             use std::os::unix::ffi::OsStrExt;
 
             let build_dir = tempfile::TempDir::new().unwrap();

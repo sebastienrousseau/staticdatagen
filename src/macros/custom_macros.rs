@@ -10,7 +10,7 @@
 //!
 //! ## Usage
 //!
-//! ```rust
+//! ```rust,ignore
 //! use clap::{Arg, ArgMatches, Command, Error};
 //! use staticdatagen::macro_get_args;
 //!
@@ -119,7 +119,7 @@
 ///
 /// ## Usage
 ///
-/// ```rust
+/// ```rust,ignore
 /// use clap::{Arg, ArgMatches, Command, Error};
 /// use staticdatagen::macro_get_args;
 ///

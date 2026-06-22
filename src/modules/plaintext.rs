@@ -168,8 +168,8 @@ pub fn generate_plain_text(
 
 /// Converts formatted content to plain text.
 fn convert_to_plain_text(content: &str) -> Result<String> {
-    let mut plain_text = String::new();
-    let mut buffer = String::new();
+    let mut plain_text = String::with_capacity(content.len());
+    let mut buffer = String::with_capacity(256);
     let mut last_was_text = false;
 
     let parser = Parser::new(content);
@@ -553,13 +553,86 @@ mod tests {
     }
 
     #[test]
-    fn test_trailing_buffer_flush() -> Result<()> {
-        // Trigger line 230: buffer has content at end
-        let input = "**bold text** at end";
+    fn test_list_and_break_events() -> Result<()> {
+        // Trigger list events and breaks
+        let input = "- Item 1\n- Item 2\n\nLine 1\\\nLine 2";
         let (content, ..) =
             generate_plain_text(input, "", "", "", "", "")?;
-        assert!(content.contains("bold text"));
-        assert!(content.contains("at end"));
+        assert!(content.contains("• Item 1"));
+        assert!(content.contains("• Item 2"));
+        assert!(content.contains("Line 1 Line 2"));
         Ok(())
+    }
+
+    #[test]
+    fn convert_headings_with_paragraphs_separates_sections(
+    ) -> Result<()> {
+        // Arrange - heading followed by paragraph text triggers the
+        // double-newline insertion path when buffer has accumulated content
+        // before a new heading starts
+        let input =
+            "# Heading 1\n\nSome text.\n\n# Heading 2\n\nMore text.";
+
+        // Act
+        let (content, ..) =
+            generate_plain_text(input, "t", "d", "a", "c", "k")?;
+
+        // Assert
+        assert!(
+            content.contains("Heading 1"),
+            "Should contain first heading, got: {}",
+            content
+        );
+        assert!(
+            content.contains("Some text."),
+            "Should contain paragraph text, got: {}",
+            content
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn generate_plain_text_returns_sanitized_metadata() {
+        let result = generate_plain_text(
+            "# Hello\nWorld",
+            "Title",
+            "Desc",
+            "Author",
+            "Creator",
+            "keywords",
+        );
+        assert!(result.is_ok());
+        let (content, title, desc, author, creator, kw) =
+            result.unwrap();
+        assert!(content.contains("Hello"));
+        assert_eq!(title, "Title");
+        assert_eq!(desc, "Desc");
+        assert_eq!(author, "Author");
+        assert_eq!(creator, "Creator");
+        assert_eq!(kw, "keywords");
+    }
+
+    #[test]
+    fn convert_to_plain_text_multiple_paragraphs_inserts_newlines() {
+        let md = "First paragraph\n\nSecond paragraph";
+        let result = convert_to_plain_text(md).unwrap();
+        assert!(result.contains("First paragraph"), "Got: {}", result);
+        assert!(result.contains("Second paragraph"), "Got: {}", result);
+    }
+
+    #[test]
+    fn convert_to_plain_text_inline_code_falls_through() {
+        // Inline code events hit the `_ => {}` catch-all arm
+        let md = "Use `code` here";
+        let result = convert_to_plain_text(md).unwrap();
+        // Code tokens are stripped by the catch-all; only text events emit
+        assert!(result.contains("Use"), "Got: {}", result);
+    }
+
+    #[test]
+    fn convert_to_plain_text_trailing_buffer_flushed() {
+        let md = "Just some text";
+        let result = convert_to_plain_text(md).unwrap();
+        assert!(!result.is_empty());
     }
 }

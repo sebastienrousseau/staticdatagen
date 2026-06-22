@@ -273,6 +273,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn test_validate_directory_unreadable() {
         use std::os::unix::fs::PermissionsExt;
 

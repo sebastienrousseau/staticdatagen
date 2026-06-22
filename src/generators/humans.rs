@@ -27,9 +27,9 @@
 //! assert!(humans_content.contains("John Doe"));
 //! ```
 
-use dtt::dtt_parse;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use time::macros::format_description;
 use url::Url;
 
 /// Maximum length for text fields
@@ -385,10 +385,20 @@ fn sanitize_date(date: &str) -> Result<String, HumansError> {
         return Ok(String::new());
     }
 
-    match dtt_parse!(date) {
-        Ok(_) => Ok(date.to_string()),
-        Err(_) => Err(HumansError::InvalidDate(date.to_string())),
+    // Accept YYYY-MM-DD or full ISO 8601 / RFC 3339
+    let ymd = format_description!("[year]-[month]-[day]");
+    if time::Date::parse(date, ymd).is_ok() {
+        return Ok(date.to_string());
     }
+    if time::OffsetDateTime::parse(
+        date,
+        &time::format_description::well_known::Rfc3339,
+    )
+    .is_ok()
+    {
+        return Ok(date.to_string());
+    }
+    Err(HumansError::InvalidDate(date.to_string()))
 }
 
 #[cfg(test)]

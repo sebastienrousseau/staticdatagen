@@ -261,7 +261,7 @@ fn remove_control_chars(input: &str) -> String {
 /// [`to_title_case`], and truncates to a max length (`MAX_DISPLAY_LEN`).
 fn sanitize_and_titlecase(file_stem: &str) -> String {
     // Remove `<` or `>` to prevent injection
-    let filtered = file_stem.replace('<', "").replace(['<', '>'], "");
+    let filtered = file_stem.replace(['<', '>'], "");
 
     // Split on multiple delimiters
     let parts: Vec<&str> = filtered
@@ -784,5 +784,41 @@ mod tests {
     #[test]
     fn test_is_malicious_path_root_only() {
         assert!(is_malicious_path("/"));
+    }
+
+    #[test]
+    fn test_remove_control_chars_comprehensive() {
+        let input = "a\nb\tc\0\u{FEFF}\x01";
+        let result = remove_control_chars(input);
+        assert_eq!(result, "a\nb\tc");
+    }
+
+    #[test]
+    fn test_sanitize_and_titlecase_truncation() {
+        let long_stem = "a".repeat(100);
+        let result = sanitize_and_titlecase(&long_stem);
+        assert!(result.ends_with('…'));
+        assert_eq!(result.chars().count(), MAX_DISPLAY_LEN + 1);
+    }
+
+    #[test]
+    fn is_malicious_path_absolute_returns_true() {
+        // Arrange & Act & Assert
+        assert!(is_malicious_path("/etc/passwd"));
+    }
+
+    #[test]
+    fn is_malicious_path_parent_dir_returns_true() {
+        assert!(is_malicious_path("../../etc/passwd"));
+    }
+
+    #[test]
+    fn is_malicious_path_current_dir_returns_true() {
+        assert!(is_malicious_path("./hidden"));
+    }
+
+    #[test]
+    fn is_malicious_path_safe_returns_false() {
+        assert!(!is_malicious_path("about.md"));
     }
 }

@@ -9,9 +9,9 @@
 //! contact and policy information.
 
 use crate::models::data::SecurityData;
-use dtt::datetime::DateTime;
 use log::debug;
 use std::collections::HashMap;
+use time::format_description::well_known::Rfc3339;
 
 /// Creates a SecurityData object from metadata.
 ///
@@ -183,15 +183,13 @@ fn sanitize_expires(date: &str) -> String {
     debug!("Attempting to parse date: {}", date);
 
     // First try parsing as RFC 3339/ISO 8601
-    let formatted = match DateTime::parse(date) {
-        Ok(dt) => dt.format_rfc3339().unwrap_or_default(),
+    let formatted = match time::OffsetDateTime::parse(date, &Rfc3339) {
+        Ok(dt) => dt.format(&Rfc3339).unwrap_or_default(),
         Err(_) => {
-            // If that fails, try converting from RFC 2822 format to ISO format
-            // RFC 2822: "Tue, 20 Feb 2024 15:15:15 GMT"
-            // Convert to: "2024-02-20T15:15:15Z"
+            // If that fails, try converting from RFC 2822
             if let Some(iso_date) = convert_rfc2822_to_iso8601(date) {
-                match DateTime::parse(&iso_date) {
-                    Ok(dt) => dt.format_rfc3339().unwrap_or_default(),
+                match time::OffsetDateTime::parse(&iso_date, &Rfc3339) {
+                    Ok(dt) => dt.format(&Rfc3339).unwrap_or_default(),
                     Err(_) => String::new(),
                 }
             } else {

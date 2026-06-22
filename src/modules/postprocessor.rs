@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use regex::{Captures, Regex};
+use std::sync::LazyLock;
+
+/// Pre-compiled regex for extracting alt attributes from img tags.
+///
+/// # Safety
+/// The pattern is a compile-time constant validated by tests.
+#[allow(clippy::unwrap_used)]
+static ALT_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"alt="([^"]*)""#).unwrap());
 
 /// Post-processes HTML content by performing various transformations.
 ///
@@ -37,43 +46,19 @@ pub fn post_process_html(
     class_regex: &Regex,
     img_regex: &Regex,
 ) -> crate::Result<String> {
-    let alt_regex = Regex::new(r#"alt="([^"]*)""#).map_err(|e| {
-        crate::Error::ContentProcessing {
-            message: format!("Failed to compile alt regex: {}", e),
-            source: None,
-        }
-    })?;
-    let _title_regex =
-        Regex::new(r#"title="([^"]*)""#).map_err(|e| {
-            crate::Error::ContentProcessing {
-                message: format!(
-                    "Failed to compile title regex: {}",
-                    e
-                ),
-                source: None,
-            }
-        })?;
-
-    let mut processed_html = String::new();
+    let mut processed_html = String::with_capacity(html.len());
 
     for line in html.lines() {
         let mut processed_line = line.to_string();
         let mut modified_line = processed_line.clone();
 
-        for class_captures in class_regex.captures_iter(&processed_line)
-        {
-            let class_attribute = match class_captures.get(1) {
-                Some(m) => m.as_str(),
-                None => continue,
-            };
-            modified_line = class_regex
-                .replace(
-                    &modified_line,
-                    format!("<p class=\"{}\">", class_attribute)
-                        .as_str(),
-                )
-                .to_string();
-        }
+        modified_line = class_regex
+            .replace_all(&modified_line, |caps: &Captures<'_>| {
+                let class_attribute =
+                    caps.get(1).map_or("", |m| m.as_str());
+                format!("<p class=\"{}\">", class_attribute)
+            })
+            .to_string();
 
         if let Some(class_value) = img_regex
             .captures(&processed_line)
@@ -94,7 +79,7 @@ pub fn post_process_html(
 
                 let mut new_img_tag = img_tag_start.to_string();
 
-                let alt_value = alt_regex
+                let alt_value = ALT_REGEX
                     .captures(img_tag_start)
                     .map_or(String::new(), |c| {
                         c.get(1).map_or(String::new(), |m| {
@@ -443,13 +428,42 @@ mod tests {
     }
 
     #[test]
-    fn test_post_process_html_only_whitespace_lines() {
+    fn test_post_process_html_multiple_classes() {
+        let class_regex =
+            Regex::new(r#"<p.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        // Multiple matches on one line
+        let html = r#"<p.class="a">One</p> <p.class="b">Two</p>"#;
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
+        assert!(result.contains("class=\"a\""));
+        assert!(result.contains("class=\"b\""));
+    }
+
+    #[test]
+    fn post_process_html_multiline_processes_all_lines() {
         let class_regex =
             Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
         let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
 
-        let html = "   \n  \n   ";
+        let html = "<p>Line 1</p>\n<p>Line 2</p>\n<img src=\"a.png\" alt=\"photo\">";
+        let result =
+            post_process_html(html, &class_regex, &img_regex).unwrap();
+        assert!(result.contains("Line 1"));
+        assert!(result.contains("Line 2"));
+        assert!(result.contains("alt=\"photo\""));
+    }
+
+    #[test]
+    fn post_process_html_compiles_internal_regexes() {
+        let class_regex =
+            Regex::new(r#"<p\.class=\"([^\"]*)\""#).unwrap();
+        let img_regex = Regex::new(r#"(<img[^>]*)(>)"#).unwrap();
+
+        let html = "<p>Simple paragraph</p>";
         let result = post_process_html(html, &class_regex, &img_regex);
         assert!(result.is_ok());
+        assert_eq!(result.unwrap().trim(), "<p>Simple paragraph</p>");
     }
 }

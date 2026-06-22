@@ -1,3 +1,6 @@
+// Copyright © 2025-2026 Static Data Gen. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 //! This build script checks if the current Rustc version is at least the
 //! minimum required version.
 //! If the current Rustc version is less than the minimum required version,

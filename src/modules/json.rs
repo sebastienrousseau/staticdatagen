@@ -1031,7 +1031,11 @@ mod tests {
         let result = sitemap(options, &temp_dir);
         assert!(result.is_ok());
         let content = result.unwrap();
-        assert!(content.contains("a/b/c/index.html"));
+        // Path separators differ across platforms
+        assert!(
+            content.contains("a/b/c/index.html")
+                || content.contains("a\\b\\c\\index.html")
+        );
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
@@ -1055,5 +1059,54 @@ mod tests {
         // Should have XML header but no URL entries
         assert!(content.contains("<?xml version"));
         assert!(!content.contains("<loc>"));
+    }
+
+    #[test]
+    fn news_sitemap_with_empty_fields_generates_xml() {
+        // Arrange - trigger the news_sitemap function with empty NewsData
+        // to exercise the add_news_sitemap_entry error/success path
+        let options = NewsData {
+            news_genres: String::new(),
+            news_image_loc: String::new(),
+            news_keywords: String::new(),
+            news_language: String::new(),
+            news_loc: String::new(),
+            news_publication_date: String::new(),
+            news_publication_name: String::new(),
+            news_title: String::new(),
+        };
+
+        // Act
+        let result = news_sitemap(options);
+
+        // Assert
+        assert!(result.contains("<?xml version"));
+    }
+
+    #[test]
+    fn sitemap_with_nested_dirs_finds_index_html() {
+        use sitemap_gen::SiteMapData;
+        use url::Url;
+
+        // Arrange
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let sub_dir = temp_dir.path().join("about");
+        fs::create_dir_all(&sub_dir).unwrap();
+        fs::write(sub_dir.join("index.html"), "<html></html>").unwrap();
+
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Weekly,
+            lastmod: "2024-06-01".to_string(),
+        };
+
+        // Act
+        let result = sitemap(options, temp_dir.path());
+
+        // Assert
+        assert!(result.is_ok());
+        let content = result.unwrap();
+        assert!(content.contains("<loc>"));
+        assert!(content.contains("example.com"));
     }
 }

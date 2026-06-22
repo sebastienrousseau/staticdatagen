@@ -133,24 +133,22 @@ pub fn write_files_to_build_directory(
 fn get_processed_file_name(original_name: &str) -> String {
     debug!("Getting processed file name for '{}'", original_name);
     let path = Path::new(original_name);
-    match path.extension().and_then(|s| s.to_str()) {
-        Some(ext)
-            if ["js", "json", "md", "toml", "txt", "xml"]
-                .contains(&ext) =>
-        {
+    let extension = path.extension().and_then(|s| s.to_str());
+
+    if let Some(ext) = extension {
+        if ["js", "json", "md", "toml", "txt", "xml"].contains(&ext) {
             let processed = path
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or(original_name)
                 .to_string();
             debug!("Processed file name: '{}'", processed);
-            processed
-        }
-        _ => {
-            debug!("No processing needed for '{}'", original_name);
-            original_name.to_string()
+            return processed;
         }
     }
+
+    debug!("No processing needed for '{}'", original_name);
+    original_name.to_string()
 }
 
 /// Writes content to a file with optional HTML minification.
@@ -299,18 +297,34 @@ fn get_file_content<'a>(
     file: &'a FileData,
     file_name: &str,
 ) -> &'a str {
-    match file_name {
-        "CNAME" => &file.cname,
-        "humans.txt" => &file.human,
-        "index.html" => &file.content,
-        "manifest.json" => &file.manifest,
-        "robots.txt" => &file.txt,
-        "rss.xml" => &file.rss,
-        "security.txt" => &file.security,
-        "sitemap.xml" => &file.sitemap,
-        "news-sitemap.xml" => &file.sitemap_news,
-        _ => "",
+    if file_name == "CNAME" {
+        return &file.cname;
     }
+    if file_name == "humans.txt" {
+        return &file.human;
+    }
+    if file_name == "index.html" {
+        return &file.content;
+    }
+    if file_name == "manifest.json" {
+        return &file.manifest;
+    }
+    if file_name == "robots.txt" {
+        return &file.txt;
+    }
+    if file_name == "rss.xml" {
+        return &file.rss;
+    }
+    if file_name == "security.txt" {
+        return &file.security;
+    }
+    if file_name == "sitemap.xml" {
+        return &file.sitemap;
+    }
+    if file_name == "news-sitemap.xml" {
+        return &file.sitemap_news;
+    }
+    ""
 }
 
 /// Writes index files (like `CNAME`, `index.html`, `robots.txt`, etc.) to the build directory.
@@ -966,5 +980,263 @@ mod tests {
 
         assert!(result.is_ok());
         assert!(dir_name.exists());
+    }
+
+    #[test]
+    fn test_get_processed_file_name_edge_cases() {
+        // No extension
+        assert_eq!(get_processed_file_name("noext"), "noext");
+        // Only extension
+        assert_eq!(get_processed_file_name(".txt"), ".txt");
+        // Multiple dots
+        assert_eq!(get_processed_file_name("a.b.txt"), "a.b");
+        // Path with directories
+        assert_eq!(get_processed_file_name("dir/file.md"), "file");
+    }
+
+    #[test]
+    fn test_write_file_error_path_is_dir() {
+        let tmp = TempDir::new().unwrap();
+        let dir = tmp.path().join("dir");
+        fs::create_dir(&dir).unwrap();
+        // Trying to write to a directory path should fail
+        let result = write_file(tmp.path(), "dir", "content", false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_minify_file_error_read_fails() {
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("missing.html");
+        let result = minify_file(&path);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_copy_template_file_dest_no_permission() {
+        let tmp = TempDir::new().unwrap();
+        let src = tmp.path().join("src.js");
+        fs::write(&src, "data").unwrap();
+        let dest_dir = tmp.path().join("dest");
+        fs::create_dir(&dest_dir).unwrap();
+
+        // Make destination directory read-only
+        let mut perms = fs::metadata(&dest_dir).unwrap().permissions();
+        perms.set_readonly(true);
+        fs::set_permissions(&dest_dir, perms).unwrap();
+
+        let _ = copy_template_file(tmp.path(), &dest_dir, "src.js");
+        // We don't assert error here because on some environments (like root/CI) it might succeed anyway.
+        // The goal is to exercise the path and the error handling logic if it triggers.
+
+        // Cleanup permissions so TempDir can delete itself
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mut perms =
+                fs::metadata(&dest_dir).unwrap().permissions();
+            perms.set_mode(0o755);
+            fs::set_permissions(&dest_dir, perms).unwrap();
+        }
+        #[cfg(not(unix))]
+        {
+            let mut perms =
+                fs::metadata(&dest_dir).unwrap().permissions();
+            #[allow(clippy::permissions_set_readonly_false)]
+            perms.set_readonly(false);
+            fs::set_permissions(&dest_dir, perms).unwrap();
+        }
+    }
+
+    #[test]
+    fn write_files_to_build_directory_index_file_writes_all_index_files(
+    ) {
+        // Arrange
+        let tmp = TempDir::new().unwrap();
+        let build_dir = tmp.path().join("build");
+        fs::create_dir_all(&build_dir).unwrap();
+        let template_dir = tmp.path().join("templates");
+        fs::create_dir_all(&template_dir).unwrap();
+        // Create template auxiliary files so copy doesn't fail
+        fs::write(template_dir.join("main.js"), "// js").unwrap();
+        fs::write(template_dir.join("sw.js"), "// sw").unwrap();
+
+        let file = FileData {
+            name: "index.md".to_string(),
+            content: "<html><body>Hello</body></html>".to_string(),
+            cname: "example.com".to_string(),
+            ..Default::default()
+        };
+
+        // Act
+        let result = write_files_to_build_directory(
+            &build_dir,
+            &file,
+            &template_dir,
+        );
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Should write index files: {:?}",
+            result.err()
+        );
+        assert!(build_dir.join("CNAME").exists());
+        assert!(build_dir.join("index.html").exists());
+        assert!(build_dir.join("robots.txt").exists());
+        assert!(build_dir.join("main.js").exists());
+    }
+
+    #[test]
+    fn write_files_to_build_directory_content_file_creates_subdir() {
+        // Arrange
+        let tmp = TempDir::new().unwrap();
+        let build_dir = tmp.path().join("build");
+        fs::create_dir_all(&build_dir).unwrap();
+        let template_dir = tmp.path().join("templates");
+        fs::create_dir_all(&template_dir).unwrap();
+
+        let file = FileData {
+            name: "about.md".to_string(),
+            content: "<html><body>About</body></html>".to_string(),
+            ..Default::default()
+        };
+
+        // Act
+        let result = write_files_to_build_directory(
+            &build_dir,
+            &file,
+            &template_dir,
+        );
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Should write content files: {:?}",
+            result.err()
+        );
+        let about_dir = build_dir.join("about");
+        assert!(about_dir.exists());
+        assert!(about_dir.join("index.html").exists());
+    }
+
+    #[test]
+    fn write_files_to_build_directory_index_writes_and_copies_aux() {
+        let build_dir = TempDir::new().unwrap();
+        let template_dir = TempDir::new().unwrap();
+
+        // Create auxiliary template files
+        fs::write(template_dir.path().join("main.js"), "// main")
+            .unwrap();
+        fs::write(template_dir.path().join("sw.js"), "// sw").unwrap();
+
+        let file = FileData {
+            name: "index.md".to_string(),
+            content: "<html><body>Hello</body></html>".to_string(),
+            rss: "<rss></rss>".to_string(),
+            sitemap: "<sitemap/>".to_string(),
+            sitemap_news: "<news/>".to_string(),
+            txt: "robots".to_string(),
+            cname: "example.com".to_string(),
+            human: "humans".to_string(),
+            manifest: "{}".to_string(),
+            security: "security".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_files_to_build_directory(
+            build_dir.path(),
+            &file,
+            template_dir.path(),
+        );
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(build_dir.path().join("index.html").exists());
+        assert!(build_dir.path().join("CNAME").exists());
+        assert!(build_dir.path().join("main.js").exists());
+    }
+
+    #[test]
+    fn write_index_files_writes_all_known_files() {
+        let build_dir = TempDir::new().unwrap();
+        let file = FileData {
+            content: "<p>hello</p>".to_string(),
+            rss: "<rss/>".to_string(),
+            txt: "robots".to_string(),
+            cname: "example.com".to_string(),
+            human: "humans".to_string(),
+            manifest: "{}".to_string(),
+            sitemap: "<sitemap/>".to_string(),
+            sitemap_news: "<news/>".to_string(),
+            security: "security".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_index_files(build_dir.path(), &file, false);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(build_dir.path().join("index.html").exists());
+        assert!(build_dir.path().join("robots.txt").exists());
+    }
+
+    #[test]
+    fn copy_auxiliary_files_copies_template_files() {
+        let template_dir = TempDir::new().unwrap();
+        let build_dir = TempDir::new().unwrap();
+
+        fs::write(template_dir.path().join("main.js"), "// main")
+            .unwrap();
+        fs::write(template_dir.path().join("sw.js"), "// sw").unwrap();
+
+        let result =
+            copy_auxiliary_files(template_dir.path(), build_dir.path());
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(build_dir.path().join("main.js").exists());
+        assert!(build_dir.path().join("sw.js").exists());
+    }
+
+    #[test]
+    fn write_content_files_creates_dir_and_writes() {
+        let base_dir = TempDir::new().unwrap();
+        let content_dir = base_dir.path().join("about");
+        let file = FileData {
+            content: "<p>about</p>".to_string(),
+            manifest: "{}".to_string(),
+            txt: "robots".to_string(),
+            rss: "<rss/>".to_string(),
+            sitemap: "<sitemap/>".to_string(),
+            sitemap_news: "".to_string(),
+            security: "sec".to_string(),
+            cname: "".to_string(),
+            human: "".to_string(),
+            ..Default::default()
+        };
+
+        let result = write_content_files(&content_dir, &file, false);
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(content_dir.join("index.html").exists());
+    }
+
+    #[test]
+    fn print_section_headers_reads_directory() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("file.txt"), "content").unwrap();
+        fs::create_dir(dir.path().join("subdir")).unwrap();
+
+        let result = print_section_headers(dir.path(), Instant::now());
+        assert!(result.is_ok(), "{:?}", result.err());
+    }
+
+    #[test]
+    fn copy_template_file_copies_single_file() {
+        let src_dir = TempDir::new().unwrap();
+        let dest_dir = TempDir::new().unwrap();
+        fs::write(src_dir.path().join("test.js"), "// test").unwrap();
+
+        let result = copy_template_file(
+            src_dir.path(),
+            dest_dir.path(),
+            "test.js",
+        );
+        assert!(result.is_ok(), "{:?}", result.err());
+        assert!(dest_dir.path().join("test.js").exists());
     }
 }

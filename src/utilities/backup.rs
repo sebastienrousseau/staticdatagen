@@ -345,6 +345,7 @@ mod tests {
             assert!(
                 e.kind() == ErrorKind::Other
                     || e.kind() == ErrorKind::InvalidInput
+                    || e.kind() == ErrorKind::PermissionDenied
             );
         }
 

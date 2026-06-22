@@ -1,12 +1,32 @@
-*.DS_Store
-*.profraw
-*.log
+# OS
+.DS_Store
+Icon?
+
+# IDE
 /.vscode/
+
+# Rust build
+/target/
+*.profraw
+
+# Build artifacts
+/build/
 /output/
 /public/
-/target/
-build
-Icon?
-src/.DS_Store
+
+# Generated reports (regenerable via CI)
+cobertura.xml
 tarpaulin-report.html
-Cargo.lock
+tarpaulin-report.json
+*.lcov
+
+# Generated manifests (regenerable at release time)
+manifest.json
+release_manifest_*.json
+staticdatagen.cdx.json
+
+# Generated example output (regenerable via cargo run --example)
+/examples/site/
+
+# Logs
+*.log

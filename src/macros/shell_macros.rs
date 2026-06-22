@@ -24,7 +24,7 @@
 //! - Configurable shell interpreter
 //!
 //! # Examples
-//! ```
+//! ```no_run
 //! use staticdatagen::macro_execute_and_log;
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let cmd = "ls -l";
@@ -60,14 +60,6 @@ pub enum CommandError {
     /// The command execution failed
     #[error("Command execution failed: {0}")]
     ExecutionFailed(String),
-
-    /// The shell interpreter was not found
-    #[error("Shell interpreter not found: {0}")]
-    InterpreterNotFound(String),
-
-    /// The command output could not be captured
-    #[error("Failed to capture command output: {0}")]
-    OutputCaptureFailed(String),
 }
 
 /// Encapsulates command execution functionality with safety checks.
@@ -243,6 +235,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn test_command_executor_with_bash() {
         let mut executor = CommandExecutor::new(Some("bash")).unwrap();
         let _ = executor.command("echo $BASH_VERSION");
@@ -360,17 +353,26 @@ mod tests {
             format!("{}", err),
             "Command execution failed: test"
         );
+    }
 
-        let err = CommandError::InterpreterNotFound("zsh".to_string());
-        assert_eq!(
-            format!("{}", err),
-            "Shell interpreter not found: zsh"
-        );
+    #[test]
+    fn command_executor_new_with_custom_interpreter() {
+        // Arrange & Act
+        let executor = CommandExecutor::new(Some("sh")).unwrap();
 
-        let err = CommandError::OutputCaptureFailed("err".to_string());
-        assert_eq!(
-            format!("{}", err),
-            "Failed to capture command output: err"
-        );
+        // Assert
+        assert!(executor.command_str.is_empty());
+    }
+
+    #[test]
+    fn command_executor_command_sets_command_string() {
+        // Arrange
+        let mut executor = CommandExecutor::new(None::<&str>).unwrap();
+
+        // Act
+        let _ = executor.command("echo hello");
+
+        // Assert
+        assert_eq!(executor.command_str, "echo hello");
     }
 }
