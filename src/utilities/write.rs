@@ -387,6 +387,17 @@ fn copy_auxiliary_files(
         build_dir_path.display()
     );
     for file_name in &OTHER_FILES {
+        // Issue #68: make the copy best-effort. Most sites don't ship
+        // a service worker today, so missing `main.js` / `sw.js` is
+        // expected — don't abort the whole build over it.
+        let src = template_path.join(file_name);
+        if !src.exists() {
+            debug!(
+                "auxiliary file '{}' not present in templates — skipping",
+                file_name
+            );
+            continue;
+        }
         debug!("Copying auxiliary file: '{}'", file_name);
         copy_template_file(template_path, build_dir_path, file_name)
             .with_context(|| {
@@ -850,14 +861,26 @@ mod tests {
 
     #[test]
     fn test_copy_auxiliary_files_missing() {
+        // Regression for sebastienrousseau/staticdatagen#68.
+        // Before the fix, copy_auxiliary_files aborted with `os error 2`
+        // when `main.js` or `sw.js` were absent from templates/. After
+        // the fix, missing auxiliary files are skipped silently (debug
+        // log) and the build continues.
         let template_dir = TempDir::new().unwrap();
         let build_dir = TempDir::new().unwrap();
 
-        // Don't create the files - should fail
+        // Templates dir is empty — no main.js, no sw.js.
         let result =
             copy_auxiliary_files(template_dir.path(), build_dir.path());
 
-        assert!(result.is_err());
+        assert!(
+            result.is_ok(),
+            "copy_auxiliary_files should succeed when files are absent: {:?}",
+            result.err()
+        );
+        // And nothing should have been copied.
+        assert!(!build_dir.path().join("main.js").exists());
+        assert!(!build_dir.path().join("sw.js").exists());
     }
 
     #[test]
