@@ -137,11 +137,13 @@ fn get_processed_file_name(original_name: &str) -> String {
 
     if let Some(ext) = extension {
         if ["js", "json", "md", "toml", "txt", "xml"].contains(&ext) {
-            let processed = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or(original_name)
-                .to_string();
+            // Issue #70: preserve parent directories (per-locale
+            // subdirs like `fr/`) when stripping the extension —
+            // `path.file_stem()` would drop them and the locale
+            // prefix would never reach the output URL. Using
+            // `with_extension("")` keeps the relative path intact.
+            let processed =
+                path.with_extension("").to_string_lossy().to_string();
             debug!("Processed file name: '{}'", processed);
             return processed;
         }
@@ -1007,14 +1009,21 @@ mod tests {
 
     #[test]
     fn test_get_processed_file_name_edge_cases() {
-        // No extension
+        // No extension — unchanged.
         assert_eq!(get_processed_file_name("noext"), "noext");
-        // Only extension
+        // Only extension (no stem) — unchanged.
         assert_eq!(get_processed_file_name(".txt"), ".txt");
-        // Multiple dots
+        // Multiple dots — unchanged (one extension stripped).
         assert_eq!(get_processed_file_name("a.b.txt"), "a.b");
-        // Path with directories
-        assert_eq!(get_processed_file_name("dir/file.md"), "file");
+        // Issue #70: parent directory is now PRESERVED when an
+        // extension is stripped, so per-locale subdirs like `fr/`
+        // survive into the output URL. Pre-#70 this returned just
+        // "file"; post-#70 it returns "dir/file".
+        assert_eq!(get_processed_file_name("dir/file.md"), "dir/file");
+        assert_eq!(
+            get_processed_file_name("fr/_posts/article.md"),
+            "fr/_posts/article"
+        );
     }
 
     #[test]

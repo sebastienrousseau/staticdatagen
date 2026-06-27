@@ -133,6 +133,7 @@ url = "2.5"
 langweave = { version = "0.0.2", optional = true }
 metadata-gen = "0.0.4"
 regex = "1.11.1"
+walkdir = "2"                               # Recursive directory walk for nested-locale `_posts/<lang>/` trees
 rss-gen = "0.0.5"
 sitemap-gen = "0.0.2"
 staticweaver = "0.0.2"
