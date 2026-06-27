@@ -126,7 +126,7 @@ pulldown-cmark = "0.13"
 html-generator = "0.0.6"
 
 # Web and networking
-http-handle = { version = "0.0.4", optional = true }
+http-handle = { version = "0.0.5", optional = true }
 url = "2.5"
 
 # Utilities
@@ -140,7 +140,7 @@ time = { version = "0.3", features = ["formatting", "parsing"] }
 uuid = { version = "1.11", features = ["v4"] }
 
 # XML processing
-quick-xml = "0.39"
+quick-xml = "0.40"
 xml-rs = "1.0"
 
 # CNAME dependencies
