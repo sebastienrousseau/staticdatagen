@@ -98,12 +98,6 @@ pub fn compile(
         })
         .collect();
 
-    // Log compilation completion message.
-    info!(
-        "Successfully generated, compiled, and minified all HTML to the `{}` directory",
-        site_path.display()
-    );
-
     // Write each compiled file to the output directory.
     for file in &compiled_files? {
         write_files_to_build_directory(
@@ -122,6 +116,15 @@ pub fn compile(
         .context("Failed to clean up site directory")?;
     fs::rename(build_dir_path, site_path)
         .context("Failed to finalize build directory")?;
+
+    // Issue #71: only log success AFTER every fallible step (write,
+    // tags HTML, cleanup, rename) has completed. Downstream consumers
+    // (ssg, CI tooling) parse this line for build state, so it must
+    // never fire on a build that later errors out.
+    info!(
+        "Successfully generated, compiled, and minified all HTML to the `{}` directory",
+        site_path.display()
+    );
 
     Ok(())
 }
