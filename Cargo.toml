@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.9"                          # Current version of the crate
+version = "0.0.10"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.88.0"                    # Minimum supported Rust version
@@ -102,8 +102,8 @@ version_check = "0.9.5"                       # Ensures that a compatible Rust v
 [dev-dependencies]
 # Dependencies required for testing and development.
 criterion = "0.8.2"                           # Benchmarking library to test performance
-proptest = "1.6"                              # Property-based testing framework
-tempfile = "3"                                # Temporary file/directory creation for tests
+proptest = "1.11"                             # Property-based testing framework
+tempfile = "3.27"                             # Temporary file/directory creation for tests
 
 # -----------------------------------------------------------------------------
 # Dependencies
@@ -126,26 +126,27 @@ pulldown-cmark = "0.13"
 html-generator = "0.0.6"
 
 # Web and networking
-http-handle = { version = "0.0.4", optional = true }
+http-handle = { version = "0.0.5", optional = true }
 url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.2", optional = true }
 metadata-gen = "0.0.4"
-regex = "1.11.1"
-rss-gen = "0.0.5"
+regex = "1.12"
+walkdir = "2.5"                             # Recursive directory walk for nested-locale `_posts/<lang>/` trees
+rss-gen = "0.0.6"
 sitemap-gen = "0.0.2"
-staticweaver = "0.0.2"
+staticweaver = "0.0.3"
 time = { version = "0.3", features = ["formatting", "parsing"] }
-uuid = { version = "1.11", features = ["v4"] }
+uuid = { version = "1.23", features = ["v4"] }
 
 # XML processing
-quick-xml = "0.39"
+quick-xml = "0.40"
 xml-rs = "1.0"
 
 # CNAME dependencies
-idna = "1.0.3"
-rayon = "1.10.0"
+idna = "1.1"
+rayon = "1.12"
 
 # -----------------------------------------------------------------------------
 # Criterion Benchmark

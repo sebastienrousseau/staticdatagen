@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10] — 2026-06-28
+
+### Fixed
+- **#67 — Empty `layout:` key crashed `render_page`.** Frontmatter missing or empty `layout:` now falls back to `"page"` instead of passing `""` to staticweaver (which aborted with `invalid template or partial name: ""`). Unblocks every page authored without a layout key, including the ≈ 1,137 of 2,371 affected files on multilingual Jekyll-style trees. (`src/compiler/service.rs`)
+- **#68 — `copy_auxiliary_files` aborted when `main.js` / `sw.js` were absent.** The copy is now best-effort: missing auxiliary files are logged at `debug` and skipped instead of failing the build with opaque `os error 2`. Sites that don't ship a service worker can build cleanly. (`src/utilities/write.rs`)
+- **#69 — `write_tags_html_to_file` aborted builds without a tags template.** Skips the substitution gracefully when `tags/index.html` is absent. (`src/generators/tags.rs`)
+- **#70 — `add()` skipped subdirectories.** Switched to `walkdir::WalkDir` so multilingual `_posts/<lang>/` trees and any nested locale layout are processed. Per-locale subdirs are preserved through `get_processed_file_name` via `with_extension("")` so output URLs keep their `fr/`, `bn/`, etc. prefixes. (`src/utilities/file.rs`, `src/utilities/write.rs`)
+- **#71 — Misleading "Successfully generated…" log fired before compile errors propagated.** The success line now fires *after* the final `fs::rename`, so log scrapers (`ssg`, CI tooling) can rely on it as a build-state signal. (`src/compiler/service.rs`)
+
+### Security
+- **GHSA-cq8v-f236-94qc / RUSTSEC-2026-0097** — Bumped `rand` to 0.8.6, resolving the Stacked-Borrows unsoundness in `ThreadRng` reachable through custom loggers that call `rand::rng()` while reseeding. Closes Dependabot alerts #1 and #2.
+
+### Changed
+- **Dependencies** — Bumped to current latest minors:
+  - `staticweaver` 0.0.2 → 0.0.3
+  - `rss-gen` 0.0.5 → 0.0.6
+  - `regex` 1.11 → 1.12
+  - `walkdir` 2 → 2.5
+  - `uuid` 1.11 → 1.23
+  - `idna` 1.0 → 1.1
+  - `rayon` 1.10 → 1.12
+  - `proptest` (dev) 1.6 → 1.11
+  - `tempfile` (dev) 3 → 3.27
+
 ## [0.0.9] — 2026-06-21
 
 ### Changed

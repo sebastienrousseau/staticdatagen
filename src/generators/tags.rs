@@ -303,6 +303,19 @@ pub fn write_tags_html_to_file(
 ) -> io::Result<()> {
     let file_path = output_path.join("tags/index.html");
 
+    // Issue #69: a missing tags template means the user hasn't asked
+    // for a tags page — silently skip rather than aborting the whole
+    // build with an opaque `os error 2` after every other artefact is
+    // already written. Users opt in by checking `tags.md` (or
+    // `tags/index.md`) into content/.
+    if !file_path.exists() {
+        debug!(
+            "tags template '{}' not present — skipping tags HTML write",
+            file_path.display()
+        );
+        return Ok(());
+    }
+
     let mut file = fs::File::open(&file_path)?;
     let mut base_html = String::new();
     // Use `_ = ...` to ignore number-of-bytes result
@@ -608,10 +621,20 @@ mod tests {
 
     #[test]
     fn test_write_tags_html_to_file_missing_file() {
+        // Regression for sebastienrousseau/staticdatagen#69.
+        // Before the fix, missing `tags/index.html` aborted the build
+        // with `os error 2`. After the fix, it's a silent no-op
+        // (debug log) so sites without a tags page build cleanly.
         let temp_dir = tempfile::TempDir::new().unwrap();
         let result =
             write_tags_html_to_file("<p>Tags</p>", temp_dir.path());
-        assert!(result.is_err());
+        assert!(
+            result.is_ok(),
+            "missing tags page should now be a no-op: {:?}",
+            result.err()
+        );
+        // And nothing should have been created.
+        assert!(!temp_dir.path().join("tags/index.html").exists());
     }
 
     #[test]

@@ -8,16 +8,52 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# No caller-level `permissions:` block. A workflow-level block would
+# cap the ceiling for every reusable workflow we call, and `docs.yml`'s
+# `deploy` job requests `pages: write` + `id-token: write` (for GitHub
+# Pages OIDC). A restrictive ceiling here fails the workflow at
+# startup with "The nested job 'deploy' is requesting 'pages: write,
+# id-token: write', but is only allowed 'pages: none, id-token: none'".
+# Each reusable workflow declares its own job-level permissions, which
+# is the correct boundary.
+
 jobs:
   # ── Primary: stable, all checks, cross-platform ──────────────────
+  # `run-audit: false` because the reusable workflow's audit job only
+  # grants `contents: read`, leaving `rustsec/audit-check` unable to
+  # POST its check-run summary ("Resource not accessible by
+  # integration"). The local `audit` job below runs the same action
+  # with the `checks: write` permission it actually needs.
   ci:
     uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
     with:
       rust-version: 'stable'
+      run-audit: false
       run-coverage: true
       run-cross-platform: true
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ── Audit: run inline with `checks: write` (the upstream reusable
+  # workflow only grants `contents: read`, which makes the
+  # `rustsec/audit-check` action fail when it tries to POST a
+  # check-run summary). Reads `.cargo/audit.toml` for the ignore list.
+  audit:
+    name: Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          show-progress: false
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   # ── MSRV: minimum supported Rust version ─────────────────────────
   msrv:

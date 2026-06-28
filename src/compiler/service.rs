@@ -98,12 +98,6 @@ pub fn compile(
         })
         .collect();
 
-    // Log compilation completion message.
-    info!(
-        "Successfully generated, compiled, and minified all HTML to the `{}` directory",
-        site_path.display()
-    );
-
     // Write each compiled file to the output directory.
     for file in &compiled_files? {
         write_files_to_build_directory(
@@ -122,6 +116,15 @@ pub fn compile(
         .context("Failed to clean up site directory")?;
     fs::rename(build_dir_path, site_path)
         .context("Failed to finalize build directory")?;
+
+    // Issue #71: only log success AFTER every fallible step (write,
+    // tags HTML, cleanup, rename) has completed. Downstream consumers
+    // (ssg, CI tooling) parse this line for build state, so it must
+    // never fire on a build that later errors out.
+    info!(
+        "Successfully generated, compiled, and minified all HTML to the `{}` directory",
+        site_path.display()
+    );
 
     Ok(())
 }
@@ -442,10 +445,15 @@ fn process_file(
     context.set("primary".to_string(), all_meta_tags.primary);
     context.set("twitter".to_string(), all_meta_tags.twitter);
 
-    let content = engine.render_page(
-        &context,
-        metadata.get("layout").cloned().unwrap_or_default().as_str(),
-    )?;
+    // Default to `page` when frontmatter omits `layout:` (or sets it
+    // to an empty/whitespace value); staticweaver otherwise aborts with
+    // `invalid template or partial name: ""`. Issue #67.
+    let layout = metadata
+        .get("layout")
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .unwrap_or("page");
+    let content = engine.render_page(&context, layout)?;
 
     // Generate RSS, manifest and auxiliary files
     let rss_content = generate_rss_content(&metadata)?;
@@ -1370,5 +1378,53 @@ Content here"#;
         let content = generate_manifest_content(&metadata);
         // Should produce a valid manifest or be empty if ManifestConfig fails
         let _ = content; // exercised the code path
+    }
+
+    #[test]
+    fn test_compile_defaults_layout_when_missing() {
+        // Regression for sebastienrousseau/staticdatagen#67.
+        // Frontmatter without a `layout:` key used to pass "" to
+        // staticweaver, which then errored with "invalid template or
+        // partial name". After the fix, "page" is used as the default.
+        let build_dir = tempfile::TempDir::new().unwrap();
+        let content_dir = tempfile::TempDir::new().unwrap();
+        let site_dir = tempfile::TempDir::new().unwrap();
+        let template_dir = tempfile::TempDir::new().unwrap();
+
+        // Frontmatter intentionally omits `layout:`.
+        fs::write(
+            content_dir.path().join("index.md"),
+            "---\ntitle: Home\npermalink: https://example.com\ndescription: Home page\nauthor: Test\nchangefreq: weekly\n---\n# Welcome\n",
+        )
+        .unwrap();
+
+        fs::write(
+            template_dir.path().join("page.html"),
+            "<html><body>{{content}}</body></html>",
+        )
+        .unwrap();
+        fs::write(template_dir.path().join("main.js"), "// main")
+            .unwrap();
+        fs::write(template_dir.path().join("sw.js"), "// sw").unwrap();
+
+        fs::create_dir_all(build_dir.path().join("tags")).unwrap();
+        fs::write(
+            build_dir.path().join("tags/index.html"),
+            "<html><body>[[content]]</body></html>",
+        )
+        .unwrap();
+
+        let result = compile(
+            build_dir.path(),
+            content_dir.path(),
+            site_dir.path(),
+            template_dir.path(),
+        );
+
+        assert!(
+            result.is_ok(),
+            "compile should succeed when layout key is absent: {:?}",
+            result.err()
+        );
     }
 }

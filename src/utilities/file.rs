@@ -5,77 +5,96 @@ use crate::models::data::FileData;
 use log::warn;
 use quick_xml::escape::escape;
 use std::{fs, io, path::Path};
+use walkdir::WalkDir;
 
 /// Maximum file size in bytes (10 MiB).
 const MAX_FILE_SIZE: u64 = 10 * 1024 * 1024;
 
-/// Reads all files in a directory specified by the given path and returns a vector of FileData.
+/// Reads all files in a directory (recursively) and returns a vector of FileData.
 ///
-/// Each file is represented as a `FileData` struct containing the name and content of the file.
+/// Each file is represented as a `FileData` struct containing the
+/// directory-relative path (e.g. `fr/article.md` for a per-locale
+/// `_posts/<lang>/` tree) as `name`, and the raw + entity-escaped
+/// content. Subdirectories are walked transparently, which is what
+/// makes the multilingual `_posts/<lang>/<slug>.md` pattern build
+/// without per-locale shims. Issue #70.
+///
+/// Files named `.DS_Store` and files exceeding `MAX_FILE_SIZE` (10 MiB)
+/// are skipped at any depth. Non-UTF-8 files are skipped with a
+/// warning. The walk follows symlinks; relying on cycles is undefined.
 ///
 /// # Arguments
 ///
-/// * `path` - A `Path` representing the directory containing the files to be read.
+/// * `path` - A `Path` representing the root directory containing the
+///   files (and optional subdirectories) to be read.
 ///
 /// # Returns
 ///
-/// A `Result` containing a vector of `FileData` structs representing all files in the directory,
-/// or an `io::Error` if the directory cannot be read.
+/// A `Result` containing a vector of `FileData` structs for every
+/// reachable file, or an `io::Error` if the directory cannot be opened.
 pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
-    let files = fs::read_dir(path)?
-        .filter_map(|entry| {
-            let entry = entry.ok()?;
-            let path = entry.path();
-            if path.is_file() {
-                let file_name =
-                    path.file_name()?.to_string_lossy().to_string();
-                if file_name == ".DS_Store" {
-                    return None;
-                }
-                // Check file size before reading to prevent memory exhaustion
-                if let Ok(metadata) = fs::metadata(&path) {
-                    if metadata.len() > MAX_FILE_SIZE {
-                        warn!(
-                            "Skipping oversized file {:?} ({} bytes, limit {})",
-                            path, metadata.len(), MAX_FILE_SIZE
-                        );
-                        return None;
-                    }
-                }
-                let content = fs::read_to_string(&path)
-                    .map_err(|e| {
-                        warn!(
-                            "Error reading file {:?}: {}",
-                            path, e
-                        );
-                        e
-                    })
-                    .ok()?;
-                Some((file_name, content))
-            } else {
-                None
-            }
-        })
-        .map(|(file_name, content)| {
-            let escaped = escape(&content).to_string();
+    // Probe the root once so a missing-dir surfaces as io::Error
+    // (matches the pre-#70 contract that downstream tests rely on).
+    let _ = fs::read_dir(path)?;
 
-            FileData {
-                cname: escaped.clone(),
-                keyword: escaped.clone(),
-                manifest: escaped.clone(),
-                rss: escaped.clone(),
-                sitemap: escaped.clone(),
-                sitemap_news: escaped,
-                human: content.clone(),
-                security: content.clone(),
-                txt: content.clone(),
-                name: file_name,
-                content,
-            }
-        })
-        .collect::<Vec<FileData>>();
+    let mut out = Vec::new();
+    for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        let abs = entry.path();
+        let rel = abs.strip_prefix(path).unwrap_or(abs);
+        // Use forward slashes regardless of platform — these names
+        // become URL path components downstream.
+        let file_name = rel
+            .components()
+            .map(|c| c.as_os_str().to_string_lossy())
+            .collect::<Vec<_>>()
+            .join("/");
 
-    Ok(files)
+        // Skip `.DS_Store` whether at root or nested.
+        if rel.file_name().map(|f| f == ".DS_Store").unwrap_or(false) {
+            continue;
+        }
+
+        // Reject files exceeding MAX_FILE_SIZE so the process can't
+        // be OOM'd by a stray binary in the content tree.
+        if let Ok(metadata) = fs::metadata(abs) {
+            if metadata.len() > MAX_FILE_SIZE {
+                warn!(
+                    "Skipping oversized file {:?} ({} bytes, limit {})",
+                    abs,
+                    metadata.len(),
+                    MAX_FILE_SIZE
+                );
+                continue;
+            }
+        }
+
+        let content = match fs::read_to_string(abs) {
+            Ok(c) => c,
+            Err(e) => {
+                warn!("Error reading file {:?}: {}", abs, e);
+                continue;
+            }
+        };
+
+        let escaped = escape(&content).to_string();
+        out.push(FileData {
+            cname: escaped.clone(),
+            keyword: escaped.clone(),
+            manifest: escaped.clone(),
+            rss: escaped.clone(),
+            sitemap: escaped.clone(),
+            sitemap_news: escaped,
+            human: content.clone(),
+            security: content.clone(),
+            txt: content.clone(),
+            name: file_name,
+            content,
+        });
+    }
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -206,23 +225,36 @@ mod tests {
         Ok(())
     }
 
-    /// Tests that `add` skips over non-file entries (e.g., subdirectories).
+    /// Tests that `add` walks into subdirectories (issue #70).
+    ///
+    /// Pre-#70 this test asserted the opposite — that subdirectories
+    /// were silently skipped, which broke every `_posts/<lang>/`
+    /// multilingual tree. Post-#70 the recursive walk picks them up.
     #[test]
-    fn test_add_skips_directories() -> io::Result<()> {
+    fn test_add_walks_into_subdirectories() -> io::Result<()> {
         let dir = tempdir()?;
         let subdir_path = dir.path().join("subdir");
-        let file_path = dir.path().join("test_file.txt");
+        let root_file = dir.path().join("root.txt");
 
-        // Create a subdirectory and a test file in the main directory
         fs::create_dir(&subdir_path)?;
-        File::create(&file_path)?.write_all(b"Content in file")?;
+        File::create(&root_file)?.write_all(b"root content")?;
+        File::create(subdir_path.join("nested.txt"))?
+            .write_all(b"nested content")?;
 
-        // Run the `add` function
         let files = add(dir.path())?;
 
-        // Verify that only the file is read, and the subdirectory is ignored
-        assert_eq!(files.len(), 1);
-        assert_eq!(files[0].name, "test_file.txt");
+        // Both root and nested files should be read.
+        assert_eq!(files.len(), 2);
+        let names: Vec<&str> =
+            files.iter().map(|f| f.name.as_str()).collect();
+        assert!(
+            names.contains(&"root.txt"),
+            "expected root.txt, got: {names:?}"
+        );
+        assert!(
+            names.contains(&"subdir/nested.txt"),
+            "expected subdir/nested.txt (with parent prefix), got: {names:?}"
+        );
 
         Ok(())
     }
@@ -293,6 +325,72 @@ mod tests {
         // Assert
         assert_eq!(files.len(), 1, "Oversized file should be skipped");
         assert_eq!(files[0].name, "small.txt");
+        Ok(())
+    }
+
+    /// Tests that `add` preserves the directory-relative path on
+    /// every `FileData::name`, using forward slashes regardless of
+    /// platform — the names round-trip into URL path components.
+    #[test]
+    fn test_add_preserves_locale_subdirectory_prefix() -> io::Result<()>
+    {
+        // Mirror the Jekyll `_posts/<lang>/<slug>.md` shape.
+        let dir = tempdir()?;
+        for locale in ["en", "fr", "de"] {
+            let sub = dir.path().join(locale);
+            fs::create_dir(&sub)?;
+            File::create(sub.join("hello.md"))?
+                .write_all(format!("hello-{locale}").as_bytes())?;
+        }
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 3);
+        let names: Vec<&str> =
+            files.iter().map(|f| f.name.as_str()).collect();
+        for locale in ["en", "fr", "de"] {
+            let expected = format!("{locale}/hello.md");
+            assert!(
+                names.contains(&expected.as_str()),
+                "expected name {expected:?} in {names:?}"
+            );
+        }
+        Ok(())
+    }
+
+    /// Tests that `.DS_Store` is filtered out at ANY depth, not just
+    /// at the root.
+    #[test]
+    fn test_add_skips_ds_store_recursively() -> io::Result<()> {
+        let dir = tempdir()?;
+        let nested = dir.path().join("fr");
+        fs::create_dir(&nested)?;
+        File::create(dir.path().join(".DS_Store"))?
+            .write_all(b"junk")?; // root-level junk
+        File::create(nested.join(".DS_Store"))?.write_all(b"junk")?; // nested junk
+        File::create(nested.join("article.md"))?
+            .write_all(b"keep me")?;
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 1, "only article.md should remain");
+        assert_eq!(files[0].name, "fr/article.md");
+        Ok(())
+    }
+
+    /// Tests deep nesting (3+ levels) so the recursion can't be
+    /// silently capped at a single level.
+    #[test]
+    fn test_add_handles_deep_nesting() -> io::Result<()> {
+        let dir = tempdir()?;
+        let deep = dir.path().join("a").join("b").join("c");
+        fs::create_dir_all(&deep)?;
+        File::create(deep.join("buried.md"))?.write_all(b"deep")?;
+
+        let files = add(dir.path())?;
+
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].name, "a/b/c/buried.md");
         Ok(())
     }
 }

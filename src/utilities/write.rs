@@ -137,11 +137,13 @@ fn get_processed_file_name(original_name: &str) -> String {
 
     if let Some(ext) = extension {
         if ["js", "json", "md", "toml", "txt", "xml"].contains(&ext) {
-            let processed = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or(original_name)
-                .to_string();
+            // Issue #70: preserve parent directories (per-locale
+            // subdirs like `fr/`) when stripping the extension —
+            // `path.file_stem()` would drop them and the locale
+            // prefix would never reach the output URL. Using
+            // `with_extension("")` keeps the relative path intact.
+            let processed =
+                path.with_extension("").to_string_lossy().to_string();
             debug!("Processed file name: '{}'", processed);
             return processed;
         }
@@ -387,6 +389,17 @@ fn copy_auxiliary_files(
         build_dir_path.display()
     );
     for file_name in &OTHER_FILES {
+        // Issue #68: make the copy best-effort. Most sites don't ship
+        // a service worker today, so missing `main.js` / `sw.js` is
+        // expected — don't abort the whole build over it.
+        let src = template_path.join(file_name);
+        if !src.exists() {
+            debug!(
+                "auxiliary file '{}' not present in templates — skipping",
+                file_name
+            );
+            continue;
+        }
         debug!("Copying auxiliary file: '{}'", file_name);
         copy_template_file(template_path, build_dir_path, file_name)
             .with_context(|| {
@@ -850,14 +863,26 @@ mod tests {
 
     #[test]
     fn test_copy_auxiliary_files_missing() {
+        // Regression for sebastienrousseau/staticdatagen#68.
+        // Before the fix, copy_auxiliary_files aborted with `os error 2`
+        // when `main.js` or `sw.js` were absent from templates/. After
+        // the fix, missing auxiliary files are skipped silently (debug
+        // log) and the build continues.
         let template_dir = TempDir::new().unwrap();
         let build_dir = TempDir::new().unwrap();
 
-        // Don't create the files - should fail
+        // Templates dir is empty — no main.js, no sw.js.
         let result =
             copy_auxiliary_files(template_dir.path(), build_dir.path());
 
-        assert!(result.is_err());
+        assert!(
+            result.is_ok(),
+            "copy_auxiliary_files should succeed when files are absent: {:?}",
+            result.err()
+        );
+        // And nothing should have been copied.
+        assert!(!build_dir.path().join("main.js").exists());
+        assert!(!build_dir.path().join("sw.js").exists());
     }
 
     #[test]
@@ -984,14 +1009,21 @@ mod tests {
 
     #[test]
     fn test_get_processed_file_name_edge_cases() {
-        // No extension
+        // No extension — unchanged.
         assert_eq!(get_processed_file_name("noext"), "noext");
-        // Only extension
+        // Only extension (no stem) — unchanged.
         assert_eq!(get_processed_file_name(".txt"), ".txt");
-        // Multiple dots
+        // Multiple dots — unchanged (one extension stripped).
         assert_eq!(get_processed_file_name("a.b.txt"), "a.b");
-        // Path with directories
-        assert_eq!(get_processed_file_name("dir/file.md"), "file");
+        // Issue #70: parent directory is now PRESERVED when an
+        // extension is stripped, so per-locale subdirs like `fr/`
+        // survive into the output URL. Pre-#70 this returned just
+        // "file"; post-#70 it returns "dir/file".
+        assert_eq!(get_processed_file_name("dir/file.md"), "dir/file");
+        assert_eq!(
+            get_processed_file_name("fr/_posts/article.md"),
+            "fr/_posts/article"
+        );
     }
 
     #[test]
