@@ -8,6 +8,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Default permissions are read-only on pull_request from forks (and on
+# any repo that opts into the new restrictive default). The `rustsec/
+# audit-check` action invoked by the reusable rust-ci.yml workflow needs
+# `checks: write` to create its check-run annotation; without it the
+# audit step succeeds (0 vulnerabilities) but the job fails on
+# "Resource not accessible by integration". Granting it at the caller
+# is propagated into the reusable workflow.
+permissions:
+  contents: read
+  checks: write
+  pull-requests: read
+  security-events: write
+  actions: read
+
 jobs:
   # ── Primary: stable, all checks, cross-platform ──────────────────
   ci:

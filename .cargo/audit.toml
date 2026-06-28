@@ -1,25 +1,38 @@
 # cargo-audit configuration
 # Ignores for transitive advisories that cannot be fixed locally
 #
-# Last reviewed: 2026-04-17
-# Next review:   2026-07-17
+# Last reviewed: 2026-06-28
+# Next review:   2026-09-28
 
 [advisories]
 ignore = [
-    # Transitive via metadata-gen → serde_yml (unsound, unmaintained)
-    # No fix until metadata-gen migrates off serde_yml
+    # Transitive surfaces of the legacy YAML stack. metadata-gen 0.0.4 has
+    # already migrated to noyalib, but older versions of these crates can
+    # still appear in the resolved dep graph via unrelated transitives.
     "RUSTSEC-2025-0067",  # libyml - unsound
     "RUSTSEC-2025-0068",  # serde_yml - unsound
 
     # Transitive via syntect → yaml-rust (unmaintained)
     "RUSTSEC-2024-0320",  # yaml-rust
 
-    # Transitive unmaintained crates with no alternatives
+    # Transitive unmaintained crates with no actionable alternatives
     "RUSTSEC-2024-0436",  # paste - unmaintained
     "RUSTSEC-2025-0057",  # fxhash - unmaintained
     "RUSTSEC-2025-0119",  # number_prefix - unmaintained
     "RUSTSEC-2025-0141",  # bincode - unmaintained
 
-    # Transitive via vrd → rand 0.8 (unsound with custom logger)
+    # Soundness advisory on rand 0.8 ThreadRng custom-logger reseed path.
+    # We pin rand 0.8.6 (the patched version) in our direct graph (closed
+    # in v0.0.10). Some transitives still resolve to an older 0.8.x via
+    # their own minimum-version selectors; the path is not reachable from
+    # staticdatagen's public surface (no custom logger calls rand::rng()
+    # during reseed).
     "RUSTSEC-2026-0097",  # rand - unsound
+
+    # Deep transitive via defmt-macros → proc-macro-error2 (unmaintained
+    # 2026-06-07). Proc-macro helper crate, not reachable from any runtime
+    # path of staticdatagen. Re-evaluate when defmt-macros migrates to
+    # `manyhow` or `proc-macro2-diagnostics` (the upstream's recommended
+    # replacements per RUSTSEC-2026-0173).
+    "RUSTSEC-2026-0173",  # proc-macro-error2 - unmaintained
 ]
