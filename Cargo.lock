@@ -2074,19 +2074,16 @@ checksum = "88904434abc2901f197fe8cc55f0445e7ded921dba5911dad2e2b39b48e663c4"
 
 [[package]]
 name = "metadata-gen"
-version = "0.0.4"
+version = "0.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bdfc9095ce2b6a57ef0302307e0bfc0d9127f498a48f1a687ab60ed22cf1a15"
+checksum = "b7f7be5c3ef95691a63df8984cf8fc99568ada42ff5feeb065d9773eefd8b371"
 dependencies = [
- "anyhow",
  "dtt 0.0.10",
  "noyalib 0.0.8",
  "quick-xml 0.40.1",
  "regex",
- "scraper 0.27.0",
  "serde",
  "serde_json",
- "tempfile",
  "thiserror 2.0.18",
  "time",
  "tokio",
