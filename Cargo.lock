@@ -3759,9 +3759,9 @@ dependencies = [
 
 [[package]]
 name = "staticweaver"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d358780740c9a469e59253ea11035cbd84911e75f7d62745bd6d955db5deb049"
+checksum = "0559d6c2c69f0b11e6780599eb105e0a9780d9110ebffef0bba5ecb81bd658f3"
 dependencies = [
  "fnv",
  "tempfile",

@@ -136,7 +136,7 @@ regex = "1.12"
 walkdir = "2.5"                             # Recursive directory walk for nested-locale `_posts/<lang>/` trees
 rss-gen = "0.0.6"
 sitemap-gen = "0.0.2"
-staticweaver = "0.0.3"
+staticweaver = "0.0.4"
 time = { version = "0.3", features = ["formatting", "parsing"] }
 uuid = { version = "1.23", features = ["v4"] }
 
