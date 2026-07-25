@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.11] — 2026-07-25
+
+Correctness release driven by the ssg v0.0.47 plan (ssg#586, spec
+items A1/A2/A4 of the ssg fixes-and-native-migration specification).
+
+### Fixed
+- **A1 — Raw HTML in Markdown was escaped (P0).** `html-generator 0.0.6` introduced `HtmlConfig.allow_unsafe_html` defaulting to `false`, which escaped raw block HTML (`<section>`, `<figure>`, inline `<svg>`, …) in Markdown bodies. `compiler::service::generate_html_content` now explicitly opts into pass-through (`allow_unsafe_html: true`) — the trusted-author default; sanitisation remains an explicit opt-in (`sanitize_html`), never silent escaping. Regression test asserts `<section class="x">` renders unescaped. (`src/compiler/service.rs`)
+- **A2 — `channel.link is missing` hard-failed the whole build (P0).** A page without `permalink:` front matter aborted the entire compile at RSS validation (and independently at sitemap generation). Two changes: (1) a missing `permalink` is now derived via the fallback chain `permalink` → `url` → `{base_url}/{relative_output_path}` → `base_url`, so a correct feed/sitemap link is always available when the site provides its base URL; (2) a genuinely underivable feed or sitemap entry logs a warning and is skipped — it never aborts the compile. Authors no longer need to hand-write `permalink`. (`src/compiler/service.rs`)
+- **A4 — news-sitemap date parser rejected common formats (P1).** `generators::news_sitemap` accepted only RFC 2822, spamming `Parsing failed: the 'day' component could not be parsed. Using fallback.` for front matter written as `July 1, 2026` or `2026-07-01`. Date parsing is now routed through the new `utilities::dates::parse_flexible_date`, which accepts, in order: RFC 2822, long form, and ISO 8601 (date or datetime). The fallback to the current time survives as a last resort and now logs the failing field and every attempted format. (`src/generators/news_sitemap.rs`)
+
+### Added
+- **`utilities::dates`** — dependency-free flexible date parsing (RFC 2822 / long form / ISO 8601) with deterministic, locale-independent output formatting (`to_rfc2822`, `to_rfc3339`, `to_w3c_date`, `to_iso_date`), ported from ssg's `src/core/dates.rs` so both layers agree on what a date means. Includes property tests round-tripping dates 1990–2100 through all three spec formats.
+
 ## [0.0.10] — 2026-06-28
 
 ### Fixed

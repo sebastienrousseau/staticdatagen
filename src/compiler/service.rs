@@ -200,11 +200,80 @@ fn generate_html_content(body: &str) -> Result<String> {
         language: "en".to_string(),
         max_input_size: usize::MAX,
         syntax_theme: None,
+        // Spec A1 (ssg-fixes spec / ssg#586): html-generator 0.0.6
+        // introduced `allow_unsafe_html` with a `false` default, which
+        // silently escapes raw block HTML (`<section>`, `<figure>`,
+        // inline `<svg>`, …) in Markdown bodies. Site authors write
+        // that HTML deliberately, so pass-through is the trusted-author
+        // default here; sanitisation must be an explicit opt-in pass
+        // (`sanitize_html: true`), never silent escaping.
+        allow_unsafe_html: true,
         ..HtmlConfig::default()
     };
 
     generate_html(body, &config)
         .context("Failed to generate HTML content")
+}
+
+/// Derives a permalink for a page whose front matter does not provide
+/// one (spec A2, ssg#586 tracker).
+///
+/// Fallback chain, in order:
+///
+/// 1. `permalink` — kept verbatim when present and non-empty.
+/// 2. `url` — some sites carry the canonical page URL here.
+/// 3. `{base_url}/{relative_output_path}` — always derivable when the
+///    site injects its base URL, because the output path is a pure
+///    function of the source file name (mirrors
+///    `utilities::write::get_processed_file_name`).
+/// 4. `base_url` alone — last resort for unusual file names.
+///
+/// Returns `None` only when the front matter carries none of
+/// `permalink`, `url`, or `base_url` — a genuinely underivable link.
+fn derive_permalink(
+    metadata: &HashMap<String, String>,
+    file_name: &str,
+) -> Option<String> {
+    let non_empty = |key: &str| {
+        metadata
+            .get(key)
+            .map(|value| value.trim())
+            .filter(|value| !value.is_empty())
+            .map(str::to_string)
+    };
+
+    if let Some(permalink) = non_empty("permalink") {
+        return Some(permalink);
+    }
+    if let Some(url) = non_empty("url") {
+        return Some(url);
+    }
+    let base_url = non_empty("base_url")?;
+    let base_url = base_url.trim_end_matches('/');
+
+    // Mirror the output layout produced by
+    // `write_files_to_build_directory`: `index.md` lands at the site
+    // root as `index.html`; every other page becomes
+    // `{stem}/index.html`.
+    let path = Path::new(file_name);
+    let stem = match path.extension().and_then(|s| s.to_str()) {
+        Some(ext)
+            if ["js", "json", "md", "toml", "txt", "xml"]
+                .contains(&ext) =>
+        {
+            path.with_extension("").to_string_lossy().into_owned()
+        }
+        _ => file_name.to_string(),
+    };
+    let output_path = if stem.is_empty() {
+        return Some(base_url.to_string());
+    } else if stem == "index" {
+        "index.html".to_string()
+    } else {
+        format!("{}/index.html", stem)
+    };
+
+    Some(format!("{}/{}", base_url, output_path))
 }
 
 /// Generates RSS content from metadata.
@@ -382,7 +451,25 @@ fn assemble_file_data(
     let txt_options = create_txt_data(metadata);
     let txt_data = txt(&txt_options);
     let security_data = security(&security_options);
-    let sitemap_data = sitemap(sitemap_options?, site_path);
+    // Spec A2: like the RSS feed, a sitemap entry that cannot be
+    // built (e.g. no derivable permalink) is warned about and
+    // skipped; it never aborts the compile.
+    let sitemap_data = match sitemap_options {
+        Ok(options) => match sitemap(options, site_path) {
+            Ok(data) => data,
+            Err(e) => {
+                warn!(
+                    "Skipping sitemap entry for '{}': {}",
+                    file.name, e
+                );
+                String::new()
+            }
+        },
+        Err(e) => {
+            warn!("Skipping sitemap entry for '{}': {}", file.name, e);
+            String::new()
+        }
+    };
 
     Ok(FileData {
         cname: cname_content,
@@ -393,7 +480,7 @@ fn assemble_file_data(
         name: file.name.clone(),
         rss: rss_content,
         security: security_data,
-        sitemap: sitemap_data?,
+        sitemap: sitemap_data,
         sitemap_news: news_sitemap_content,
         txt: txt_data,
     })
@@ -424,9 +511,30 @@ fn process_file(
     // Extract metadata and keywords (inline to avoid type issues)
     let (_frontmatter, body) =
         split_frontmatter_and_body(&file.content);
-    let (metadata, keywords, all_meta_tags) =
+    let (mut metadata, keywords, all_meta_tags) =
         extract_and_prepare_metadata(&file.content)
             .context("Failed to extract and prepare metadata")?;
+
+    // Spec A2: backfill a missing `permalink` from the fallback chain
+    // (`url` → `{base_url}/{output_path}` → `base_url`) so the RSS
+    // channel link and sitemap `<loc>` are always derivable. Authors
+    // never need to hand-write `permalink`.
+    if metadata
+        .get("permalink")
+        .map(|p| p.trim().is_empty())
+        .unwrap_or(true)
+    {
+        if let Some(permalink) = derive_permalink(&metadata, &file.name)
+        {
+            let _ = metadata
+                .insert("permalink".to_string(), permalink.clone());
+            // `item_link` feeds the RSS `<item><link>`; keep it in
+            // step with the derived permalink when absent.
+            let _ = metadata
+                .entry("item_link".to_string())
+                .or_insert(permalink);
+        }
+    }
 
     // Generate HTML content
     let html_content = generate_html_content(&body)?;
@@ -455,8 +563,23 @@ fn process_file(
         .unwrap_or("page");
     let content = engine.render_page(&context, layout)?;
 
-    // Generate RSS, manifest and auxiliary files
-    let rss_content = generate_rss_content(&metadata)?;
+    // Generate RSS, manifest and auxiliary files.
+    //
+    // Spec A2: a feed entry whose link is genuinely underivable (no
+    // `permalink`, `url`, or `base_url` anywhere in the front matter)
+    // is warned about and skipped — it must NEVER abort the whole
+    // compile. Every other artifact for the page is still produced.
+    let rss_content = match generate_rss_content(&metadata) {
+        Ok(rss) => rss,
+        Err(e) => {
+            warn!(
+                "Skipping RSS feed for '{}': {}. The page itself is \
+                 still built.",
+                file.name, e
+            );
+            String::new()
+        }
+    };
     let manifest_content = generate_manifest_content(&metadata);
     let (news_sitemap_content, cname_content, humans_content) =
         generate_auxiliary_files(&metadata);
@@ -807,7 +930,7 @@ Content here"#;
     // Test error handling for invalid templates
     #[test]
     fn test_invalid_template_handling() {
-        let mut engine =
+        let engine =
             Engine::new("/nonexistent", Duration::from_secs(60));
         let context = TemplateContext::new();
         let result = engine.render_page(&context, "nonexistent");
@@ -862,6 +985,175 @@ Content here"#;
         assert!(result.is_ok());
         let html = result.unwrap();
         assert!(html.contains("Hello World"));
+    }
+
+    #[test]
+    fn test_generate_html_content_raw_html_passthrough() {
+        // Spec A1 regression test: html-generator 0.0.6 defaults
+        // `allow_unsafe_html` to false, which would escape raw block
+        // HTML in Markdown bodies on every platform. The compiler
+        // config must opt into pass-through for trusted authors.
+        let body = "Intro paragraph.\n\n<section class=\"x\"><p>hi</p></section>\n\nOutro.";
+        let html = generate_html_content(body)
+            .expect("raw-HTML body should render");
+        assert!(
+            html.contains("<section class=\"x\">"),
+            "raw block HTML must pass through unescaped, got: {}",
+            html
+        );
+        assert!(
+            !html.contains("&lt;section"),
+            "raw block HTML must not be escaped, got: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn test_derive_permalink_fallback_chain() {
+        let mut metadata = HashMap::new();
+
+        // Nothing derivable → None.
+        assert_eq!(derive_permalink(&metadata, "post.md"), None);
+
+        // base_url + relative output path (trailing slash trimmed).
+        let _ = metadata.insert(
+            "base_url".to_string(),
+            "https://example.com/".to_string(),
+        );
+        assert_eq!(
+            derive_permalink(&metadata, "post.md").as_deref(),
+            Some("https://example.com/post/index.html")
+        );
+        assert_eq!(
+            derive_permalink(&metadata, "index.md").as_deref(),
+            Some("https://example.com/index.html")
+        );
+        // Per-locale subdirectories survive (issue #70 layout).
+        assert_eq!(
+            derive_permalink(&metadata, "fr/article.md").as_deref(),
+            Some("https://example.com/fr/article/index.html")
+        );
+
+        // `url` outranks the base_url derivation.
+        let _ = metadata.insert(
+            "url".to_string(),
+            "https://example.com/from-url/".to_string(),
+        );
+        assert_eq!(
+            derive_permalink(&metadata, "post.md").as_deref(),
+            Some("https://example.com/from-url/")
+        );
+
+        // An explicit permalink always wins.
+        let _ = metadata.insert(
+            "permalink".to_string(),
+            "https://example.com/explicit/".to_string(),
+        );
+        assert_eq!(
+            derive_permalink(&metadata, "post.md").as_deref(),
+            Some("https://example.com/explicit/")
+        );
+
+        // Empty permalink is treated as absent.
+        let _ =
+            metadata.insert("permalink".to_string(), "   ".to_string());
+        assert_eq!(
+            derive_permalink(&metadata, "post.md").as_deref(),
+            Some("https://example.com/from-url/")
+        );
+    }
+
+    #[test]
+    fn test_compile_without_permalink_derives_feed_link() {
+        // Spec A2 acceptance: a post with only title + date + body
+        // (plus the site-level base_url) builds, and the feed <link>
+        // equals {base_url}/{output_path}.
+        let build_dir = tempfile::TempDir::new().unwrap();
+        let content_dir = tempfile::TempDir::new().unwrap();
+        let site_dir = tempfile::TempDir::new().unwrap();
+        let template_dir = tempfile::TempDir::new().unwrap();
+
+        // No `permalink:` anywhere in the front matter.
+        fs::write(
+            content_dir.path().join("index.md"),
+            "---\ntitle: Home\ndate: July 1, 2026\nbase_url: https://example.com\ndescription: Home page\nauthor: Test\nchangefreq: weekly\n---\n# Welcome\n",
+        )
+        .unwrap();
+
+        fs::write(
+            template_dir.path().join("page.html"),
+            "<html><body>{{content}}</body></html>",
+        )
+        .unwrap();
+
+        let result = compile(
+            build_dir.path(),
+            content_dir.path(),
+            site_dir.path(),
+            template_dir.path(),
+        );
+        assert!(
+            result.is_ok(),
+            "compile without permalink should succeed: {:?}",
+            result.err()
+        );
+
+        let rss = fs::read_to_string(site_dir.path().join("rss.xml"))
+            .unwrap();
+        assert!(
+            rss.contains("<link>https://example.com/index.html</link>"),
+            "feed link should equal base_url + output path, got: {}",
+            rss
+        );
+    }
+
+    #[test]
+    fn test_compile_underivable_feed_entry_never_aborts() {
+        // Spec A2 acceptance: a pathological entry (no permalink, no
+        // url, no base_url) is skipped with a warning — the compile
+        // and every other artifact stay intact.
+        let build_dir = tempfile::TempDir::new().unwrap();
+        let content_dir = tempfile::TempDir::new().unwrap();
+        let site_dir = tempfile::TempDir::new().unwrap();
+        let template_dir = tempfile::TempDir::new().unwrap();
+
+        fs::write(
+            content_dir.path().join("index.md"),
+            "---\ntitle: Orphan\ndate: 2026-07-01\ndescription: No link anywhere\nauthor: Test\n---\n# Orphan page\n",
+        )
+        .unwrap();
+
+        fs::write(
+            template_dir.path().join("page.html"),
+            "<html><body>{{content}}</body></html>",
+        )
+        .unwrap();
+
+        let result = compile(
+            build_dir.path(),
+            content_dir.path(),
+            site_dir.path(),
+            template_dir.path(),
+        );
+        assert!(
+            result.is_ok(),
+            "an underivable feed entry must never abort the compile: {:?}",
+            result.err()
+        );
+
+        // The page itself is still built…
+        let html =
+            fs::read_to_string(site_dir.path().join("index.html"))
+                .unwrap();
+        assert!(html.contains("Orphan page"));
+        // …while the underivable feed is skipped (empty rss.xml).
+        let rss = fs::read_to_string(site_dir.path().join("rss.xml"))
+            .unwrap();
+        assert!(
+            rss.is_empty(),
+            "underivable feed should be skipped, got: {}",
+            rss
+        );
     }
 
     #[test]
@@ -1252,13 +1544,16 @@ Content here"#;
 
     #[test]
     fn test_assemble_file_data_missing_permalink() {
+        // Spec A2 semantics change: a missing permalink used to make
+        // create_site_map_data fail and abort the whole compile via
+        // `sitemap_options?`. The sitemap entry is now skipped with a
+        // warning and the page is still assembled.
         let temp_dir = tempfile::TempDir::new().unwrap();
         let file = FileData {
             name: "test.md".to_string(),
             content: "test".to_string(),
             ..Default::default()
         };
-        // No permalink → create_site_map_data fails → sitemap_options? returns Err
         let metadata = HashMap::new();
         let mut global_tags_data = HashMap::new();
 
@@ -1275,7 +1570,13 @@ Content here"#;
             &mut global_tags_data,
             temp_dir.path(),
         );
-        assert!(result.is_err());
+        let fd = result.expect(
+            "assemble_file_data must not abort on missing permalink",
+        );
+        assert!(
+            fd.sitemap.is_empty(),
+            "underivable sitemap entry should be skipped, not fatal"
+        );
     }
 
     #[test]
