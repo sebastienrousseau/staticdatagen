@@ -263,7 +263,7 @@ pub fn create_directory(directories: &[&Path]) -> crate::Result<()> {
 pub fn to_title_case(s: &str) -> String {
     TITLE_CASE_RE
         .replace_all(s, |caps: &regex::Captures| {
-            format!(" {}", &caps[1].to_uppercase())
+            format!(" {}", caps[1].to_uppercase())
         })
         .trim_start()
         .to_string()
