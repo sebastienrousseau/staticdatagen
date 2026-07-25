@@ -930,7 +930,7 @@ Content here"#;
     // Test error handling for invalid templates
     #[test]
     fn test_invalid_template_handling() {
-        let mut engine =
+        let engine =
             Engine::new("/nonexistent", Duration::from_secs(60));
         let context = TemplateContext::new();
         let result = engine.render_page(&context, "nonexistent");
