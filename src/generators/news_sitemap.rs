@@ -31,6 +31,7 @@
 //! ```
 
 use crate::models::data::NewsData;
+use crate::utilities::dates::parse_flexible_date;
 use log::warn;
 use std::collections::HashMap;
 use time::{format_description, OffsetDateTime};
@@ -184,17 +185,27 @@ impl NewsSiteMapGenerator {
     }
 }
 
-/// Formats publication dates from "Tue, 20 Feb 2024 15:15:15 GMT" to ISO 8601.
+/// Formats publication dates to ISO 8601 / W3C datetime.
+///
+/// Spec A4 (ssg#586): accepts, in order, RFC 2822
+/// (`Tue, 20 Feb 2024 15:15:15 GMT`), long form (`July 1, 2026`),
+/// and ISO 8601 (`2026-07-01`, with or without a time component) via
+/// [`crate::utilities::dates::parse_flexible_date`]. The previous
+/// parser understood RFC 2822 only, so every front-matter date in
+/// another format produced the `'day' component could not be
+/// parsed. Using fallback.` warning spam downstream.
+///
+/// Falls back to the current time only as a last resort, logging
+/// which field failed and every format that was attempted.
 fn format_publication_date(input: &str) -> String {
-    match OffsetDateTime::parse(
-        input,
-        &format_description::well_known::Rfc2822,
-    ) {
-        Ok(parsed) => parsed
-            .format(&format_description::well_known::Rfc3339)
-            .unwrap_or_default(),
+    match parse_flexible_date(input) {
+        Ok(parsed) => parsed.to_w3c_date(),
         Err(e) => {
-            warn!("Parsing failed: {}. Using fallback.", e);
+            warn!(
+                "news_sitemap: field 'news_publication_date' {}. \
+                 Falling back to the current time.",
+                e
+            );
             OffsetDateTime::now_utc()
                 .format(&format_description::well_known::Rfc3339)
                 .unwrap_or_default()
@@ -353,6 +364,36 @@ mod tests {
             .format(&format_description::well_known::Rfc3339)
             .unwrap();
         assert!(fallback.starts_with(&fallback_now[..10])); // Compare only the date part
+    }
+
+    #[test]
+    fn test_format_publication_date_accepts_all_spec_formats() {
+        // Spec A4 regression test: the parser must accept RFC 2822,
+        // long form, and ISO 8601 — not just RFC 2822.
+
+        // RFC 2822 (numeric offset variant).
+        assert_eq!(
+            format_publication_date("Wed, 01 Jul 2026 07:07:07 +0000"),
+            "2026-07-01T07:07:07Z"
+        );
+
+        // Long form — previously warned and fell back to now().
+        assert_eq!(
+            format_publication_date("July 1, 2026"),
+            "2026-07-01T00:00:00Z"
+        );
+
+        // ISO 8601 date — previously warned and fell back to now().
+        assert_eq!(
+            format_publication_date("2026-07-01"),
+            "2026-07-01T00:00:00Z"
+        );
+
+        // ISO 8601 datetime.
+        assert_eq!(
+            format_publication_date("2026-07-01T07:07:07Z"),
+            "2026-07-01T07:07:07Z"
+        );
     }
 
     #[test]

@@ -4,6 +4,10 @@
 /// The `backup` module contains functions for creating backups of files.
 pub mod backup;
 
+/// The `dates` module contains flexible date parsing (RFC 2822, long
+/// form, ISO 8601) shared by the metadata generators.
+pub mod dates;
+
 /// The `directory` module contains functions for creating directories.
 pub mod directory;
 
