@@ -2786,9 +2786,9 @@ dependencies = [
 
 [[package]]
 name = "rss-gen"
-version = "0.0.8"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bca6514ce21f46a2b9e5b7faa01df744c8add5321aeef221a58d1b9f390ff2e"
+checksum = "c64240c5536a3e6bf8e0d760a4d555e14c95651ce26bb4d9a4210e181c1e9e04"
 dependencies = [
  "log",
  "quick-xml",
