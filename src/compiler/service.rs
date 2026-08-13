@@ -875,10 +875,12 @@ mod tests {
             ..HtmlConfig::default()
         };
 
-        let err = generate_html("Test content", &config)
-            .expect_err("a theme set with highlighting disabled should be refused");
+        let err = generate_html("Test content", &config).expect_err(
+            "a theme set with highlighting disabled should be refused",
+        );
         assert!(
-            format!("{err:?}").contains("enable_syntax_highlighting = false"),
+            format!("{err:?}")
+                .contains("enable_syntax_highlighting = false"),
             "unexpected error: {err:?}"
         );
     }
