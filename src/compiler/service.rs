@@ -852,13 +852,54 @@ mod tests {
             generate_toc: true,
             language: "fr".to_string(),
             max_input_size: 100,
-            syntax_theme: Some("monokai".to_string()),
+            syntax_theme: None,
             ..HtmlConfig::default()
         };
 
         let body = "Test content";
         let result = generate_html(body, &config);
         assert!(result.is_ok());
+    }
+
+    /// html-generator 0.0.10 validates the config instead of silently
+    /// ignoring a contradictory one. This test previously passed a
+    /// `syntax_theme` while `enable_syntax_highlighting` was false, and
+    /// named a theme outside the allowed set; both were accepted and
+    /// dropped on the floor. They are now errors, which is the better
+    /// behaviour and worth pinning so it is not lost in a later bump.
+    #[test]
+    fn html_config_rejects_a_theme_that_cannot_apply() {
+        let config = HtmlConfig {
+            enable_syntax_highlighting: false,
+            syntax_theme: Some("base16-ocean.dark".to_string()),
+            ..HtmlConfig::default()
+        };
+
+        let err = generate_html("Test content", &config).expect_err(
+            "a theme set with highlighting disabled should be refused",
+        );
+        assert!(
+            format!("{err:?}")
+                .contains("enable_syntax_highlighting = false"),
+            "unexpected error: {err:?}"
+        );
+    }
+
+    /// The theme name itself is validated against a fixed set.
+    #[test]
+    fn html_config_rejects_an_unknown_syntax_theme() {
+        let config = HtmlConfig {
+            enable_syntax_highlighting: true,
+            syntax_theme: Some("monokai".to_string()),
+            ..HtmlConfig::default()
+        };
+
+        let err = generate_html("Test content", &config)
+            .expect_err("an unknown theme should be refused");
+        assert!(
+            format!("{err:?}").contains("Value not in allowed set"),
+            "unexpected error: {err:?}"
+        );
     }
 
     // Test metadata extraction with various fields
