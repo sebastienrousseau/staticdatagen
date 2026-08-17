@@ -17,7 +17,7 @@
   <a href="https://crates.io/crates/staticdatagen"><img src="https://img.shields.io/crates/v/staticdatagen.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/staticdatagen"><img src="https://img.shields.io/badge/docs.rs-staticdatagen-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://codecov.io/gh/sebastienrousseau/staticdatagen"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/staticdatagen?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
-  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.11-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.12-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
 </p>
 
 ---
@@ -41,7 +41,7 @@
 **Operational**
 
 - [When not to use staticdatagen](#when-not-to-use-staticdatagen) — limitations
-- [Roadmap](#roadmap) — v0.0.11 → v0.0.15
+- [Roadmap](#roadmap) — v0.0.12 → v0.0.15
 - [Development](#development) — local loop, CI
 - [Security](#security) — guarantees and audit cadence
 - [Documentation](#documentation) — reference links
@@ -53,7 +53,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.11"
+staticdatagen = "0.0.12"
 ```
 
 Or via Cargo:
@@ -86,7 +86,7 @@ Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows 
 ```toml
 # Example: smaller binary, no preview server (no AGPL transitive)
 [dependencies]
-staticdatagen = { version = "0.0.11", default-features = false, features = ["i18n"] }
+staticdatagen = { version = "0.0.12", default-features = false, features = ["i18n"] }
 ```
 
 ---
@@ -168,9 +168,12 @@ A few features built on top:
 - **Build-state log fidelity.** The "Successfully generated…" log
   line fires only *after* the build has truly succeeded — log
   scrapers (CI, `ssg`) can rely on it as a build-state signal.
-- **Parallel-ready data model.** `FileData` and `PageData` are
-  `Send + Sync`. The compile pipeline parallelises across cores in
-  v0.0.11 ([#74](https://github.com/sebastienrousseau/staticdatagen/issues/74)).
+- **Parallel compile.** `FileData` and `PageData` are `Send + Sync`, and
+  since v0.0.12 `compile` renders and writes across cores
+  ([#74](https://github.com/sebastienrousseau/staticdatagen/issues/74)):
+  a 500-page build went from 2.83 s to under 0.6 s — at least 67% faster
+  at every size measured — with output byte-identical. Sites under 24 pages stay on the calling thread, where
+  starting the pool would cost more than it saves.
 
 ---
 
