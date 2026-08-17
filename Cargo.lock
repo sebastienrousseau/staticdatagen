@@ -1843,9 +1843,9 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rss-gen"
-version = "0.0.9"
+version = "0.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c64240c5536a3e6bf8e0d760a4d555e14c95651ce26bb4d9a4210e181c1e9e04"
+checksum = "1c3b5748fb3d0f3e25d2464c3487f3dcf9add985563f082bdd18d6c1d8ed2f58"
 dependencies = [
  "log",
  "quick-xml",
