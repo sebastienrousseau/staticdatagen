@@ -38,18 +38,37 @@ pub fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// This example writes demo content and templates, so it works inside
+/// `target/service_example` rather than in `examples/`.
+///
+/// `examples/content` and `examples/templates` are checked-in fixtures —
+/// 17 tracked files that other examples and the test suite read. Writing
+/// there left the working tree dirty on every run, and the cleanup step
+/// used to delete them outright.
+const WORK_ROOT: &str =
+    concat!(env!("CARGO_MANIFEST_DIR"), "/target/service_example");
+const WORK_CONTENT: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/target/service_example/content"
+);
+const WORK_TEMPLATES: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/target/service_example/templates"
+);
+const WORK_BUILD: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/target/service_example/build"
+);
+const WORK_SITE: &str =
+    concat!(env!("CARGO_MANIFEST_DIR"), "/target/service_example/site");
+
 /// Sets up example directories for testing.
 fn setup_example_directories() -> Result<(), Box<dyn std::error::Error>>
 {
     println!("🦀 Setting Up Example Directories");
     println!("---------------------------------------------");
 
-    let dirs = [
-        "examples/content",
-        "examples/templates",
-        "examples/build",
-        "examples/site",
-    ];
+    let dirs = [WORK_CONTENT, WORK_TEMPLATES, WORK_BUILD, WORK_SITE];
 
     for dir in &dirs {
         fs::create_dir_all(dir)?;
@@ -69,7 +88,13 @@ fn setup_example_directories() -> Result<(), Box<dyn std::error::Error>>
 </body>
 </html>"#;
 
-    fs::write("examples/templates/default.html", template_content)?;
+    fs::write(
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/target/service_example/templates/default.html"
+        ),
+        template_content,
+    )?;
     println!("    ✅ Created sample template file");
 
     Ok(())
@@ -81,10 +106,10 @@ fn basic_compilation_example() -> Result<(), Box<dyn std::error::Error>>
     println!("\n🦀 Basic Site Compilation Example");
     println!("---------------------------------------------");
 
-    let build_dir = Path::new("examples/build");
-    let content_dir = Path::new("examples/content");
-    let site_dir = Path::new("examples/site");
-    let template_dir = Path::new("examples/templates");
+    let build_dir = Path::new(WORK_BUILD);
+    let content_dir = Path::new(WORK_CONTENT);
+    let site_dir = Path::new(WORK_SITE);
+    let template_dir = Path::new(WORK_TEMPLATES);
 
     // Create a sample content file
     let content = "# Hello World\n\nThis is a test page.";
@@ -126,7 +151,13 @@ fn template_processing_example(
 </body>
 </html>"#;
 
-    fs::write("examples/templates/custom.html", custom_template)?;
+    fs::write(
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/target/service_example/templates/custom.html"
+        ),
+        custom_template,
+    )?;
 
     println!("    ✅ Created custom template");
     println!("    ✅ Template processing example completed");
@@ -140,7 +171,7 @@ fn content_compilation_example(
     println!("\n🦀 Content Compilation Example");
     println!("---------------------------------------------");
 
-    let content_path = Path::new("examples/content");
+    let content_path = Path::new(WORK_CONTENT);
 
     // Create sample content files
     let files = [
@@ -167,7 +198,7 @@ fn metadata_handling_example() -> Result<(), Box<dyn std::error::Error>>
     println!("\n🦀 Metadata Handling Example");
     println!("---------------------------------------------");
 
-    let content_path = Path::new("examples/content");
+    let content_path = Path::new(WORK_CONTENT);
     let content_with_metadata = r#"---
 title: Sample Page
 description: A sample page demonstrating metadata
@@ -195,7 +226,7 @@ fn directory_structure_example(
     println!("\n🦀 Directory Structure Example");
     println!("---------------------------------------------");
 
-    let content_path = Path::new("examples/content");
+    let content_path = Path::new(WORK_CONTENT);
     let dirs = ["blog", "blog/2024", "pages", "docs", "docs/api"];
 
     for dir in &dirs {
@@ -233,29 +264,40 @@ fn error_handling_example() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Test with invalid content file
-    let content_path = Path::new("examples/content");
+    let content_path = Path::new(WORK_CONTENT);
     fs::write(content_path.join("invalid.txt"), "Invalid file type")?;
     println!("    ✅ Created invalid content file");
 
     Ok(())
 }
 
-/// Cleans up example directories.
+/// Removes the directories this example generates.
+///
+/// `examples/content` and `examples/templates` are deliberately **not**
+/// listed. They are checked-in fixtures — 17 tracked files that the other
+/// examples and the test suite read — and this function used to delete
+/// them, so running the example left the working tree with 17 deletions
+/// staged against it and broke every example that depends on them.
+///
+/// It was also fatal on a missing directory (`remove_dir_all(dir)?`), so
+/// a first run on a clean checkout aborted partway: fixtures already
+/// gone, generated output still present. Absence is now the expected
+/// state, not an error.
 fn cleanup_example_directories(
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("\n🦀 Cleaning Up Example Directories");
     println!("---------------------------------------------");
 
-    let dirs = [
-        "examples/content",
-        "examples/templates",
-        "examples/build",
-        "examples/site",
-    ];
+    let generated = [WORK_ROOT];
 
-    for dir in &dirs {
-        fs::remove_dir_all(dir)?;
-        println!("    ✅ Removed directory: {}", dir);
+    for dir in &generated {
+        match fs::remove_dir_all(dir) {
+            Ok(()) => println!("    ✅ Removed directory: {}", dir),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                println!("    ✅ Nothing to remove: {}", dir);
+            }
+            Err(e) => return Err(e.into()),
+        }
     }
 
     Ok(())
