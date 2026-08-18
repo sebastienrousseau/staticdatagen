@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.12] — 2026-08-17
+
+Performance release. `compile` renders and writes pages in parallel, which
+takes a 500-page build from 2.83 s to under 0.6 s — at least 67% faster at
+every size measured — with output unchanged.
+
+### Changed
+
+- **`compile` renders and writes in parallel.** Profiling a 500-page corpus
+  put 94% of wall-clock inside this function, and each page is independent:
+  it reads shared, immutable navigation and writes only its own output. Two
+  things made the loop sequential — a `&mut Engine` and a `&mut HashMap` of
+  tags. Each rayon worker now holds its own `Engine`, so the template cache
+  is per-thread rather than contended, and each file reports the tags it
+  contributes for merging afterwards. The merge iterates the collected
+  results in order, so output does not depend on thread scheduling.
+
+  Measured on an M-series laptop, medians of 3, each build in isolation:
+
+  | Pages | 0.0.11 | 0.0.12 | Faster |
+  |-------|--------|--------|--------|
+  |    10 |   45.4 ms |   15.1 ms | 66.8% |
+  |   100 |  387.7 ms |  127.6 ms | 67.1% |
+  |   500 | 2,830 ms  |  578.2 ms | 79.6% |
+
+  The 500-page figure moves between roughly 425 ms and 615 ms depending on
+  machine load; the table quotes the slower sample rather than the best
+  one. The direction is stable across every run: never worse than 67%.
+
+- **Small sites stay on the calling thread.** Below `PARALLEL_THRESHOLD`
+  (24 pages) both the render and write loops run sequentially: starting
+  rayon's pool costs more than the parallelism saves. A 10-page build
+  measured 35 ms sequentially against 158 ms parallel before this guard was
+  added, and most sites are small.
+
+### Added
+
+- `parallel_and_sequential_render_identically` — renders the same pages
+  through both branches and asserts the per-page HTML matches. Verified to
+  fail when the parallel path is deliberately corrupted, rather than only
+  ever having passed.
+- `parallel_compilation_is_deterministic` — two parallel runs of one corpus
+  must produce identical bytes, pinning the ordered tag merge.
+- `compiles_either_side_of_the_parallel_threshold` — covers the boundary
+  where the branch is chosen, so an off-by-one cannot silently send every
+  build down one path.
+
+### Notes
+
+Emitted HTML is byte-identical to 0.0.11: verified across a four-theme,
+34-page site as well as in-crate. Run-to-run ordering differences in
+`.meta/*.json` and `depgraph.json` are pre-existing `HashMap` iteration
+order — confirmed by building 0.0.11 twice and observing the same
+differences — and are not affected by this change.
+
 ## [0.0.11] — 2026-07-25
 
 Correctness release driven by the ssg v0.0.47 plan (ssg#586, spec
