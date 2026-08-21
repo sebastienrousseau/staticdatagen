@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.13] — 2026-08-20
+
+Stops asking the HTML pipeline for structured data it could never produce.
+
+`generate_structured_data` was enabled for every Markdown body. It reads a
+`<title>`, and a Markdown body is a fragment with no `<head>` — so the step
+failed on every page ever compiled, logging an error each time. A themes
+showcase build reported it 25 times, once per page.
+
+Nothing was lost when it failed and nothing is gained by fixing it here:
+structured data is generated downstream from front matter, where the title,
+description, canonical URL and page type are known, and that block is a
+full `@graph` rather than the bare name/description derivable from a
+fragment. Enabling it would emit a second, thinner `ld+json` block
+competing with the real one.
+
+Output is unchanged. What goes away is 25 error diagnostics per build and a
+step that never once did anything.
+
 ## [0.0.12] — 2026-08-17
 
 Performance release. `compile` renders and writes pages in parallel, which
