@@ -63,9 +63,21 @@ path = "src/lib.rs"                         # Path to the library entry point
 # -----------------------------------------------------------------------------
 [features]
 # Optional features that can be enabled or disabled.
-default = ["full"]                          # Full features enabled by default
 
-# Full feature set - includes all optional features
+# `server` is deliberately NOT in the default set.
+#
+# It pulls `http-handle`, which is `license = "AGPL-3.0-only"`. This crate is
+# published as Apache-2.0 OR MIT, so a default build was quietly handing every
+# consumer an AGPL transitive — including `ssg`, which depends on this crate
+# with default features and never references the re-exported `Server` at all.
+#
+# The README promised this exit for v0.0.12 (#83) and it never happened. Taking
+# `server` out of `default` is the part that can be done without replacing the
+# dependency: anyone who wants the preview server opts in, and everyone else
+# stops inheriting a copyleft licence they did not ask for.
+default = ["rss", "sitemap", "i18n"]
+
+# Everything, including the AGPL-transitive preview server.
 full = ["rss", "sitemap", "i18n", "server"]
 
 # Minimal feature set - core functionality only

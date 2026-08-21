@@ -74,19 +74,25 @@ Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows 
 
 | Feature | Default? | Pulls in | Adds | Status |
 |---|:---:|---|---|---|
-| `full` | ✅ | `rss + sitemap + i18n + server` | Convenience meta-feature (the default). | Stable |
-| `rss` | ✅ (via `full`) | — | RSS feed emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
-| `sitemap` | ✅ (via `full`) | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
-| `i18n` | ✅ (via `full`) | `langweave 0.0.2` | Enables the `locales` module for translated string handling. | Active. |
-| `server` | ✅ (via `full`) | `http-handle 0.0.5` | Re-exports `staticdatagen::Server` for serving a built site. | Active. **AGPL transitive, still present as of v0.0.14** — the exit was slated for v0.0.12 and has not landed ([#83](https://github.com/sebastienrousseau/staticdatagen/issues/83)). Disable the `server` feature to avoid it. |
+| `full` | ❌ | `rss + sitemap + i18n + server` | Everything, **including the AGPL-transitive preview server**. | Stable |
+| `rss` | ✅ | — | RSS feed emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
+| `sitemap` | ✅ | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
+| `i18n` | ✅ | `langweave 0.0.2` | Enables the `locales` module for translated string handling. | Active. |
+| `server` | ❌ | `http-handle 0.0.5` | Re-exports `staticdatagen::Server` for serving a built site. | **Opt-in since 0.0.14.** `http-handle` is `AGPL-3.0-only`; this crate is Apache-2.0 OR MIT, so it is no longer in `default`. Replacing it ([#83](https://github.com/sebastienrousseau/staticdatagen/issues/83)) is still open. |
 | `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. Real gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `async` | ❌ | — | Reserved name; no async surface yet. |
 | `serde` | ❌ | — | Always-on via the unconditional `serde` direct dep. Reserved flag. |
 
+A default build carries no AGPL: `server` is opt-in as of 0.0.14.
+
 ```toml
-# Example: smaller binary, no preview server (no AGPL transitive)
+# Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = { version = "0.0.14", default-features = false, features = ["i18n"] }
+staticdatagen = "0.0.14"
+
+# Preview server. Pulls `http-handle`, which is AGPL-3.0-only.
+[dependencies]
+staticdatagen = { version = "0.0.14", features = ["server"] }
 ```
 
 ---
