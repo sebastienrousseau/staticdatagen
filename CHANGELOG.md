@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.14] — 2026-08-21
+
+A documentation-and-tooling pass. No behaviour changes beyond one
+deprecation; the value is in what turned out not to be true.
+
+### Deprecated
+
+- **`move_output_directory`.** It hardcoded `public/`, resolved against the
+  caller's working directory, and the first thing it did there was
+  `remove_dir_all`. Every test in the module called the private
+  `move_output_directory_to` instead, precisely so a test run could not
+  delete the repository's own `public/` — an API its own tests avoid is not
+  one to hand a consumer. `move_output_directory_to` is now public and takes
+  the destination as an argument.
+
+### Added
+
+- **`benches/compile_scaling.rs`.** `compile` had never been benchmarked,
+  despite being the function the README quotes a figure for and the target
+  of the 0.0.12 parallel work. Covers 12 pages (sequential, below
+  `PARALLEL_THRESHOLD`) and 50/200/500 (parallel). It asserts the compile
+  succeeded: a failed `compile` returns in microseconds, and the first draft
+  of this benchmark timed exactly that without noticing.
+- **Documented output layout** for `move_output_directory_to`: the moved
+  directory keeps its own name (`public/site/out/`, not `public/site/`), and
+  spaces in `site_name` become underscores. Both were silent before.
+
+### Fixed
+
+- **`performance_stress_test` was never compiled.** 360 lines of benchmarks
+  with no `[[bench]]` entry in `Cargo.toml`, so cargo ignored the file
+  entirely. It has been in that state since before 0.0.10 and could not have
+  reported a regression.
+- **`static_site_example` never terminated.** It started a blocking server
+  unconditionally, so `cargo run --example static_site_example` hung, the
+  line telling you where to look was unreachable, and a sweep over every
+  example left an orphan holding port 3000. Serving is now opt-in via
+  `STATICDATAGEN_EXAMPLE_SERVE=1`.
+- **`static_site_example` wrote into the source tree.** Output went to
+  `examples/site` and `examples/build`; `examples/site` is gitignored, so
+  `git status` — the usual check for this — could not see it. Outputs now go
+  to `target/`, matching what #116 did for `service_example`.
+
+### Documentation
+
+The README described 0.0.10 and made claims that had stopped being true:
+
+- The capabilities section still tracked 0.0.10, four releases behind.
+- Test counts read "714 lib tests, 55 doctests"; the real figures are 754
+  lib, 61 doc (3 ignored) and 18 integration.
+- The performance claim — "a 500-page build went from 2.83 s to under
+  0.6 s" — was not reproducible from this repository, because nothing
+  benchmarked `compile`. It is replaced with measured figures and the
+  command to regenerate them.
+- Three roadmap promises had silently expired: the AGPL exit ([#83]) was
+  slated for v0.0.12 and `http-handle` is still a dependency; the
+  incremental cache ([#87]) was slated for v0.0.13 and no incremental code
+  exists; `cargo vet` ([#76]) was slated for v0.0.11 and there is no
+  `supply-chain/` directory. The AGPL one mattered most — a reader checking
+  licence exposure would have concluded it was gone.
+
+The roadmap table now says plainly that it is a plan rather than a record.
+
 ## [0.0.13] — 2026-08-20
 
 Stops asking the HTML pipeline for structured data it could never produce.

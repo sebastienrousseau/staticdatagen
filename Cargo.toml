@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.13"                         # Current version of the crate
+version = "0.0.14"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.88.0"                    # Minimum supported Rust version
@@ -155,6 +155,20 @@ rayon = "1.12"
 # Benchmarking configuration for performance testing.
 name = "criterion_benchmark"                # Name of the benchmark
 harness = false                             # Disable the default benchmark harness (used by Criterion)
+
+# benches/performance_stress_test.rs existed since before 0.0.10 with no
+# [[bench]] entry, so cargo never built or ran it — 360 lines of benchmarks
+# that could not report a regression.
+[[bench]]
+name = "performance_stress_test"
+harness = false
+
+# Measures `compile` itself, which is the claim the README makes about this
+# crate's performance and the reason for the 0.0.12 parallel work. Nothing
+# reproduced that number before.
+[[bench]]
+name = "compile_scaling"
+harness = false
 
 # -----------------------------------------------------------------------------
 # Documentation Configuration

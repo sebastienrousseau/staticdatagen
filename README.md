@@ -17,7 +17,7 @@
   <a href="https://crates.io/crates/staticdatagen"><img src="https://img.shields.io/crates/v/staticdatagen.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/staticdatagen"><img src="https://img.shields.io/badge/docs.rs-staticdatagen-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://codecov.io/gh/sebastienrousseau/staticdatagen"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/staticdatagen?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
-  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.12-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.14-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
 </p>
 
 ---
@@ -32,7 +32,7 @@
 **Library reference**
 
 - [Why staticdatagen?](#why-staticdatagen) — design rationale
-- [Capabilities in 0.0.10](#capabilities-in-0010) — release inventory
+- [Capabilities in 0.0.14](#capabilities-in-0014) — release inventory
 - [Modules](#modules) — top-level surface
 - [Library Usage](#library-usage) — `compile`, errors, UUID, version
 - [Configuration](#configuration) — what gets emitted
@@ -41,7 +41,7 @@
 **Operational**
 
 - [When not to use staticdatagen](#when-not-to-use-staticdatagen) — limitations
-- [Roadmap](#roadmap) — v0.0.12 → v0.0.15
+- [Roadmap](#roadmap) — planned work, and what has slipped
 - [Development](#development) — local loop, CI
 - [Security](#security) — guarantees and audit cadence
 - [Documentation](#documentation) — reference links
@@ -53,7 +53,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.12"
+staticdatagen = "0.0.14"
 ```
 
 Or via Cargo:
@@ -75,18 +75,18 @@ Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows 
 | Feature | Default? | Pulls in | Adds | Status |
 |---|:---:|---|---|---|
 | `full` | ✅ | `rss + sitemap + i18n + server` | Convenience meta-feature (the default). | Stable |
-| `rss` | ✅ (via `full`) | — | RSS feed emission knob. | Currently always-on; per-feature gating tracked in [#78](https://github.com/sebastienrousseau/staticdatagen/issues/78) for v0.0.11. |
-| `sitemap` | ✅ (via `full`) | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating tracked in [#78](https://github.com/sebastienrousseau/staticdatagen/issues/78) for v0.0.11. |
+| `rss` | ✅ (via `full`) | — | RSS feed emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
+| `sitemap` | ✅ (via `full`) | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `i18n` | ✅ (via `full`) | `langweave 0.0.2` | Enables the `locales` module for translated string handling. | Active. |
-| `server` | ✅ (via `full`) | `http-handle 0.0.5` | Re-exports `staticdatagen::Server` for serving a built site. | Active. **AGPL transitive — exits in v0.0.12 ([#83](https://github.com/sebastienrousseau/staticdatagen/issues/83))**. |
-| `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. Real gating in v0.0.11 ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)). |
+| `server` | ✅ (via `full`) | `http-handle 0.0.5` | Re-exports `staticdatagen::Server` for serving a built site. | Active. **AGPL transitive, still present as of v0.0.14** — the exit was slated for v0.0.12 and has not landed ([#83](https://github.com/sebastienrousseau/staticdatagen/issues/83)). Disable the `server` feature to avoid it. |
+| `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. Real gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `async` | ❌ | — | Reserved name; no async surface yet. |
 | `serde` | ❌ | — | Always-on via the unconditional `serde` direct dep. Reserved flag. |
 
 ```toml
 # Example: smaller binary, no preview server (no AGPL transitive)
 [dependencies]
-staticdatagen = { version = "0.0.12", default-features = false, features = ["i18n"] }
+staticdatagen = { version = "0.0.14", default-features = false, features = ["i18n"] }
 ```
 
 ---
@@ -95,7 +95,7 @@ staticdatagen = { version = "0.0.12", default-features = false, features = ["i18
 
 Compile a content tree into a publishable static site. The example
 below is doctest-runnable: every type, function, and import resolves
-in `staticdatagen 0.0.10`.
+in `staticdatagen 0.0.14`.
 
 ```rust,no_run
 use staticdatagen::compile;
@@ -170,25 +170,48 @@ A few features built on top:
   scrapers (CI, `ssg`) can rely on it as a build-state signal.
 - **Parallel compile.** `FileData` and `PageData` are `Send + Sync`, and
   since v0.0.12 `compile` renders and writes across cores
-  ([#74](https://github.com/sebastienrousseau/staticdatagen/issues/74)):
-  a 500-page build went from 2.83 s to under 0.6 s — at least 67% faster
-  at every size measured — with output byte-identical. Sites under 24 pages stay on the calling thread, where
-  starting the pool would cost more than it saves.
+  ([#74](https://github.com/sebastienrousseau/staticdatagen/issues/74)),
+  with output byte-identical. Sites under 24 pages stay on the calling
+  thread, where starting the pool would cost more than it saves.
+
+  Measure it yourself — `cargo bench --bench compile_scaling`:
+
+  | Pages | Path | Median |
+  | ---: | :--- | ---: |
+  | 12 | sequential | 16.1 ms |
+  | 50 | parallel | 57.4 ms |
+  | 200 | parallel | 241.9 ms |
+  | 500 | parallel | 811.5 ms |
+
+  Recorded on an Apple Silicon laptop under a load average of about 6, so
+  read them as an upper bound rather than a best case. What matters is that
+  they are reproducible: the benchmark builds a corpus, compiles it, and
+  **asserts the compile succeeded** — a failed `compile` returns in
+  microseconds and would otherwise be timed as though it were a build.
+
+  Earlier releases quoted "2.83 s to under 0.6 s" here. Nothing in this
+  repository ever reproduced that figure — no benchmark called `compile`
+  at all before 0.0.14 — so it has been replaced with numbers anyone can
+  regenerate.
 
 ---
 
-## Capabilities in 0.0.10
+## Capabilities in 0.0.14
 
-The 0.0.10 release is a stabilisation pass on the v0.0.9 dep-graph
-slim-down plus five user-reported bug fixes. See
-[`CHANGELOG.md`](CHANGELOG.md) for the full entry.
+This section tracked 0.0.10 for four releases while 0.0.11, 0.0.12 and
+0.0.13 shipped. See [`CHANGELOG.md`](CHANGELOG.md) for the full entries.
 
 | Theme | Headline deliverables |
 | :--- | :--- |
-| Bug fixes | Empty `layout:` resolves to `"page"` ([#67]); missing `main.js` / `sw.js` no-op ([#68]); missing tags template no-op ([#69]); recursive walk through subdirectories with locale-preservation ([#70]); success log line fires only after success ([#71]). |
-| Security | `rand` 0.8.5 → 0.8.6 closes GHSA-cq8v-f236-94qc / RUSTSEC-2026-0097 (Stacked-Borrows unsoundness reachable through custom loggers). |
-| Dependencies | `staticweaver` 0.0.2 → 0.0.3, `rss-gen` 0.0.5 → 0.0.6, `regex` 1.11 → 1.12, `walkdir` 2 → 2.5, `uuid` 1.11 → 1.23, `idna` 1.0 → 1.1, `rayon` 1.10 → 1.12. Dev: `proptest` 1.6 → 1.11, `tempfile` 3 → 3.27. |
-| Tests | 714 lib tests, 55 doctests, integration suite green; 0 `cargo audit` vulnerabilities. |
+| Safer API (0.0.14) | `move_output_directory` is deprecated: it hardcoded `public/` relative to the caller's working directory and `remove_dir_all`'d it. Use `move_output_directory_to`, now public, which takes the destination as an argument. |
+| Benchmarks (0.0.14) | `compile` is benchmarked for the first time (`compile_scaling`), and `performance_stress_test` is finally declared in `Cargo.toml` — it had never been compiled. |
+| Examples (0.0.14) | `static_site_example` no longer blocks forever on a server nothing asked for, and writes to `target/` instead of back into `examples/`. |
+| Correctness (0.0.13) | The structured-data step is off: it read a `<title>` from a Markdown fragment that has no `<head>`, so it failed on every page ever compiled. Output unchanged. |
+| Performance (0.0.12) | `compile` renders and writes across cores ([#74]); sites under 24 pages stay on the calling thread. |
+| Correctness (0.0.11) | Raw HTML in Markdown is no longer escaped; a missing `permalink:` no longer hard-fails the build; the news-sitemap date parser accepts RFC 2822, long form and ISO 8601. |
+| Tests | 754 lib tests, 61 doctests (3 ignored), 18 integration tests; 0 `cargo audit` vulnerabilities. |
+
+[#74]: https://github.com/sebastienrousseau/staticdatagen/issues/74
 
 [#67]: https://github.com/sebastienrousseau/staticdatagen/issues/67
 [#68]: https://github.com/sebastienrousseau/staticdatagen/issues/68
@@ -236,8 +259,8 @@ fn build() -> anyhow::Result<()> {
 
 `compile()` is idempotent if `content/` and `templates/` are
 unchanged — the final `fs::rename(build_dir → site_path)` is atomic
-on POSIX. The function returns `anyhow::Result<()>` in v0.0.10;
-v0.0.11 ([#73]) promotes the typed
+on POSIX. The function still returns `anyhow::Result<()>` as of
+v0.0.14; the typed-error work ([#73]) has not landed. It promotes the typed
 [`staticdatagen::Error`](https://docs.rs/staticdatagen/latest/staticdatagen/enum.Error.html)
 to the public surface.
 
@@ -341,8 +364,9 @@ use staticdatagen::Server;
 use std::path::Path;
 
 // Re-exported from `http_handle` — see that crate's docs for the
-// full configuration surface. AGPL transitive in v0.0.10; replaced
-// by `axum` in v0.0.12 (#83).
+// full configuration surface. Still AGPL-transitive as of v0.0.14 —
+// the `axum` replacement (#83) was slated for v0.0.12 and has not
+// landed. Optional: disabling the `server` feature drops it.
 let _server = Server::new("127.0.0.1:3000", Path::new("public"));
 ```
 
@@ -423,13 +447,14 @@ A narrative *learn → integrate → extend* ladder lands in v0.0.15
   emits the parts a search engine, RSS reader, or LLM crawler reads —
   it does not ship a CLI, theme system, or asset pipeline.
 - **You need a non-Rust runtime today.** WASI 0.2 Component Model
-  distribution lands in v0.0.14
+  distribution was slated for v0.0.14 and has not landed
   ([#90](https://github.com/sebastienrousseau/staticdatagen/issues/90));
   Python / Node FFIs in v0.0.15
   ([#96](https://github.com/sebastienrousseau/staticdatagen/issues/96),
   [#97](https://github.com/sebastienrousseau/staticdatagen/issues/97)).
-- **You need true incremental rebuilds.** v0.0.10 rebuilds every
-  file. Content-hash-based incremental cache lands in v0.0.13
+- **You need true incremental rebuilds.** v0.0.14 still rebuilds
+  every file. The content-hash incremental cache was slated for v0.0.13
+  and has not landed
   ([#87](https://github.com/sebastienrousseau/staticdatagen/issues/87),
   closes long-standing
   [#36](https://github.com/sebastienrousseau/staticdatagen/issues/36)).
@@ -437,6 +462,16 @@ A narrative *learn → integrate → extend* ladder lands in v0.0.15
 ---
 
 ## Roadmap
+
+**This table is a plan, not a record.** Milestones v0.0.11 through v0.0.14
+have all shipped, and much of what is listed against them has not landed —
+the AGPL exit ([#83]) was slated for v0.0.12 and the dependency is still
+here; the incremental cache ([#87]) was slated for v0.0.13 and there is no
+incremental code. Items stay listed because they remain wanted, not because
+they arrived with the version beside them.
+
+For what a release actually contained, read [`CHANGELOG.md`](CHANGELOG.md),
+which is written after the fact.
 
 | Milestone | Theme | Highlights |
 | :--- | :--- | :--- |
@@ -483,7 +518,7 @@ git clone https://github.com/sebastienrousseau/staticdatagen.git
 cd staticdatagen
 make                  # fmt + clippy + test (see Makefile)
 cargo build           # debug build
-cargo test            # 714 lib + 55 doc tests + integration suite
+cargo test            # 754 lib + 61 doc tests + 18 integration tests
 cargo clippy          # -D warnings is enforced
 cargo bench           # Criterion benches under benches/
 ```
@@ -496,8 +531,9 @@ CI runs on every push:
   `cargo miri test utilities::element`, `utilities::uuid`, `locales`,
   `macros::directory`, `macros::custom`.
 - **Coverage**: `cargo llvm-cov` reported to Codecov.
-- **Supply chain**: `cargo audit`, `cargo deny`. `cargo vet` lands
-  in v0.0.11
+- **Supply chain**: `cargo audit`, `cargo deny`. `cargo vet` was
+  slated for v0.0.11 and has not landed — there is no `supply-chain/`
+  directory in this crate
   ([#76](https://github.com/sebastienrousseau/staticdatagen/issues/76)).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for signed-commit setup and
@@ -517,7 +553,7 @@ PR guidelines.
   (next: 2026-07-17) and lists every transitive exemption with a
   justification.
 - **Vulnerability disclosure.** See [SECURITY.md](.github/SECURITY.md).
-- **SBOM** publication lands in v0.0.11
+- **SBOM** publication was slated for v0.0.11 and has not landed
   ([#77](https://github.com/sebastienrousseau/staticdatagen/issues/77));
   Kani proofs in v0.0.15
   ([#94](https://github.com/sebastienrousseau/staticdatagen/issues/94)).
