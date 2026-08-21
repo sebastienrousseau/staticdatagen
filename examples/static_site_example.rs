@@ -37,11 +37,33 @@ use std::{collections::HashMap, path::Path};
 fn main() -> Result<()> {
     println!("🚀 Starting StaticDataGen Example...\n");
 
-    // Define directory paths
-    let build_dir = Path::new("examples/build"); // Temporary build directory
-    let site_dir = Path::new("examples/site"); // Final output directory
-    let content_dir = Path::new("examples/content"); // Source content files
-    let template_dir = Path::new("examples/templates"); // HTML templates
+    // Inputs are the tracked fixtures under `examples/`; outputs go to
+    // `target/`, matching what #116 did for `service_example`.
+    //
+    // These were relative paths (`examples/build`, `examples/site`), which
+    // resolve against the caller's working directory rather than the crate,
+    // and wrote generated output back into the source tree. `examples/site`
+    // is gitignored, so those writes were invisible to `git status` — the
+    // check that is supposed to catch exactly this.
+    //
+    // CARGO_MANIFEST_DIR makes both ends independent of where the example is
+    // run from.
+    let build_dir = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/target/static_site_example/build"
+    ));
+    let site_dir = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/target/static_site_example/site"
+    ));
+    let content_dir = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/examples/content"
+    ));
+    let template_dir = Path::new(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/examples/templates"
+    ));
 
     // Create and resolve template context
     println!("🔧 Resolving template tags...");
@@ -70,13 +92,36 @@ fn main() -> Result<()> {
     println!("📄 Processing file data...");
     handle_file_data()?;
 
+    // The server blocks forever, so it is opt-in.
+    //
+    // `server.start()` never returns: it serves until killed. Starting it
+    // unconditionally meant `cargo run --example static_site_example` hung
+    // rather than completing, and the line below it — the one telling you
+    // where to look — was unreachable. A sweep over every example (`for f in
+    // examples/*.rs`) hangs on this one, and the orphaned process then holds
+    // port 3000, so every later run fails with "Address already in use"
+    // rather than the real problem.
     #[cfg(feature = "server")]
     {
-        println!("🌍 Starting local server...");
-        let server =
-            Server::new("127.0.0.1:3000", site_dir.to_str().unwrap());
-        server.start()?;
-        println!("   Visit http://127.0.0.1:3000 to view your site.");
+        if std::env::var_os("STATICDATAGEN_EXAMPLE_SERVE").is_some() {
+            println!("🌍 Starting local server...");
+            println!(
+                "   Visit http://127.0.0.1:3000 to view your site."
+            );
+            println!("   This blocks until interrupted (Ctrl-C).");
+            let server = Server::new(
+                "127.0.0.1:3000",
+                site_dir.to_str().unwrap(),
+            );
+            server.start()?;
+        } else {
+            println!("🌍 Local server: skipped.");
+            println!(
+                "   Set STATICDATAGEN_EXAMPLE_SERVE=1 to serve {} on \
+                 http://127.0.0.1:3000 (blocks until Ctrl-C).",
+                site_dir.display()
+            );
+        }
     }
 
     println!("\n✨ StaticDataGen example completed successfully!");

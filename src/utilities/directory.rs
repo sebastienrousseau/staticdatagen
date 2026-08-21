@@ -90,6 +90,26 @@ pub fn directory(dir: &Path, name: &str) -> Result<String, String> {
 ///
 /// If `public/` already exists, it will be removed before creating a fresh one.
 /// The output directory `out_dir` is then moved into `public/site_name`.
+///
+/// # Deprecated
+///
+/// The destination is hardcoded to `public/`, resolved against the caller's
+/// current working directory, and the first thing done there is
+/// `remove_dir_all`. A caller running from an unexpected directory loses
+/// whatever `public/` is found, with no way to say where it meant.
+///
+/// Every test in this module calls [`move_output_directory_to`] instead,
+/// precisely so a test run cannot delete the repository's own `public/`.
+/// An API its own tests will not touch is not one to hand a consumer.
+///
+/// Use [`move_output_directory_to`] and pass the destination. This wrapper
+/// is exactly `move_output_directory_to(site_name, out_dir, Path::new("public"))`.
+#[deprecated(
+    since = "0.0.14",
+    note = "hardcodes `public/` relative to the working directory and \
+            removes it; use `move_output_directory_to` and pass the \
+            destination explicitly"
+)]
 pub fn move_output_directory(
     site_name: &str,
     out_dir: &Path,
@@ -97,9 +117,57 @@ pub fn move_output_directory(
     move_output_directory_to(site_name, out_dir, Path::new("public"))
 }
 
-/// Core implementation of [`move_output_directory`] with a configurable
-/// public directory path. Used internally and in tests.
-fn move_output_directory_to(
+/// Moves `out_dir` into `public_dir/site_name`, replacing `public_dir` if it
+/// already exists.
+///
+/// Prefer this over [`move_output_directory`]: the destination is explicit,
+/// so it can be pointed at a temporary directory and cannot remove something
+/// the caller never named.
+///
+/// # Arguments
+///
+/// * `site_name` - Name of the site; becomes the directory inside `public_dir`.
+/// * `out_dir` - The directory to move.
+/// * `public_dir` - Destination root. **Removed with `remove_dir_all` if it
+///   exists**, so pass a path you own.
+///
+/// # Returns
+///
+/// An `io::Result<()>` indicating success or failure.
+///
+/// # Resulting layout
+///
+/// `out_dir` is moved *inside* `public_dir/site_name`, keeping its own
+/// directory name rather than becoming it:
+///
+/// ```text
+/// public_dir/
+/// └── site_name/
+///     └── <out_dir's file name>/
+///         └── ...contents of out_dir
+/// ```
+///
+/// Spaces in `site_name` become underscores, so `"my site"` yields
+/// `public_dir/my_site/`.
+///
+/// # Examples
+///
+/// ```
+/// use staticdatagen::utilities::directory::move_output_directory_to;
+/// use std::fs;
+///
+/// let tmp = tempfile::tempdir().unwrap();
+/// let out = tmp.path().join("out");
+/// fs::create_dir_all(&out).unwrap();
+/// fs::write(out.join("index.html"), "<h1>hi</h1>").unwrap();
+///
+/// let public = tmp.path().join("public");
+/// move_output_directory_to("mysite", &out, &public).unwrap();
+///
+/// // Note the `out` component: the moved directory keeps its own name.
+/// assert!(public.join("mysite").join("out").join("index.html").exists());
+/// ```
+pub fn move_output_directory_to(
     site_name: &str,
     out_dir: &Path,
     public_dir: &Path,

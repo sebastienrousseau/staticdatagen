@@ -11,7 +11,7 @@
 //! date consumers share, ported from ssg's `src/core/dates.rs` so the
 //! two layers agree byte-for-byte on what a date means.
 //!
-//! [`parse_flexible_date`] accepts, in priority order:
+//! [`parse_flexible_date()`](crate::utilities::dates::parse_flexible_date) accepts, in priority order:
 //!
 //! 1. **RFC 2822** — `Wed, 01 Jul 2026 07:07:07 +0000` (weekday
 //!    optional and *not* verified, matching the lenient behaviour
@@ -29,12 +29,12 @@
 //! no system-time reads.
 //!
 //! The output side offers the exact shapes the generators emit:
-//! [`FlexibleDate::to_rfc2822`] for RSS `<pubDate>`,
-//! [`FlexibleDate::to_w3c_date`] for the news-sitemap
+//! [`FlexibleDate::to_rfc2822`](crate::utilities::dates::FlexibleDate::to_rfc2822) for RSS `<pubDate>`,
+//! [`FlexibleDate::to_w3c_date`](crate::utilities::dates::FlexibleDate::to_w3c_date) for the news-sitemap
 //! `<news:publication_date>` (renders UTC as `Z`, matching the
 //! `time` crate output the generator previously produced),
-//! [`FlexibleDate::to_rfc3339`] for feed timestamps, and
-//! [`FlexibleDate::to_iso_date`] for sitemap `<lastmod>`.
+//! [`FlexibleDate::to_rfc3339`](crate::utilities::dates::FlexibleDate::to_rfc3339) for feed timestamps, and
+//! [`FlexibleDate::to_iso_date`](crate::utilities::dates::FlexibleDate::to_iso_date) for sitemap `<lastmod>`.
 
 use std::fmt;
 
