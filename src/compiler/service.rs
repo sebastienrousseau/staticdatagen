@@ -261,21 +261,27 @@ pub fn split_frontmatter_and_body(content: &str) -> (String, String) {
     (frontmatter.trim().to_string(), body.trim().to_string())
 }
 
-/// Generates HTML content from markdown body using the specified configuration.
+/// The configuration used to render every Markdown body.
 ///
-/// # Arguments
-///
-/// * `body` - The markdown body content to convert to HTML.
-///
-/// # Returns
-///
-/// Returns the generated HTML content as a string.
-fn generate_html_content(body: &str) -> Result<String> {
-    let config = HtmlConfig {
+/// Extracted so tests exercise the configuration the compiler actually
+/// uses rather than a copy of it that can drift.
+fn html_config() -> HtmlConfig {
+    HtmlConfig {
         enable_syntax_highlighting: true,
         minify_output: false,
         add_aria_attributes: true,
-        generate_structured_data: true,
+        // Deliberately off. This ran on the Markdown body, which is a
+        // fragment: it has no `<head>`, so `<title>` cannot exist and the
+        // step failed on every page ever compiled — 25 of 25 pages in the
+        // themes showcase, logged at Error level each time.
+        //
+        // Turning it on again would not recover anything, it would emit a
+        // second `ld+json` block. Structured data is generated downstream
+        // from front matter, where the title, description, canonical URL
+        // and page type are actually known, and that block is a full
+        // `@graph` rather than the bare name/description derivable from a
+        // fragment. See ssg's metadata plugin.
+        generate_structured_data: false,
         generate_toc: false,
         language: "en".to_string(),
         max_input_size: usize::MAX,
@@ -289,9 +295,20 @@ fn generate_html_content(body: &str) -> Result<String> {
         // (`sanitize_html: true`), never silent escaping.
         allow_unsafe_html: true,
         ..HtmlConfig::default()
-    };
+    }
+}
 
-    generate_html(body, &config)
+/// Generates HTML content from markdown body using the specified configuration.
+///
+/// # Arguments
+///
+/// * `body` - The markdown body content to convert to HTML.
+///
+/// # Returns
+///
+/// Returns the generated HTML content as a string.
+fn generate_html_content(body: &str) -> Result<String> {
+    generate_html(body, &html_config())
         .context("Failed to generate HTML content")
 }
 
@@ -752,6 +769,56 @@ fn update_global_tags_data(
 mod tests {
     use super::*;
     use rss_gen::data::RssDataField;
+
+    /// Every step the render pipeline is asked to perform must succeed.
+    ///
+    /// `generate_structured_data` was on, and could not succeed: it looks
+    /// for a `<title>`, and the input is a Markdown body with no `<head>`.
+    /// Every page ever compiled logged a step failure that nothing acted
+    /// on, and the JSON-LD it was meant to produce was never emitted.
+    ///
+    /// Asserting on diagnostics rather than on the absence of the string
+    /// keeps this honest: it fails for any step that silently degrades,
+    /// not only the one that prompted it.
+    #[test]
+    fn render_pipeline_reports_no_failed_step() {
+        let body =
+            "# Heading\n\nA paragraph, so a description could be \
+                    derived if anything asked for one.\n";
+
+        let output = html_generator::generate_html_with_diagnostics(
+            body,
+            &html_config(),
+        )
+        .expect("rendering the body must succeed");
+
+        let failed: Vec<_> = output
+            .diagnostics
+            .iter()
+            .filter(|d| {
+                d.level == html_generator::DiagnosticLevel::Error
+            })
+            .collect();
+
+        assert!(
+            failed.is_empty(),
+            "render pipeline reported failed step(s): {failed:#?}"
+        );
+    }
+
+    /// Structured data belongs downstream, where front matter supplies the
+    /// title, description and canonical URL. Emitting a second, thinner
+    /// block from the fragment would compete with it.
+    #[test]
+    fn rendered_body_carries_no_structured_data() {
+        let html = generate_html_content("# Heading\n\nBody.\n")
+            .expect("rendering the body must succeed");
+
+        assert!(
+            !html.contains("application/ld+json"),
+            "fragment must not carry its own JSON-LD: {html}"
+        );
+    }
 
     /// Builds a corpus of `n` pages and returns the emitted HTML keyed by
     /// filename, so two runs can be compared for equality.
