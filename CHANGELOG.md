@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 A documentation-and-tooling pass. No behaviour changes beyond one
 deprecation; the value is in what turned out not to be true.
 
+### Changed
+
+- **`server` is no longer a default feature.** It pulls `http-handle`, which
+  is `license = "AGPL-3.0-only"`, while this crate is published as
+  Apache-2.0 OR MIT — so every default build handed its consumer an AGPL
+  transitive. `ssg` was one of them: it depends on this crate with default
+  features and never references the re-exported `Server`.
+
+  The README promised this exit for v0.0.12 ([#83]) and it did not happen.
+  Removing `server` from `default` is the part achievable without replacing
+  the dependency; replacing it remains open.
+
+  **Breaking if you used `staticdatagen::Server` with default features.**
+  Add `features = ["server"]`, or use `full`, which still includes it. A
+  default build now resolves `http-handle` zero times, verified with
+  `cargo tree --edges normal`.
+
 ### Deprecated
 
 - **`move_output_directory`.** It hardcoded `public/`, resolved against the
