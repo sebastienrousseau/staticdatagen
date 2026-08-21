@@ -964,9 +964,9 @@ dependencies = [
 
 [[package]]
 name = "http-handle"
-version = "0.0.5"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cf34d328daadca2f19e07da47d9485568162ab9f6514cd7304580871205e8d9"
+checksum = "1e5903ce8b7fe4344c6cc6df63602d9593077651d31576906f1dfa6a46f4a00b"
 dependencies = [
  "crossbeam-channel",
  "ctrlc",
@@ -2084,7 +2084,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "staticdatagen"
-version = "0.0.14"
+version = "0.0.15"
 dependencies = [
  "anyhow",
  "comrak 0.54.0",

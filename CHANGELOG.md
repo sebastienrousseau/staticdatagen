@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.15] — 2026-08-21
+
+### Changed
+
+- **`http-handle` 0.0.5 → 0.0.7, which is now `Apache-2.0 OR MIT`.** It was
+  `AGPL-3.0-only`, and 0.0.14 removed `server` from the default features to
+  keep that copyleft out of a default build. The dependency has since been
+  relicensed at source, so the exposure is gone rather than merely avoided:
+  a build with `--features server` now resolves nothing under AGPL.
+
+  `server` stays opt-in. That is no longer a licence decision — it is a
+  dependency-weight one, and a preview server is still not something every
+  consumer should carry by default.
+
+  Also brings RUSTSEC-2026-0258 (`h2` unbounded empty DATA frames), fixed in
+  http-handle 0.0.7.
+
+### Fixed
+
+- **The release workflow can publish.** `x86_64-unknown-linux-musl` is
+  dropped from the build matrix: `onig_sys` runs a cc-rs build script needing
+  `x86_64-linux-musl-gcc`, which ubuntu-latest does not carry. The matrix
+  fails fast, so that one missing linker cancelled every other build and
+  skipped `Release Rust` with them.
+
+  This is the second linker to be dropped for the same reason. #118 removed
+  `aarch64-unknown-linux-gnu` and #119 fixed the JSON that had expanded the
+  matrix to zero jobs; the v0.0.14 tag was the first run where the matrix
+  expanded at all, and musl was waiting behind it. Every release from v0.0.9
+  to v0.0.14 was published by hand.
+
+  Both targets can return once the cross toolchains are installed in
+  `sebastienrousseau/pipelines`.
+
 ## [0.0.14] — 2026-08-21
 
 A documentation-and-tooling pass. No behaviour changes beyond one
