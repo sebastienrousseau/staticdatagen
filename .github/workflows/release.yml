@@ -32,21 +32,24 @@ jobs:
     uses: sebastienrousseau/pipelines/.github/workflows/release.yml@main
     with:
       language: rust
+      # aarch64-unknown-linux-gnu is omitted deliberately. `onig_sys` runs a
+      # cc-rs build script that needs `aarch64-linux-gnu-gcc`, which
+      # ubuntu-latest does not carry, so the target failed on every tag from
+      # v0.0.9 on. The matrix fails fast, so it cancelled the other five
+      # builds and skipped `Release Rust` with them — which is why every
+      # release to date was published by hand, 0.0.13 included.
+      #
+      # Dropping it costs nothing that works today: it has never once
+      # produced a binary. It can return once the cross toolchain is
+      # installed in sebastienrousseau/pipelines.
+      #
+      # The value below must be PURE JSON. The reusable workflow calls
+      # fromJSON on it, and JSON has no comments — a `#` inside this block
+      # scalar is data, not a comment, and makes the parse fail. That is why
+      # this explanation lives out here as YAML rather than in there.
       rust-targets: |
         [
           {"target":"x86_64-unknown-linux-gnu",  "os":"ubuntu-latest"},
-          # aarch64-unknown-linux-gnu is omitted deliberately. `onig_sys`
-          # runs a cc-rs build script that needs `aarch64-linux-gnu-gcc`,
-          # which ubuntu-latest does not carry, so this target has failed
-          # on every tag since v0.0.9 — and because the matrix fails fast,
-          # it cancelled the other five builds and skipped `Release Rust`
-          # with them. That is why v0.0.10 had to be published by hand and
-          # why 0.0.13 never reached crates.io at all.
-          #
-          # Dropping it costs nothing that currently works: the target has
-          # never once produced a binary. Restoring it needs the cross
-          # toolchain installed in sebastienrousseau/pipelines, at which
-          # point it can come back.
           {"target":"x86_64-unknown-linux-musl", "os":"ubuntu-latest"},
           {"target":"x86_64-apple-darwin",       "os":"macos-latest"},
           {"target":"aarch64-apple-darwin",      "os":"macos-latest"},
