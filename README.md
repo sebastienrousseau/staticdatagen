@@ -17,7 +17,7 @@
   <a href="https://crates.io/crates/staticdatagen"><img src="https://img.shields.io/crates/v/staticdatagen.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/staticdatagen"><img src="https://img.shields.io/badge/docs.rs-staticdatagen-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://codecov.io/gh/sebastienrousseau/staticdatagen"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/staticdatagen?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
-  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.14-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.16-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
 </p>
 
 ---
@@ -53,7 +53,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.14"
+staticdatagen = "0.0.16"
 ```
 
 Or via Cargo:
@@ -74,25 +74,25 @@ Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows 
 
 | Feature | Default? | Pulls in | Adds | Status |
 |---|:---:|---|---|---|
-| `full` | ❌ | `rss + sitemap + i18n + server` | Everything, **including the AGPL-transitive preview server**. | Stable |
+| `full` | ❌ | `rss + sitemap + i18n + server` | Everything, including the preview server. | Stable |
 | `rss` | ✅ | — | RSS feed emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `sitemap` | ✅ | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `i18n` | ✅ | `langweave 0.0.2` | Enables the `locales` module for translated string handling. | Active. |
-| `server` | ❌ | `http-handle 0.0.5` | Re-exports `staticdatagen::Server` for serving a built site. | **Opt-in since 0.0.14.** `http-handle` is `AGPL-3.0-only`; this crate is Apache-2.0 OR MIT, so it is no longer in `default`. Replacing it ([#83](https://github.com/sebastienrousseau/staticdatagen/issues/83)) is still open. |
+| `server` | ❌ | `http-handle 0.0.7` | Re-exports `staticdatagen::Server` for serving a built site. | Opt-in since 0.0.14, when `http-handle` was `AGPL-3.0-only`. It was relicensed to Apache-2.0 OR MIT in 0.0.7, so this is no longer a licence matter — it stays opt-in because a preview server is not something every consumer should carry. |
 | `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. Real gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `async` | ❌ | — | Reserved name; no async surface yet. |
 | `serde` | ❌ | — | Always-on via the unconditional `serde` direct dep. Reserved flag. |
 
-A default build carries no AGPL: `server` is opt-in as of 0.0.14.
+Every feature combination is Apache-2.0 OR MIT as of 0.0.16. `server` remains opt-in on dependency-weight grounds, not licence ones.
 
 ```toml
 # Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = "0.0.14"
+staticdatagen = "0.0.16"
 
-# Preview server. Pulls `http-handle`, which is AGPL-3.0-only.
+# Preview server. Pulls `http-handle` (Apache-2.0 OR MIT since 0.0.7).
 [dependencies]
-staticdatagen = { version = "0.0.14", features = ["server"] }
+staticdatagen = { version = "0.0.16", features = ["server"] }
 ```
 
 ---
@@ -370,9 +370,9 @@ use staticdatagen::Server;
 use std::path::Path;
 
 // Re-exported from `http_handle` — see that crate's docs for the
-// full configuration surface. Still AGPL-transitive as of v0.0.14 —
-// the `axum` replacement (#83) was slated for v0.0.12 and has not
-// landed. Optional: disabling the `server` feature drops it.
+// full configuration surface. It was AGPL-3.0-only until 0.0.7 and is
+// now Apache-2.0 OR MIT, so the `axum` replacement (#83) is no longer
+// needed for licence reasons. Behind the optional `server` feature.
 let _server = Server::new("127.0.0.1:3000", Path::new("public"));
 ```
 
@@ -471,8 +471,8 @@ A narrative *learn → integrate → extend* ladder lands in v0.0.15
 
 **This table is a plan, not a record.** Milestones v0.0.11 through v0.0.14
 have all shipped, and much of what is listed against them has not landed —
-the AGPL exit ([#83]) was slated for v0.0.12 and the dependency is still
-here; the incremental cache ([#87]) was slated for v0.0.13 and there is no
+the AGPL exit ([#83]) was slated for v0.0.12 and never happened — the
+problem was instead solved by relicensing `http-handle` itself in 0.0.16; the incremental cache ([#87]) was slated for v0.0.13 and there is no
 incremental code. Items stay listed because they remain wanted, not because
 they arrived with the version beside them.
 
