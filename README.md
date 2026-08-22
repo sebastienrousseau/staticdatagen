@@ -17,7 +17,7 @@
   <a href="https://crates.io/crates/staticdatagen"><img src="https://img.shields.io/crates/v/staticdatagen.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
   <a href="https://docs.rs/staticdatagen"><img src="https://img.shields.io/badge/docs.rs-staticdatagen-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
   <a href="https://codecov.io/gh/sebastienrousseau/staticdatagen"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/staticdatagen?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
-  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.16-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+  <a href="https://lib.rs/crates/staticdatagen"><img src="https://img.shields.io/badge/lib.rs-v0.0.17-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
 </p>
 
 ---
@@ -53,7 +53,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.16"
+staticdatagen = "0.0.17"
 ```
 
 Or via Cargo:
@@ -88,11 +88,11 @@ Every feature combination is Apache-2.0 OR MIT as of 0.0.16. `server` remains op
 ```toml
 # Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = "0.0.16"
+staticdatagen = "0.0.17"
 
 # Preview server. Pulls `http-handle` (Apache-2.0 OR MIT since 0.0.7).
 [dependencies]
-staticdatagen = { version = "0.0.16", features = ["server"] }
+staticdatagen = { version = "0.0.17", features = ["server"] }
 ```
 
 ---

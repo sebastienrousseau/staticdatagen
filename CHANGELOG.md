@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.17] — 2026-08-22
+
+### Fixed
+
+- **The release workflow passed a secret that does not exist.** It read
+  `secrets.CRATES_TOKEN`; this repository's token is named
+  `CARGO_API_TOKEN`. The expression resolved to an empty string, so
+  `cargo publish` failed with "please provide a non-empty token".
+
+  This had been true since v0.0.9 and was unreachable until now, because
+  `Release Rust` never got as far as publishing:
+
+  | Tag | Stopped at |
+  | :--- | :--- |
+  | v0.0.9 – v0.0.13 | `rust-targets` JSON expanded the matrix to zero jobs |
+  | v0.0.14 | `aarch64`, then `musl`, cross linkers absent from the runner |
+  | v0.0.15 | dirty checkout — `cargo publish` refused |
+  | v0.0.16 | reached publish — empty token |
+
+  Five failures, each hidden behind the one before it. Every release from
+  v0.0.9 to v0.0.16 was published by hand.
+
+### Notes
+
+0.0.16 carries the fix on `main` but its **tag** does not: GitHub runs the
+caller's workflow file as it existed at the triggering ref, so re-running
+that release would replay the broken expression. The reusable pipeline is
+tracked at `@main` and does resolve at run time, which is why the
+dirty-checkout fix applied retroactively — the caller's own file does not.
+
+0.0.17 exists to carry the corrected workflow into a tag. If it publishes
+without a human, this repository releases automatically for the first time
+since v0.0.9.
+
 ## [0.0.16] — 2026-08-22
 
 ### Documentation
