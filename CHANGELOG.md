@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.16] — 2026-08-22
+
+### Documentation
+
+- **The AGPL notes were false within a day of being written.** 0.0.14
+  documented `http-handle` as `AGPL-3.0-only` and explained `server` being
+  opt-in as a licence measure. `http-handle` was relicensed to
+  `Apache-2.0 OR MIT` in its 0.0.7, which 0.0.15 picked up — so six
+  statements in the README described a problem that no longer existed,
+  including the feature table, the install example and the roadmap note.
+
+  Every feature combination is now Apache-2.0 OR MIT. `server` stays
+  opt-in, but on dependency-weight grounds: a preview server is not
+  something every consumer should carry. The `axum` replacement ([#83]) is
+  no longer needed for licence reasons.
+
+  Remaining AGPL mentions are historical and marked as such.
+
+### Notes
+
+This release is also the first test of the release workflow end to end.
+`Release Rust` has run exactly once — on v0.0.15 — and failed on a dirty
+working tree, because the shared pipeline downloaded artifacts and wrote an
+SBOM into the checkout before calling `cargo publish`. That is fixed in
+`sebastienrousseau/pipelines`, which this repository tracks at `@main`.
+
+Every release from v0.0.9 to v0.0.15 was published by hand, through four
+distinct failures:
+
+| Tag | Failure |
+| :--- | :--- |
+| v0.0.9 – v0.0.13 | `rust-targets` JSON expanded the matrix to zero jobs |
+| v0.0.14 | `aarch64` and `musl` cross linkers absent from the runner |
+| v0.0.15 | dirty checkout — `cargo publish` refused |
+
+If v0.0.16 publishes without a human, the pipeline works for the first time.
+If it does not, the next failure is one nobody has seen yet.
+
 ## [0.0.15] — 2026-08-21
 
 ### Changed
