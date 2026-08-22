@@ -1,0 +1,41 @@
+# Codecov configuration.
+#
+# Without this file Codecov runs zero-tolerance defaults: any drop in project
+# coverage fails the check, however small and whatever caused it. That failed
+# two pull requests in a single day, neither of which touched a line of Rust:
+#
+#   #119  release.yml only    codecov/project -0.13%   patch: not affected
+#   #123  README/CHANGELOG    codecov/project -0.05%   patch: not affected
+#
+# Coverage cannot change when no code changes, so those deltas were
+# measurement noise — different runs instrumenting slightly differently. A
+# gate that reddens documentation PRs teaches people to merge through red,
+# which costs more than the fraction of a percent it was defending.
+
+coverage:
+  status:
+    # Project-wide coverage. The threshold absorbs run-to-run noise; a real
+    # regression is far larger than this.
+    project:
+      default:
+        target: auto
+        threshold: 0.5%
+        # A PR that adds no measurable code should not fail on drift.
+        if_ci_failed: error
+        informational: false
+
+    # Coverage of the lines this PR actually changed. Deliberately strict:
+    # this is the check that catches new code arriving untested, and unlike
+    # the project figure it cannot drift, because it only measures the diff.
+    patch:
+      default:
+        target: 90%
+        threshold: 0%
+
+# Do not post a comment on every PR; the checks carry the signal.
+comment: false
+
+ignore:
+  - "benches/**"
+  - "examples/**"
+  - "tests/**"
