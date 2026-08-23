@@ -32,31 +32,26 @@ jobs:
     uses: sebastienrousseau/pipelines/.github/workflows/release.yml@main
     with:
       language: rust
-      # Two linux targets are omitted deliberately, for the same reason:
-      # `onig_sys` runs a cc-rs build script that needs a cross linker
-      # ubuntu-latest does not carry.
+      # aarch64-unknown-linux-gnu and x86_64-unknown-linux-musl are back.
       #
-      #   aarch64-unknown-linux-gnu   needs aarch64-linux-gnu-gcc
-      #   x86_64-unknown-linux-musl   needs x86_64-linux-musl-gcc
+      # Both were dropped because `onig_sys` runs a cc-rs build script that
+      # needs a cross linker ubuntu-latest does not carry, and the fail-fast
+      # matrix let one missing linker cancel every other build and skip
+      # `Release Rust` with them. aarch64 went in #118; dropping it revealed
+      # musl behind it, dropped in #122.
       #
-      # The matrix fails fast, so one missing linker cancels every other
-      # build and skips `Release Rust` with them. That is why no release has
-      # ever published automatically — v0.0.9 through v0.0.14 all went out by
-      # hand. Dropping aarch64 in #118 revealed musl behind it; this drops
-      # musl too. Both can return once the cross toolchains are installed in
-      # sebastienrousseau/pipelines.
-      #
-      # Dropping it costs nothing that works today: it has never once
-      # produced a binary. It can return once the cross toolchain is
-      # installed in sebastienrousseau/pipelines.
+      # sebastienrousseau/pipelines#9 now installs gcc-aarch64-linux-gnu and
+      # musl-tools and sets CARGO_TARGET_*_LINKER, so the builds can link.
+      # This repository tracks that workflow at @main, so the fix is live.
       #
       # The value below must be PURE JSON. The reusable workflow calls
-      # fromJSON on it, and JSON has no comments — a `#` inside this block
-      # scalar is data, not a comment, and makes the parse fail. That is why
-      # this explanation lives out here as YAML rather than in there.
+      # fromJSON on it, and JSON has no comments — a `#` inside the block
+      # scalar is data, not a comment, and makes the parse fail (#119).
       rust-targets: |
         [
           {"target":"x86_64-unknown-linux-gnu",  "os":"ubuntu-latest"},
+          {"target":"aarch64-unknown-linux-gnu", "os":"ubuntu-latest"},
+          {"target":"x86_64-unknown-linux-musl", "os":"ubuntu-latest"},
           {"target":"x86_64-apple-darwin",       "os":"macos-latest"},
           {"target":"aarch64-apple-darwin",      "os":"macos-latest"},
           {"target":"x86_64-pc-windows-msvc",    "os":"windows-latest"}
