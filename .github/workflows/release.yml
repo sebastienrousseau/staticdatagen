@@ -56,14 +56,3 @@ jobs:
           {"target":"aarch64-apple-darwin",      "os":"macos-latest"},
           {"target":"x86_64-pc-windows-msvc",    "os":"windows-latest"}
         ]
-    secrets:
-      # This repository's token is named CARGO_API_TOKEN. The workflow input
-      # is called CRATES_TOKEN, and `secrets.CRATES_TOKEN` — which has never
-      # existed here — silently resolved to an empty string, so every publish
-      # attempt died with "please provide a non-empty token".
-      #
-      # Invisible for six releases, because `Release Rust` never ran: the
-      # matrix was empty through v0.0.13, cross linkers were missing on
-      # v0.0.14, and the checkout was dirty on v0.0.15. v0.0.16 is the first
-      # tag to reach the publish step at all.
-      CRATES_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
