@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.18] — 2026-09-05
+
+### Fixed
+
+- **`utilities::file::add` now returns files in a deterministic order.**
+  The walk used `WalkDir::new(path).into_iter()` with no ordering, so it
+  returned entries in whatever order the filesystem produced. That Vec is
+  what every generator lists from, which meant identical content produced
+  a *different site* on different machines — most visibly the order of
+  pages under each tag on `/tags/index.html`, since the tag keys were
+  sorted but the pages within a tag were not.
+
+  Found downstream in `static-site-generator`: a golden-file suite seeded
+  on macOS failed on Linux, and the difference traced back here. A
+  same-machine determinism check cannot see this, because two builds on
+  one filesystem agree.
+
+  The walk is now `sort_by_file_name()`, which orders siblings within each
+  directory while keeping the traversal depth-first — a total order over
+  the tree.
+
 ## [0.0.17] — 2026-08-22
 
 ### Fixed
