@@ -38,7 +38,26 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
     let _ = fs::read_dir(path)?;
 
     let mut out = Vec::new();
-    for entry in WalkDir::new(path).into_iter().filter_map(Result::ok) {
+    // Sorted by file name so the returned order is the same on every
+    // platform. `WalkDir` yields directory entries in whatever order the
+    // filesystem hands back -- APFS and ext4 differ -- and this Vec is
+    // what every downstream generator lists from, so an unsorted walk
+    // makes the *generated site* differ between machines from identical
+    // input.
+    //
+    // Found from static-site-generator: a golden-file suite seeded on
+    // macOS failed on Linux, and the difference was the order of pages
+    // under each tag on `/tags/index.html`. The tag keys were already
+    // sorted; the pages within a tag inherited this walk.
+    //
+    // `sort_by_file_name` orders siblings within each directory and keeps
+    // the traversal depth-first, so the result is a total order over the
+    // tree rather than merely a shuffled one.
+    for entry in WalkDir::new(path)
+        .sort_by_file_name()
+        .into_iter()
+        .filter_map(Result::ok)
+    {
         if !entry.file_type().is_file() {
             continue;
         }
@@ -99,6 +118,52 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
 
 #[cfg(test)]
 mod tests {
+    /// `add` returns files in a deterministic, platform-independent order.
+    ///
+    /// The walk feeds every downstream generator, so its order decides the
+    /// order pages appear in generated listings — the tag index most
+    /// visibly. `WalkDir` without `sort_by_file_name` yields whatever the
+    /// filesystem hands back, and APFS and ext4 disagree, so identical
+    /// content produced different sites on macOS and Linux.
+    ///
+    /// Creating the files in deliberately non-alphabetical order is what
+    /// gives this test teeth: on a filesystem that happens to return
+    /// creation order, an unsorted walk returns them unsorted and this
+    /// fails.
+    #[test]
+    fn add_returns_files_in_sorted_order() -> io::Result<()> {
+        let dir = tempdir()?;
+        let root = dir.path();
+
+        for name in ["zebra.md", "apple.md", "mango.md", "banana.md"] {
+            fs::write(root.join(name), "---\ntitle: x\n---\n")?;
+        }
+        fs::create_dir_all(root.join("nested"))?;
+        for name in ["yak.md", "ant.md"] {
+            fs::write(
+                root.join("nested").join(name),
+                "---\ntitle: x\n---\n",
+            )?;
+        }
+
+        let names: Vec<String> =
+            add(root)?.into_iter().map(|f| f.name).collect();
+
+        let mut expected = names.clone();
+        expected.sort();
+        assert_eq!(
+            names, expected,
+            "add() must return a sorted order; got {names:?}"
+        );
+
+        // And the order is stable across calls on the same tree.
+        let again: Vec<String> =
+            add(root)?.into_iter().map(|f| f.name).collect();
+        assert_eq!(names, again, "add() must be stable across calls");
+
+        Ok(())
+    }
+
     use super::add;
     use std::fs::{self, File};
     use std::io::{self, Write};
