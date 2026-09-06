@@ -153,7 +153,7 @@ time = { version = "0.3", features = ["formatting", "parsing"] }
 uuid = { version = "1.23", features = ["v4"] }
 
 # XML processing
-quick-xml = "0.41"
+quick-xml = "0.42"
 xml-rs = "1.0"
 
 # CNAME dependencies

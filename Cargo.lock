@@ -1287,7 +1287,7 @@ checksum = "7c8843b4135e8e03bf105fd877a39b1f0cc619686f6b9dc6a87d95b081bc2e4f"
 dependencies = [
  "dtt",
  "noyalib 0.0.15",
- "quick-xml",
+ "quick-xml 0.41.0",
  "regex",
  "serde",
  "serde_json",
@@ -1542,7 +1542,7 @@ checksum = "7da1d65da6dd5d1e44199ac0f58712d241c0f439f80adea8924d832384087f85"
 dependencies = [
  "base64",
  "indexmap",
- "quick-xml",
+ "quick-xml 0.41.0",
  "serde",
  "time",
 ]
@@ -1725,6 +1725,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "quick-xml"
+version = "0.42.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1848,7 +1857,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c3b5748fb3d0f3e25d2464c3487f3dcf9add985563f082bdd18d6c1d8ed2f58"
 dependencies = [
  "log",
- "quick-xml",
+ "quick-xml 0.41.0",
  "serde",
  "thiserror",
  "time",
@@ -2097,7 +2106,7 @@ dependencies = [
  "metadata-gen",
  "proptest",
  "pulldown-cmark",
- "quick-xml",
+ "quick-xml 0.42.0",
  "rayon",
  "regex",
  "rss-gen",
