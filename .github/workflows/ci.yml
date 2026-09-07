@@ -94,12 +94,12 @@ jobs:
           components: miri
       - uses: Swatinem/rust-cache@v2
       - run: |
-          cargo miri test models -- --skip proptest
-          cargo miri test utilities::element
-          cargo miri test utilities::uuid
-          cargo miri test locales
-          cargo miri test macros::directory
-          cargo miri test macros::custom
+          cargo +nightly miri test models -- --skip proptest
+          cargo +nightly miri test utilities::element
+          cargo +nightly miri test utilities::uuid
+          cargo +nightly miri test locales
+          cargo +nightly miri test macros::directory
+          cargo +nightly miri test macros::custom
         env:
           MIRIFLAGS: -Zmiri-disable-isolation -Zmiri-tree-borrows
 
