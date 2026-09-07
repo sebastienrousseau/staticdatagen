@@ -24,6 +24,15 @@ carry one copy of each dependency instead of several.
   message while `rust-version` in `Cargo.toml` already declares one and
   Cargo enforces it without a build script.
 
+### Fixed
+
+- **`rust-toolchain.toml` silently disabled the Miri job.** Adding the
+  file in this release pins the directory to stable, which overrides the
+  nightly `ci.yml` installs — and stable has no `miri` subcommand, so
+  the job failed in seconds with "no such command" rather than running
+  anything. Its six invocations now say `cargo +nightly miri`
+  explicitly. The other crates in the family already did.
+
 ### Added
 
 - **Fuzz harness** (`fuzz/`): `fuzz_markdown` (content preprocessing and
