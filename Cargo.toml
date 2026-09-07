@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.18"                         # Current version of the crate
+version = "0.0.19"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.88.0"                    # Minimum supported Rust version
@@ -17,7 +17,6 @@ homepage = "https://staticdatagen.com/"    # Project's homepage URL
 documentation = "https://staticdatagen.com/documentation/index.html" # Doc URL
 repository = "https://github.com/sebastienrousseau/staticdatagen"    # Repository URL
 readme = "README.md"                       # Path to the readme file
-build = "build.rs"                         # Path to the build script
 
 # -----------------------------------------------------------------------------
 # Crate Configuration
@@ -102,13 +101,6 @@ server = ["http-handle"]
 serde = []
 
 # -----------------------------------------------------------------------------
-# Build Dependencies
-# -----------------------------------------------------------------------------
-[build-dependencies]
-# Dependencies for the build script, used for pre-compilation tasks.
-version_check = "0.9.5"                       # Ensures that a compatible Rust version is used
-
-# -----------------------------------------------------------------------------
 # Development Dependencies
 # -----------------------------------------------------------------------------
 [dev-dependencies]
@@ -135,7 +127,7 @@ serde_json = "1.0"
 # Content generation
 comrak = "0.54"
 pulldown-cmark = "0.13"
-html-generator = "0.0.10"
+html-generator = "0.0.11"
 
 # Web and networking
 http-handle = { version = "0.0.7", optional = true }
@@ -143,7 +135,7 @@ url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.2", optional = true }
-metadata-gen = "0.0.6"
+metadata-gen = "0.0.7"
 regex = "1.12"
 walkdir = "2.5"                             # Recursive directory walk for nested-locale `_posts/<lang>/` trees
 rss-gen = "0.0.11"
