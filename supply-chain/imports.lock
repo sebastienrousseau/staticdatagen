@@ -1,10 +1,6 @@
 
 # cargo-vet imports lock
 
-[[unpublished.metadata-gen]]
-version = "0.0.7"
-audited_as = "0.0.6"
-
 [[publisher.bumpalo]]
 version = "3.19.0"
 when = "2025-06-24"
@@ -27,8 +23,8 @@ user-login = "sebastienrousseau"
 user-name = "Sebastien Rousseau"
 
 [[publisher.metadata-gen]]
-version = "0.0.6"
-when = "2026-07-25"
+version = "0.0.7"
+when = "2026-09-07"
 user-id = 186843
 user-login = "sebastienrousseau"
 user-name = "Sebastien Rousseau"
