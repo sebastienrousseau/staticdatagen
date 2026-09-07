@@ -32,7 +32,8 @@
 **Library reference**
 
 - [Why staticdatagen?](#why-staticdatagen) — design rationale
-- [Capabilities in 0.0.14](#capabilities-in-0014) — release inventory
+- [What a build produces](#what-a-build-produces) — the artefacts
+- [Determinism](#determinism) — why builds are reproducible
 - [Modules](#modules) — top-level surface
 - [Library Usage](#library-usage) — `compile`, errors, UUID, version
 - [Configuration](#configuration) — what gets emitted
@@ -41,7 +42,8 @@
 **Operational**
 
 - [When not to use staticdatagen](#when-not-to-use-staticdatagen) — limitations
-- [Roadmap](#roadmap) — planned work, and what has slipped
+- [Stability guarantees](#stability-guarantees) — SemVer axis, output stability
+- [Minimum-toolchain policy](#minimum-toolchain-policy)
 - [Development](#development) — local loop, CI
 - [Security](#security) — guarantees and audit cadence
 - [Documentation](#documentation) — reference links
@@ -53,7 +55,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.18"
+staticdatagen = "0.0.19"
 ```
 
 Or via Cargo:
@@ -79,20 +81,20 @@ Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows 
 | `sitemap` | ✅ | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `i18n` | ✅ | `langweave 0.0.2` | Enables the `locales` module for translated string handling. | Active. |
 | `server` | ❌ | `http-handle 0.0.7` | Re-exports `staticdatagen::Server` for serving a built site. | Opt-in since 0.0.14, when `http-handle` was `AGPL-3.0-only`. It was relicensed to Apache-2.0 OR MIT in 0.0.7, so this is no longer a licence matter — it stays opt-in because a preview server is not something every consumer should carry. |
-| `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. Real gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
-| `async` | ❌ | — | Reserved name; no async surface yet. |
-| `serde` | ❌ | — | Always-on via the unconditional `serde` direct dep. Reserved flag. |
+| `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. | Reserved; real gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) has not landed. |
+| `async` | ❌ | — | Reserved name; no async surface yet. | Reserved. |
+| `serde` | ❌ | — | Always-on via the unconditional `serde` direct dep. | Reserved. |
 
 Every feature combination is Apache-2.0 OR MIT as of 0.0.16. `server` remains opt-in on dependency-weight grounds, not licence ones.
 
 ```toml
 # Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = "0.0.18"
+staticdatagen = "0.0.19"
 
 # Preview server. Pulls `http-handle` (Apache-2.0 OR MIT since 0.0.7).
 [dependencies]
-staticdatagen = { version = "0.0.18", features = ["server"] }
+staticdatagen = { version = "0.0.19", features = ["server"] }
 ```
 
 ---
@@ -101,7 +103,7 @@ staticdatagen = { version = "0.0.18", features = ["server"] }
 
 Compile a content tree into a publishable static site. The example
 below is doctest-runnable: every type, function, and import resolves
-in `staticdatagen 0.0.14`.
+in the current release.
 
 ```rust,no_run
 use staticdatagen::compile;
@@ -197,35 +199,39 @@ A few features built on top:
 
   Earlier releases quoted "2.83 s to under 0.6 s" here. Nothing in this
   repository ever reproduced that figure — no benchmark called `compile`
-  at all before 0.0.14 — so it has been replaced with numbers anyone can
+  at all before 0.0.14 — so they have been replaced with numbers anyone can
   regenerate.
 
 ---
 
-## Capabilities in 0.0.14
+## What a build produces
 
-This section tracked 0.0.10 for four releases while 0.0.11, 0.0.12 and
-0.0.13 shipped. See [`CHANGELOG.md`](CHANGELOG.md) for the full entries.
+One call to `compile` turns a content directory into a finished site:
 
-| Theme | Headline deliverables |
-| :--- | :--- |
-| Safer API (0.0.14) | `move_output_directory` is deprecated: it hardcoded `public/` relative to the caller's working directory and `remove_dir_all`'d it. Use `move_output_directory_to`, now public, which takes the destination as an argument. |
-| Benchmarks (0.0.14) | `compile` is benchmarked for the first time (`compile_scaling`), and `performance_stress_test` is finally declared in `Cargo.toml` — it had never been compiled. |
-| Examples (0.0.14) | `static_site_example` no longer blocks forever on a server nothing asked for, and writes to `target/` instead of back into `examples/`. |
-| Correctness (0.0.13) | The structured-data step is off: it read a `<title>` from a Markdown fragment that has no `<head>`, so it failed on every page ever compiled. Output unchanged. |
-| Performance (0.0.12) | `compile` renders and writes across cores ([#74]); sites under 24 pages stay on the calling thread. |
-| Correctness (0.0.11) | Raw HTML in Markdown is no longer escaped; a missing `permalink:` no longer hard-fails the build; the news-sitemap date parser accepts RFC 2822, long form and ISO 8601. |
-| Tests | 754 lib tests, 61 doctests (3 ignored), 18 integration tests; 0 `cargo audit` vulnerabilities. |
+| Artefact | From |
+|---|---|
+| `index.html` and one page per document | Markdown + front matter, through `html-generator` |
+| `sitemap.xml`, `news_sitemap.xml` | the page set |
+| `manifest.json` | site metadata, for installability |
+| `humans.txt`, `CNAME`, `robots.txt` | site configuration |
+| tag pages | the `tags` field across all documents |
+| plain-text and JSON views | each page's extracted content |
 
-[#74]: https://github.com/sebastienrousseau/staticdatagen/issues/74
+Two builds of the same content produce byte-identical output on any
+filesystem — see [Determinism](#determinism).
 
-[#67]: https://github.com/sebastienrousseau/staticdatagen/issues/67
-[#68]: https://github.com/sebastienrousseau/staticdatagen/issues/68
-[#69]: https://github.com/sebastienrousseau/staticdatagen/issues/69
-[#70]: https://github.com/sebastienrousseau/staticdatagen/issues/70
-[#71]: https://github.com/sebastienrousseau/staticdatagen/issues/71
+## Determinism
 
----
+The content walk sorts every directory's entries by name before
+visiting them, and every ordering downstream is total rather than
+insertion-ordered. Without that, entry order follows the filesystem,
+APFS and ext4 disagree, and two builds of the same content differ.
+
+This is not a detail. A downstream project comparing generated files
+byte for byte — a golden-file suite, a checked-in site — depends on it,
+and the failure it prevents is invisible locally: building twice on one
+machine compares two builds on one filesystem, which always agree.
+[ADR-0002](docs/adr/0002-sorted-directory-walk.md) has the history.
 
 ## Modules
 
@@ -458,7 +464,7 @@ A narrative *learn → integrate → extend* ladder lands in v0.0.15
   Python / Node FFIs in v0.0.15
   ([#96](https://github.com/sebastienrousseau/staticdatagen/issues/96),
   [#97](https://github.com/sebastienrousseau/staticdatagen/issues/97)).
-- **You need true incremental rebuilds.** v0.0.14 still rebuilds
+- **You need true incremental rebuilds.** the compiler still rebuilds
   every file. The content-hash incremental cache was slated for v0.0.13
   and has not landed
   ([#87](https://github.com/sebastienrousseau/staticdatagen/issues/87),
@@ -467,55 +473,42 @@ A narrative *learn → integrate → extend* ladder lands in v0.0.15
 
 ---
 
-## Roadmap
+## Stability guarantees
 
-**This table is a plan, not a record.** Milestones v0.0.11 through v0.0.14
-have all shipped, and much of what is listed against them has not landed —
-the AGPL exit ([#83]) was slated for v0.0.12 and never happened — the
-problem was instead solved by relicensing `http-handle` itself in 0.0.16; the incremental cache ([#87]) was slated for v0.0.13 and there is no
-incremental code. Items stay listed because they remain wanted, not because
-they arrived with the version beside them.
+- **Versioning.** [SemVer](https://semver.org), with the pre-1.0 posture
+  that the patch number is the breaking axis during `0.0.x`. Releases
+  increment by `+0.0.1` and every breaking change is called out in
+  [`CHANGELOG.md`](CHANGELOG.md).
+- **Output stability.** What a build produces is part of the API: a
+  change to the HTML emitted for given content, to an artefact's shape,
+  or to the order of anything generated is treated as breaking even when
+  no Rust signature moves.
+- **Determinism** is a guarantee, not a tolerance. Two builds of the
+  same content are byte-identical on any platform; anything else is a
+  bug.
+- **Deprecations** live for at least two releases with a `#[deprecated]`
+  note naming the replacement before removal.
+- **Version-bearing files** are checked against the manifest by
+  `scripts/verify-release-versions.sh` before a tag exists.
 
 For what a release actually contained, read [`CHANGELOG.md`](CHANGELOG.md),
-which is written after the fact.
+which is written after the fact rather than in advance.
 
-| Milestone | Theme | Highlights |
-| :--- | :--- | :--- |
-| [v0.0.11](https://github.com/sebastienrousseau/staticdatagen/milestone/1) | Tier-1 quick wins | Typed `Error` ([#73]), parallel pipeline ([#74]), drop `pulldown-cmark` ([#75]), `cargo-vet` ([#76]), SBOM ([#77]), real feature gating ([#78]). |
-| [v0.0.12](https://github.com/sebastienrousseau/staticdatagen/milestone/2) | DX & observability | `CompileBuilder` ([#79]), `tracing` migration ([#80]), `cargo-fuzz` ([#81]), Loom ([#82]), AGPL exit / `axum` ([#83]), god-object split ([#84]). |
-| [v0.0.13](https://github.com/sebastienrousseau/staticdatagen/milestone/3) | AI-discoverable static sites | `llms.txt` ([#85]), AI sitemap ([#86]), incremental cache ([#87], closes [#36]), ADRs ([#88]), public Criterion charts ([#89]). |
-| [v0.0.14](https://github.com/sebastienrousseau/staticdatagen/milestone/4) | Portability | WASI 0.2 component ([#90]), `no_std + alloc` core split ([#91]), `Reporter` trait ([#92]), architecture diagram ([#93]). |
-| [v0.0.15](https://github.com/sebastienrousseau/staticdatagen/milestone/5) | Correctness & GTM | Kani proofs ([#94]), differential fuzz ([#95]), PyO3 binding ([#96]), NAPI binding ([#97]), README + examples ladder ([#98]). |
+## Minimum-toolchain policy
 
-[#36]: https://github.com/sebastienrousseau/staticdatagen/issues/36
-[#73]: https://github.com/sebastienrousseau/staticdatagen/issues/73
-[#74]: https://github.com/sebastienrousseau/staticdatagen/issues/74
-[#75]: https://github.com/sebastienrousseau/staticdatagen/issues/75
-[#76]: https://github.com/sebastienrousseau/staticdatagen/issues/76
-[#77]: https://github.com/sebastienrousseau/staticdatagen/issues/77
-[#78]: https://github.com/sebastienrousseau/staticdatagen/issues/78
-[#79]: https://github.com/sebastienrousseau/staticdatagen/issues/79
-[#80]: https://github.com/sebastienrousseau/staticdatagen/issues/80
-[#81]: https://github.com/sebastienrousseau/staticdatagen/issues/81
-[#82]: https://github.com/sebastienrousseau/staticdatagen/issues/82
-[#83]: https://github.com/sebastienrousseau/staticdatagen/issues/83
-[#84]: https://github.com/sebastienrousseau/staticdatagen/issues/84
-[#85]: https://github.com/sebastienrousseau/staticdatagen/issues/85
-[#86]: https://github.com/sebastienrousseau/staticdatagen/issues/86
-[#87]: https://github.com/sebastienrousseau/staticdatagen/issues/87
-[#88]: https://github.com/sebastienrousseau/staticdatagen/issues/88
-[#89]: https://github.com/sebastienrousseau/staticdatagen/issues/89
-[#90]: https://github.com/sebastienrousseau/staticdatagen/issues/90
-[#91]: https://github.com/sebastienrousseau/staticdatagen/issues/91
-[#92]: https://github.com/sebastienrousseau/staticdatagen/issues/92
-[#93]: https://github.com/sebastienrousseau/staticdatagen/issues/93
-[#94]: https://github.com/sebastienrousseau/staticdatagen/issues/94
-[#95]: https://github.com/sebastienrousseau/staticdatagen/issues/95
-[#96]: https://github.com/sebastienrousseau/staticdatagen/issues/96
-[#97]: https://github.com/sebastienrousseau/staticdatagen/issues/97
-[#98]: https://github.com/sebastienrousseau/staticdatagen/issues/98
+The floor is **Rust 1.88.0**, declared as `rust-version` in
+`Cargo.toml` so Cargo refuses older toolchains with a clear message.
 
----
+- **When it may rise:** only on a release, never silently, and always
+  with the reason in the changelog entry.
+- **Why it is where it is:** the floor follows the highest requirement
+  in the dependency graph, not an aspiration.
+- **What is verified:** CI builds and tests on stable across Linux,
+  macOS and Windows.
+
+No claim is made about distro-LTS toolchains. Making one would require a
+table mapping current distro versions to this floor, and an
+aspirational claim there is worse than none.
 
 ## Development
 

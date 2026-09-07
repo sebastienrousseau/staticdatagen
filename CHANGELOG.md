@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.19] — 2026-09-07
+
+The repository-standard release: the layout, gates and documents every
+crate in the family shares, and the upstream bumps that let a consumer
+carry one copy of each dependency instead of several.
+
+### Changed
+
+- **`html-generator` 0.0.10 → 0.0.11** and **`metadata-gen` 0.0.6 →
+  0.0.7.** Both are family releases from the same cycle: html-generator
+  fixed a licence policy its own comment claimed, scoped its Miri gate
+  around undefined behaviour in `servo_arc`, and gained a fuzz harness;
+  metadata-gen fixed `unescape_html`, which decoded its own output so
+  that `&amp;lt;` came back as `<`. Both carry the same coverage, fuzz
+  and REUSE gates as this release.
+- **`build.rs` removed.** It enforced a Rust floor with a hand-written
+  message while `rust-version` in `Cargo.toml` already declares one and
+  Cargo enforces it without a build script.
+
+### Fixed
+
+- **`rust-toolchain.toml` silently disabled the Miri job.** Adding the
+  file in this release pins the directory to stable, which overrides the
+  nightly `ci.yml` installs — and stable has no `miri` subcommand, so
+  the job failed in seconds with "no such command" rather than running
+  anything. Its six invocations now say `cargo +nightly miri`
+  explicitly. The other crates in the family already did.
+
+### Added
+
+- **Fuzz harness** (`fuzz/`): `fuzz_markdown` (content preprocessing and
+  plain-text extraction), `fuzz_html` (HTML post-processing) and
+  `fuzz_path` (path sanitisation). All three exercise transforms that
+  walk strings by hand rather than through a parser, which is where
+  byte-boundary panics live and where a panic leaves a site half
+  written. `fuzz_path` asserts two properties beyond not panicking: an
+  accepted path never contains a `..` component, and sanitising an
+  accepted path again returns it unchanged. A committed seed corpus and
+  a `regressions/` directory replay on every push. 518,000 cases across
+  the three targets found nothing.
+- **`quality.yml`**, a second CI workflow holding the gates the shared
+  pipeline does not cover: the coverage threshold, the fuzz build and
+  corpus replay, the docs lint (markdownlint, codespell, REUSE),
+  cargo-vet with an exemption ratchet, and release hygiene. Nothing in
+  this release is enforced only by a local `make` target. Miri stays in
+  `ci.yml`, where it is already scoped to the modules it can verify:
+  this crate writes a site to disk and Miri's isolation forbids `open`
+  and `mkdir`, so an unscoped run fails on the first filesystem test.
+- **Coverage gate at 98 % lines with no exclusions.** The crate was
+  already at 98.0 %; the gate makes that a floor rather than a
+  coincidence. Unlike the other crates in the family this one needs no
+  exclusion: it is a library with no binary entry point and no
+  target-gated glue, so every line is reachable from a test.
+- Repository standard layout: `DEVELOPMENT.md`, `docs/ARCHITECTURE.md`,
+  `docs/adr/` with four decisions (zero-unsafe, the sorted directory
+  walk, the single path-sanitisation boundary, building on the family's
+  crates rather than vendoring them), `CODE_OF_CONDUCT.md`,
+  `GOVERNANCE.md`, `SECURITY.md`, `SUPPORT.md`, `AGENTS.md`,
+  `CITATION.cff`, `KEYS.asc`, `REUSE.toml` (REUSE 3.3 compliant),
+  `rust-toolchain.toml`, `.devcontainer/`, `.pre-commit-config.yaml`,
+  `.codespellrc`, `.markdownlint.yaml`, issue and PR templates.
+- `scripts/verify-release-versions.sh` and `supply-chain/` with
+  cargo-vet publisher trust for the first-party crates and an exemption
+  baseline the CI ratchet cannot exceed.
+
+### Documentation
+
+- **README brought to the family template.** "Capabilities in 0.0.14",
+  which had tracked a version five releases old, is replaced by what a
+  build actually produces and a section on determinism. The roadmap
+  table — which its own text admitted was "a plan, not a record", with
+  items listed against versions they never shipped in — is replaced by
+  stability guarantees and a minimum-toolchain *policy* rather than a
+  bare number. Three feature-table rows were missing their last cell.
+
 ## [0.0.18] — 2026-09-05
 
 ### Fixed
@@ -292,16 +367,19 @@ Correctness release driven by the ssg v0.0.47 plan (ssg#586, spec
 items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 
 ### Fixed
+
 - **A1 — Raw HTML in Markdown was escaped (P0).** `html-generator 0.0.6` introduced `HtmlConfig.allow_unsafe_html` defaulting to `false`, which escaped raw block HTML (`<section>`, `<figure>`, inline `<svg>`, …) in Markdown bodies. `compiler::service::generate_html_content` now explicitly opts into pass-through (`allow_unsafe_html: true`) — the trusted-author default; sanitisation remains an explicit opt-in (`sanitize_html`), never silent escaping. Regression test asserts `<section class="x">` renders unescaped. (`src/compiler/service.rs`)
 - **A2 — `channel.link is missing` hard-failed the whole build (P0).** A page without `permalink:` front matter aborted the entire compile at RSS validation (and independently at sitemap generation). Two changes: (1) a missing `permalink` is now derived via the fallback chain `permalink` → `url` → `{base_url}/{relative_output_path}` → `base_url`, so a correct feed/sitemap link is always available when the site provides its base URL; (2) a genuinely underivable feed or sitemap entry logs a warning and is skipped — it never aborts the compile. Authors no longer need to hand-write `permalink`. (`src/compiler/service.rs`)
 - **A4 — news-sitemap date parser rejected common formats (P1).** `generators::news_sitemap` accepted only RFC 2822, spamming `Parsing failed: the 'day' component could not be parsed. Using fallback.` for front matter written as `July 1, 2026` or `2026-07-01`. Date parsing is now routed through the new `utilities::dates::parse_flexible_date`, which accepts, in order: RFC 2822, long form, and ISO 8601 (date or datetime). The fallback to the current time survives as a last resort and now logs the failing field and every attempted format. (`src/generators/news_sitemap.rs`)
 
 ### Added
+
 - **`utilities::dates`** — dependency-free flexible date parsing (RFC 2822 / long form / ISO 8601) with deterministic, locale-independent output formatting (`to_rfc2822`, `to_rfc3339`, `to_w3c_date`, `to_iso_date`), ported from ssg's `src/core/dates.rs` so both layers agree on what a date means. Includes property tests round-tripping dates 1990–2100 through all three spec formats.
 
 ## [0.0.10] — 2026-06-28
 
 ### Fixed
+
 - **#67 — Empty `layout:` key crashed `render_page`.** Frontmatter missing or empty `layout:` now falls back to `"page"` instead of passing `""` to staticweaver (which aborted with `invalid template or partial name: ""`). Unblocks every page authored without a layout key, including the ≈ 1,137 of 2,371 affected files on multilingual Jekyll-style trees. (`src/compiler/service.rs`)
 - **#68 — `copy_auxiliary_files` aborted when `main.js` / `sw.js` were absent.** The copy is now best-effort: missing auxiliary files are logged at `debug` and skipped instead of failing the build with opaque `os error 2`. Sites that don't ship a service worker can build cleanly. (`src/utilities/write.rs`)
 - **#69 — `write_tags_html_to_file` aborted builds without a tags template.** Skips the substitution gracefully when `tags/index.html` is absent. (`src/generators/tags.rs`)
@@ -309,9 +387,11 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 - **#71 — Misleading "Successfully generated…" log fired before compile errors propagated.** The success line now fires *after* the final `fs::rename`, so log scrapers (`ssg`, CI tooling) can rely on it as a build-state signal. (`src/compiler/service.rs`)
 
 ### Security
+
 - **GHSA-cq8v-f236-94qc / RUSTSEC-2026-0097** — Bumped `rand` to 0.8.6, resolving the Stacked-Borrows unsoundness in `ThreadRng` reachable through custom loggers that call `rand::rng()` while reseeding. Closes Dependabot alerts #1 and #2.
 
 ### Changed
+
 - **Dependencies** — Bumped to current latest minors:
   - `staticweaver` 0.0.2 → 0.0.3
   - `rss-gen` 0.0.5 → 0.0.6
@@ -326,6 +406,7 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 ## [0.0.9] — 2026-06-21
 
 ### Changed
+
 - **Dependencies** — Bumped `html-generator` to 0.0.6, `metadata-gen` to 0.0.4, and `sitemap-gen` to 0.0.2. The transitive chain now consumes `noyalib` (pure-Rust, zero unsafe) instead of `serde_yml`/`libyml`, dropping the unmaintained C-FFI YAML stack and resolving RUSTSEC-2025-0067 / RUSTSEC-2025-0068 for downstream consumers. (Pinning `metadata-gen 0.0.4` rather than the on-registry `0.0.3` is required — the published `0.0.3` predates the noyalib migration; only `0.0.4` carries it.)
 - **`rss-gen` 0.0.3 → 0.0.5** — Picks up the upstream `dtt` 0.0.10 API fix (the private `DateTime::offset` field that was breaking Strict CI on `main`). Restores compilation under stable, nightly, MSRV (1.88.0), and the cross-platform matrix.
 - **`staticweaver` 0.0.1 → 0.0.2** — Tera-tier templating engine with template inheritance, expression language, 23 built-in filters, and SIMD HTML escape. Adapted `compiler::service` to the removed `PageOptions` type (write directly into `Context`).
@@ -333,6 +414,7 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 - **`actions/checkout` v4 → v7** — Updated raw checkout references in the consolidated `ci.yml` (miri and semver jobs); other workflow callers run through the shared `pipelines` repo and inherit the bump centrally.
 
 ### Absorbed (dependabot)
+
 - #52 `pulldown-cmark` 0.12 → 0.13 (already on branch)
 - #53 `staticweaver` 0.0.1 → 0.0.2
 - #56 `peaceiris/actions-gh-pages` 4.0.0 → 4.1.0 (no longer referenced after workflow consolidation)
@@ -340,6 +422,7 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 - #58 `actions/checkout` 6 → 7 (applied to ci.yml)
 
 ### Closed as obsolete
+
 - #51 `metadata-gen` 0.0.2 → 0.0.3 — superseded; branch pins `metadata-gen 0.0.4` (the on-registry `0.0.3` predates the noyalib migration, so the bump goes straight to `0.0.4`).
 - #54 `vrd` 0.0.9 → 0.0.10 — `vrd` was removed entirely in 8bb3e2f as part of the dep-graph slim-down.
 - #55 `html-generator` 0.0.4 → 0.0.5 — branch already at 0.0.6.
@@ -347,10 +430,12 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 ## [0.0.8] — 2026-03-11
 
 ### Added
+
 - Integrated `euxis-commons` local dependency for shared utilities
 - Updated GitHub Actions: `upload-artifact` to v7 and `download-artifact` to v8
 
 ### Changed
+
 - **Dependencies updated** — Updated `rlg` to 0.0.8, `comrak` to 0.51, `pulldown-cmark` to 0.13, `http-handle` to 0.0.4, and `langweave` to 0.0.2
 - **Logging modernization** — Updated `macro_log_info!` to use the new `rlg` 0.0.8 builder API and fire-and-forget pattern
 - **CI/CD hardening** — Enhanced release and strict-ci workflows with latest artifact actions
@@ -358,12 +443,14 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 ## [0.0.7] — 2026-02-16
 
 ### Added
+
 - Comprehensive unit test coverage reaching 95%+ across all metrics (#418 tests)
 - 64 new unit tests including compile and process_file tests to close coverage gaps
 - Stress benchmarks for performance monitoring and regression detection
 - Enhanced feature gates for modular compilation and dependency optimization
 
 ### Changed
+
 - **Error handling modernized** — Unified error construction patterns across codebase for consistency
 - **Clippy lint compliance enforced** — All clippy lints resolved with `unwrap_used` and `expect_used` denied for production readiness
 - **Dependencies updated** — All dependencies bumped to latest versions for security and performance
@@ -371,6 +458,7 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 - Process file functionality split into focused helper functions for maintainability
 
 ### Fixed
+
 - **Security hardening** — Addressed all deep-review security findings with enhanced validation
 - **Cross-platform support** — Improved logging and platform compatibility
 - **License consistency** — Unified license headers across all source files
@@ -379,6 +467,7 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 - Clippy lints fully resolved across codebase
 
 ### Security
+
 - **MEDIUM severity** — Enhanced input validation and path sanitization
 - **LOW severity** — Dependency security audit completed with warnings noted
 - Hardened security utilities with improved cross-platform support
@@ -386,12 +475,14 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 ## [0.0.6] — 2026-02-05
 
 ### Added
+
 - New `news_sitemap.rs` generator for generating news sitemaps with comprehensive XML support
 - New `tags.rs` generator for enhanced tag management and categorization
 - Comprehensive benchmarking suite with `criterion_benchmark.rs` for performance testing
 - Enhanced service compiler with improved file processing capabilities
 
 ### Changed
+
 - **Navigation system refactored** — Significant improvements to `src/modules/navigation.rs` with enhanced menu generation and hierarchical structure support
 - **Service compiler enhanced** — Major updates to `src/compiler/service.rs` with improved file processing loop and performance optimizations
 - Library core (`src/lib.rs`) substantially expanded with new functionality and improved documentation
@@ -399,17 +490,20 @@ items A1/A2/A4 of the ssg fixes-and-native-migration specification).
 - Updated minimum Rust version requirements and build configuration
 
 ### Removed
+
 - Deprecated `src/modules/manifest.rs` — functionality migrated to generators
 - Deprecated `src/modules/news_sitemap.rs` — replaced with enhanced generator version
 - Deprecated `src/modules/tags.rs` — replaced with enhanced generator version
 - Removed obsolete `cname_benchmark.rs` — replaced with comprehensive criterion benchmarks
 
 ### Fixed
+
 - Documentation formatting issues in `build.rs` with proper indentation
 - Unused import warnings and lint configuration cleanup
 - Missing fragment specifier lint warnings resolved
 
 ### Security
+
 - Enhanced security review compliance for RFC 9116 standards
 - Improved security utilities with updated validation mechanisms
 
@@ -423,6 +517,7 @@ If you were using the removed modules:
 The new generators provide enhanced functionality while maintaining backward compatibility for most use cases.
 
 ### Performance Improvements
+
 - Navigation generation time significantly reduced through algorithm optimizations
 - Enhanced file processing efficiency in the service compiler
 - New benchmarking infrastructure for continuous performance monitoring

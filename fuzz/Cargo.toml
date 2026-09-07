@@ -1,0 +1,41 @@
+[package]
+name = "staticdatagen-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+regex = "1"
+
+[dependencies.staticdatagen]
+path = ".."
+
+# The harness is its own workspace so nightly + sanitizer flags never
+# leak into the main build.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "fuzz_markdown"
+path = "fuzz_targets/fuzz_markdown.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_html"
+path = "fuzz_targets/fuzz_html.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_path"
+path = "fuzz_targets/fuzz_path.rs"
+test = false
+doc = false
+bench = false
