@@ -37,10 +37,13 @@ carry one copy of each dependency instead of several.
   a `regressions/` directory replay on every push. 518,000 cases across
   the three targets found nothing.
 - **`quality.yml`**, a second CI workflow holding the gates the shared
-  pipeline does not cover: the coverage threshold, Miri, the fuzz build
-  and corpus replay, the docs lint (markdownlint, codespell, REUSE),
+  pipeline does not cover: the coverage threshold, the fuzz build and
+  corpus replay, the docs lint (markdownlint, codespell, REUSE),
   cargo-vet with an exemption ratchet, and release hygiene. Nothing in
-  this release is enforced only by a local `make` target.
+  this release is enforced only by a local `make` target. Miri stays in
+  `ci.yml`, where it is already scoped to the modules it can verify:
+  this crate writes a site to disk and Miri's isolation forbids `open`
+  and `mkdir`, so an unscoped run fails on the first filesystem test.
 - **Coverage gate at 98 % lines with no exclusions.** The crate was
   already at 98.0 %; the gate makes that a floor rather than a
   coincidence. Unlike the other crates in the family this one needs no

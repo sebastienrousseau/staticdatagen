@@ -61,8 +61,15 @@ doc:
 coverage:
 	cargo +nightly llvm-cov --all-features --fail-under-lines 98
 
+# Scoped to the modules Miri can verify. This crate writes a site to
+# disk and Miri's isolation forbids `open` and `mkdir`, so an unscoped
+# run fails on the first filesystem test. Mirrors the `miri` job in
+# ci.yml.
 miri:
-	cargo +nightly miri test --lib
+	cargo +nightly miri test models -- --skip proptest
+	cargo +nightly miri test utilities::element
+	cargo +nightly miri test utilities::uuid
+	cargo +nightly miri test locales
 
 # Build every target, then replay the seed corpus and the regression
 # inputs without generating new ones. Mirrors the per-push CI gate.

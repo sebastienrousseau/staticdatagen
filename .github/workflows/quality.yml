@@ -1,8 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0 OR MIT
 #
 # The gates the repository standard requires that `ci.yml` does not
-# cover: coverage threshold, Miri, fuzz corpus replay, docs lint,
-# cargo-vet provenance, version consistency, examples and benches.
+# cover: coverage threshold, fuzz corpus replay, docs lint, cargo-vet
+# provenance, version consistency, examples and benches.
+#
+# Miri is deliberately *not* here. `ci.yml` already runs it, scoped to
+# the modules it can verify — `models`, `utilities::element`,
+# `utilities::uuid`, `locales`. This crate writes a whole site to disk,
+# so almost every other test opens or creates files, and Miri's
+# isolation forbids `open` and `mkdir`. An unscoped
+# `cargo miri test --lib` fails on the first such test; duplicating the
+# job here unscoped would only add a red check that verifies nothing
+# `ci.yml` does not already verify.
 #
 # Kept separate from ci.yml so the shared `rust-ci.yml` call there stays
 # a straight upgrade path when the pipelines repo changes.
@@ -50,23 +59,6 @@ jobs:
       # chosen once and defended beats chasing 100%.
       - run: cargo llvm-cov --all-features --locked --fail-under-lines 98
 
-  miri:
-    name: miri
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
-        with:
-          toolchain: nightly
-          components: miri
-      - uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2
-      # The crate forbids unsafe, so this checks the interaction with
-      # dependencies that use it internally. Filesystem tests carry
-      # #[cfg_attr(miri, ignore)] — isolation forbids open() and mkdir().
-      - run: cargo +nightly miri test --lib
 
   fuzz-replay:
     name: fuzz build + corpus replay
