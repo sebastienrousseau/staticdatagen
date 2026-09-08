@@ -1,107 +1,154 @@
-# Contributing to `StaticDataGen`
+# Contributing to staticdatagen
 
-Welcome! We're thrilled that you're interested in contributing to the `StaticDataGen` library. Whether you're looking to evangelize, submit feedback, or contribute code, we appreciate your involvement in making `StaticDataGen` a better tool for everyone. Here's how you can get started.
+Contributions are welcome. This guide covers the essentials.
 
-## Evangelize
+## Prerequisites
 
-One of the simplest ways to help us out is by spreading the word about `StaticDataGen`. We believe that a bigger, more involved community makes for a better framework, and that better frameworks make the world a better place. If you know people who might benefit from using `StaticDataGen`, please let them know!
+- **Rust 1.88.0+** (the `rust-version` in `Cargo.toml`; Cargo refuses
+  older toolchains).
+- Git with [commit signing](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
+  configured.
+- For the full local gate: a nightly toolchain (Miri, cargo-fuzz,
+  cargo-llvm-cov), `cargo-deny`, `cargo-vet`, `cargo-audit`, `uv` and
+  `npx`. [`DEVELOPMENT.md`](DEVELOPMENT.md) lists what each is for.
 
-## How to Contribute
+## Getting Started
 
-If you're interested in making a more direct contribution, there are several ways you can help us improve `StaticDataGen`. Here are some guidelines for submitting feedback, bug reports, and code contributions.
-
-### Feedback
-
-Your feedback is incredibly valuable to us, and we're always looking for ways to make `StaticDataGen` better. If you have ideas, suggestions, or questions about `StaticDataGen`, we'd love to hear them. Here's how you can provide feedback:
-
-- Click [the documentation][02] to submit a new feedback.
-- Use a descriptive title that clearly summarizes your feedback.
-- Provide a detailed description of the issue or suggestion.
-- Be patient while we review and respond to your feedback.
-
-### Bug Reports
-
-If you encounter a bug while using `StaticDataGen`, please let us know so we can fix it. Here's how you can submit a bug report:
-
-- Click [the documentation][02] to submit a new issue.
-- Use a descriptive title that clearly summarizes the bug.
-- Provide a detailed description of the issue, including steps to reproduce it.
-- Be patient while we review and respond to your bug report.
-
-### Code Contributions
-
-If you're interested in contributing code to `StaticDataGen`, we're excited to have your help! Here's what you need to know:
-
-#### Development Setup
-
-1. Fork the repository on GitHub
-2. Clone your fork:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/staticdatagen.git
-   cd staticdatagen
-   ```
-3. Add the upstream remote:
-   ```bash
-   git remote add upstream https://github.com/sebastienrousseau/staticdatagen.git
-   ```
-4. Create a new branch for your changes:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-#### Code Style Guidelines
-
-We follow Rust's standard coding conventions. Please ensure your code:
-
-- Follows the [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
-- Is formatted with `rustfmt`
-- Has no warnings from `clippy`
-- Includes documentation for public APIs
-
-#### Testing Requirements
-
-Before submitting a pull request, ensure all tests pass:
-
-```bash
-# Run the test suite
-cargo test --lib
-
-# Check for linting issues
-cargo clippy -- -D warnings
-
-# Format your code
-cargo fmt
-
-# Build the library
-cargo build --lib
+```sh
+git clone https://github.com/sebastienrousseau/staticdatagen.git
+cd staticdatagen
+make
 ```
 
-**Important:** Code coverage must remain at or above 90%. Run tests with coverage to verify:
+`make` runs `cargo check`, `cargo clippy`, and `cargo test` in sequence.
 
-```bash
-cargo tarpaulin --lib --out Html
+## Branch naming
+
+Use Conventional Commits-flavoured prefixes. The branch prefix tells
+reviewers what kind of change to expect before they open the diff:
+
+| Prefix | Use when… | Example |
+|---|---|---|
+| `feat/` | adding user-visible behaviour or public API | `feat/typed-extraction` |
+| `fix/` | fixing a bug whose behaviour change is observable | `fix/unescape-double-decode` |
+| `perf/` | speeding up code without changing behaviour | `perf/single-pass-escape` |
+| `refactor/` | restructuring code without behaviour change | `refactor/split-flatteners` |
+| `docs/` | docs-only changes | `docs/adr-exact-pins` |
+| `test/` | tests-only changes | `test/cover-context-arms` |
+| `ci/` | CI / build / packaging changes | `ci/coverage-gate` |
+| `chore/` | dependency bumps and similar housekeeping | `chore/bump-quick-xml-0.42` |
+
+Release work lands on the branch named for the release it targets
+(`feat/vX.Y.Z`); open PRs against `main`.
+
+## Making changes
+
+1. Fork the repository and create a branch using the prefixes above.
+2. Write code. Match the local style of the file you're touching —
+   read 2–3 neighbours before introducing a new pattern.
+3. **Add or update tests in the same commit / PR** as the
+   behaviour change. Never as a follow-up. A regression fix lands with
+   the input that found it (`fuzz/regressions/` for fuzzer findings).
+4. Run the full check suite:
+
+```sh
+make           # check + clippy + test
+make fmt       # rustfmt --check
+make lint      # markdownlint + codespell + REUSE
+make deny      # cargo-deny supply-chain audit
+make vet       # cargo-vet provenance (regenerate exemptions after a
+dep change)
 ```
 
-#### Submitting a Pull Request
+5. Commit with `git commit -S` (signed).
 
-1. Ensure your changes pass all tests and linting checks
-2. Write clear, concise commit messages
-3. Update documentation if you've changed public APIs
-4. Submit your pull request with:
-   - A descriptive title
-   - A summary of changes
-   - Reference to any related issues (e.g., "Fixes #123")
+## Commit messages
 
-#### Feature Requests
+[Conventional Commits](https://www.conventionalcommits.org/) format.
+The scope is the module or subsystem touched:
 
-If you have an idea for a new feature or improvement, we'd love to hear it:
+```text
+<type>(<scope>): <imperative summary>
 
-1. Check existing issues to avoid duplicates
-2. Open a new issue describing the feature
-3. Wait for feedback before implementing
-4. Once approved, follow the contribution workflow above
+<optional body explaining the why>
 
-We hope that this guide has been helpful in explaining how you can contribute to `StaticDataGen`. Thank you for your interest and involvement in our project!
+<optional footer with breaking-change notes, issue refs>
+```
 
-[01]: https://github.com/sebastienrousseau/staticdatagen
-[02]: https://github.com/sebastienrousseau/staticdatagen/issues/new
+Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `ci`,
+`chore`, `build`, `revert`.
+
+Scopes: `generators`, `models`, `modules`, `utilities`, `macros`,
+`locales`, `deps`, `repo`, `fuzz`, `bench`.
+
+Examples:
+
+```text
+fix(utilities): reject `..` components after sanitisation
+build(deps): html-generator 0.0.11 and metadata-gen 0.0.7
+test(generators): cover every news-sitemap field
+docs(adr): add 0002 sorted directory walk
+```
+
+Sign every commit (`git commit -S`). Unsigned commits won't be
+merged. Set up GPG or SSH signing per the
+[GitHub guide](https://docs.github.com/en/authentication/managing-commit-signature-verification).
+
+## Pull requests
+
+- Open against `main`.
+- Title follows the same Conventional Commits format as commits.
+- Body includes:
+  - **What changed** in 1–3 bullets
+  - **Why** in plain English
+  - **Test plan** — what the reviewer should expect green
+- Keep PRs focused. One logical change per PR; mechanical
+  refactors and behaviour changes get separate PRs for blame
+  hygiene. Structure cleanups never couple to code changes.
+- CI must be green: clippy `-D warnings`, all tests, formatter,
+  REUSE compliance, supply-chain audit and vet, coverage gate
+  (98 % lines), Miri, fuzz corpus replay, docs lint.
+
+## Code standards
+
+- `#![forbid(unsafe_code)]`. **No `unsafe` blocks, ever.** See
+  [ADR 0001](./docs/adr/0001-zero-unsafe-policy.md).
+- All public items require documentation (`#![warn(missing_docs)]`,
+  and `cargo doc` runs with warnings denied in CI).
+- Public docstring rule: lead with one-line summary; include
+  `# Examples` with working code; include `# Errors` for fallible
+  functions; include `# Panics` if any path can panic.
+- `cargo clippy --all-targets --all-features -- -D warnings` must pass.
+- `cargo fmt --check` must pass.
+- New behaviour ships with new tests *in the same commit*.
+- New deps must come with a one-line rationale in the commit
+  message body. A new lockfile entry is a code change.
+
+## Architectural decisions
+
+For changes that touch the generated file layout, the public API
+surface, the dependency floor, or core invariants like the unsafe
+policy: write an [ADR](./docs/adr/) before opening the PR. The
+template lives at [`docs/adr/TEMPLATE.md`](./docs/adr/TEMPLATE.md).
+
+The bar is "would I want a future contributor to read this before
+proposing the opposite?" — if yes, ADR. If no, commit message
+suffices.
+
+## Reporting issues
+
+Open an issue on GitHub. Include:
+
+- A minimal content directory that reproduces the problem.
+- Expected behaviour vs. actual behaviour.
+- Rust version (`rustc --version`).
+- staticdatagen version (`grep '^version' Cargo.toml`).
+
+For security issues, **do not file a public issue.** See
+[SECURITY.md](./SECURITY.md) for the disclosure process.
+
+## License
+
+By contributing, you agree that contributions are licensed under
+the same dual license as the project: [MIT](LICENSE-MIT) or
+[Apache 2.0](LICENSE-APACHE).
