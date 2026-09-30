@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.20] — 2026-09-30
+
+Drops the syntax-highlighting engine this crate never used, and with it
+the unmaintained `yaml-rust` that every `ssg` build carried.
+
+### Changed
+
+- **`comrak` is used without its default features.** Its defaults
+  switch on `cli`, `bon` and `syntect-onig`, which pulled syntect's
+  full default set into every consumer: `yaml-rust` (unmaintained,
+  RUSTSEC-2024-0320), the Oniguruma C library (`onig`, `onig_sys`) and
+  comrak's command line (`clap_derive`). This crate only sets
+  `comrak::Options` fields; highlighting lives in `mdx-gen`, which
+  already builds syntect without YAML loading. 22 packages leave
+  `Cargo.lock` and none are added. Rendered HTML is unchanged:
+  `create_comrak_options()` produces byte-identical output with and
+  without the defaults on a fixture covering tables, footnotes, fenced
+  code, task lists, autolinks, smart punctuation, front matter and raw
+  HTML.
+- **GitHub Actions** updated to the latest pinned releases (#138).
+
 ## [0.0.19] — 2026-09-07
 
 The repository-standard release: the layout, gates and documents every

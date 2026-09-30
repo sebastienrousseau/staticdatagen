@@ -56,7 +56,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.19"
+staticdatagen = "0.0.20"
 ```
 
 Or via Cargo:
@@ -91,11 +91,11 @@ Every feature combination is Apache-2.0 OR MIT as of 0.0.16. `server` remains op
 ```toml
 # Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = "0.0.19"
+staticdatagen = "0.0.20"
 
 # Preview server. Pulls `http-handle` (Apache-2.0 OR MIT since 0.0.7).
 [dependencies]
-staticdatagen = { version = "0.0.19", features = ["server"] }
+staticdatagen = { version = "0.0.20", features = ["server"] }
 ```
 
 ---
