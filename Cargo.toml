@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.19"                         # Current version of the crate
+version = "0.0.20"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.88.0"                    # Minimum supported Rust version
@@ -125,7 +125,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Content generation
-comrak = "0.54"
+comrak = { version = "0.54", default-features = false }
 pulldown-cmark = "0.13"
 html-generator = "0.0.11"
 

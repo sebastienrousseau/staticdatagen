@@ -9,7 +9,7 @@ authors:
 repository-code: "https://github.com/sebastienrousseau/staticdatagen"
 url: "https://github.com/sebastienrousseau/staticdatagen"
 license: "Apache-2.0 OR MIT"
-version: 0.0.19
-date-released: "2026-09-07"
+version: 0.0.20
+date-released: "2026-09-30"
 abstract: >-
   A Rust library that turns Markdown content into a complete static site: HTML pages, sitemaps, RSS, JSON feeds, manifests and security files.
