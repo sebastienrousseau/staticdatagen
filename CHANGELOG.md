@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.21] — 2026-10-01
+
+Page layouts no longer HTML-escape the pages they wrap.
+
+### Fixed
+
+- **Layouts render `{{content}}` and the other pre-rendered blocks as
+  HTML.** staticweaver escapes substitutions by default, so the compiled
+  Markdown body, the navigation and the meta-tag blocks reached every
+  layout entity-escaped. Tags a downstream repair pass did not know
+  (`<details>`, `<summary>`, `<time>`, `<figure>`, inline `<svg>` and
+  others) were then shown to readers as visible markup. The layout
+  engine is now built with escaping off, in both the sequential and the
+  parallel render path, matching the trust model the Markdown render
+  already applies to authored HTML. Two tests cover the two paths.
+
 ## [0.0.20] — 2026-09-30
 
 Drops the syntax-highlighting engine this crate never used, and with it
