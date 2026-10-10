@@ -105,10 +105,6 @@ version = "1.0.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.comrak]]
-version = "0.52.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.comrak]]
 version = "0.54.0"
 criteria = "safe-to-deploy"
 
@@ -706,10 +702,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.tokio]]
 version = "1.52.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.tokio-macros]]
-version = "2.7.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.toml]]

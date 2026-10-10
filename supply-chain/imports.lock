@@ -23,15 +23,15 @@ user-login = "sebastienrousseau"
 user-name = "Sebastien Rousseau"
 
 [[publisher.metadata-gen]]
-version = "0.0.7"
-when = "2026-09-07"
+version = "0.0.8"
+when = "2026-10-09"
 user-id = 186843
 user-login = "sebastienrousseau"
 user-name = "Sebastien Rousseau"
 
 [[publisher.noyalib]]
-version = "0.0.37"
-when = "2026-09-06"
+version = "0.0.56"
+when = "2026-10-08"
 trusted-publisher = "github:sebastienrousseau/noyalib"
 
 [[publisher.sitemap-gen]]

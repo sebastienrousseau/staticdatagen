@@ -20,6 +20,8 @@ use sitemap_gen::create_site_map_data;
 use staticweaver::{Context as TemplateContext, Engine};
 use std::{collections::HashMap, fs, path::Path, time::Duration};
 
+pub use super::front_matter::split_frontmatter_and_body;
+
 use crate::{
     generators::{
         cname::{CnameConfig, CnameGenerator},
@@ -201,58 +203,6 @@ pub fn compile(
     );
 
     Ok(())
-}
-
-/// Splits a Markdown content string into frontmatter and body parts.
-///
-/// The function uses the `---` separator to divide the content into two parts:
-/// the frontmatter (metadata) and the body (main content).
-///
-/// # Parameters
-///
-/// * `content` - A reference to a string containing the Markdown content.
-///
-/// # Returns
-///
-/// A tuple containing two strings:
-/// - The first string represents the frontmatter part of the content.
-/// - The second string represents the body part of the content.
-///
-/// If the `---` separator is not found in the content, both strings will be empty.
-pub fn split_frontmatter_and_body(content: &str) -> (String, String) {
-    let mut lines = content.lines();
-    let mut frontmatter = String::new();
-    let mut body = String::new();
-    let mut in_frontmatter = false;
-
-    for line in &mut lines {
-        if line.trim() == "---" {
-            if in_frontmatter {
-                // Ending the frontmatter
-                break;
-            } else {
-                // Starting the frontmatter
-                in_frontmatter = true;
-                continue;
-            }
-        }
-
-        if in_frontmatter {
-            frontmatter.push_str(line);
-            frontmatter.push('\n');
-        } else {
-            body.push_str(line);
-            body.push('\n');
-        }
-    }
-
-    // Append the rest of the lines to the body
-    for line in lines {
-        body.push_str(line);
-        body.push('\n');
-    }
-
-    (frontmatter.trim().to_string(), body.trim().to_string())
 }
 
 /// The engine that renders page layouts.

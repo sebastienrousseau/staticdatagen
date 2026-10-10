@@ -7,6 +7,18 @@ criteria = "safe-to-deploy"
 delta = "0.54.0 -> 0.55.0"
 notes = "Delta 0.54.0 -> 0.55.0 (9 files, +194/-110): autolink parser fixes for GHSA-xg9p-p4jc-c46g (stack overflow and quadratic time) in src/parser/autolink.rs; tagfilter deprecated in options.rs/html.rs; CLI deprecation warning; tests. No new unsafe, build.rs unchanged, no dependency changes."
 
+[[audits.html-generator]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.0.11 -> 0.0.12"
+notes = "Delta 0.0.11 -> 0.0.12: noyalib =0.0.37 -> =0.0.56 (RUSTSEC-2026-0333), mdx-gen 0.0.5 -> 0.0.6 and comrak 0.54 -> 0.55 (GHSA-xg9p-p4jc-c46g), rust-version 1.88; 10 source lines of lint fixes. Crate keeps forbid(unsafe_code); no new unsafe, no build script."
+
+[[audits.mdx-gen]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.0.5 -> 0.0.6"
+notes = "Delta 0.0.5 -> 0.0.6 (18 files, +134/-23): comrak 0.52 -> 0.55 for GHSA-xg9p-p4jc-c46g; examples gated on syntax_highlighting; tests. Crate keeps forbid(unsafe_code); no new unsafe, no build script, no new dependency."
+
 [[trusted.dtt]]
 criteria = "safe-to-deploy"
 user-id = 186843 # Sebastien Rousseau (sebastienrousseau)

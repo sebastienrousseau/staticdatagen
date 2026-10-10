@@ -29,9 +29,12 @@ see is listed under Changed, as is the change to what
   `create_comrak_options` enables. One recursed once per bare email
   address in a paragraph, so a few thousand addresses overflowed the
   stack and aborted the process. This crate's own `comrak` moves to
-  0.55 (#137). `tests/autolink_stack.rs` renders 3,000 addresses
-  through `create_comrak_options` on a 512 KiB stack: the test binary
-  aborts with `comrak` 0.54 and passes with 0.55.
+  0.55 (#137), and `html-generator` 0.0.12 renders through `mdx-gen`
+  0.0.6 on `comrak` 0.55, so `Cargo.lock` holds no `comrak` older than
+  0.55. `tests/autolink_stack.rs` renders 3,000 addresses on a 512 KiB
+  stack through `create_comrak_options` and through `compile`: the
+  test binary aborts with `comrak` 0.54 and `html-generator` 0.0.11,
+  and passes here.
 
 ### Changed
 
@@ -113,6 +116,8 @@ identical metadata and meta tags under both releases.
 ### Dependencies
 
 - `html-generator` 0.0.11 to 0.0.12, `metadata-gen` 0.0.7 to 0.0.8.
+  Through `html-generator`, `mdx-gen` 0.0.5 to 0.0.6; `comrak` 0.52
+  and 0.54 and `tokio-macros` leave `Cargo.lock`.
 - `comrak` 0.54 to 0.55 (#137), for GHSA-xg9p-p4jc-c46g.
 - `ammonia` 4.1.4 to 4.1.5, the release `html-generator` 0.0.12 is
   tested with: CSS sanitisation now covers stylesheets as well as
