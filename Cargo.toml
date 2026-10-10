@@ -149,6 +149,20 @@ idna = "1.1"
 rayon = "1.12"
 
 # -----------------------------------------------------------------------------
+# Examples
+# -----------------------------------------------------------------------------
+# The locale examples use `staticdatagen::locales`, which only exists with
+# `i18n`. Without these entries `cargo build --no-default-features
+# --all-targets` fails to compile them instead of skipping them.
+[[example]]
+name = "locales_de_example"
+required-features = ["i18n"]
+
+[[example]]
+name = "locales_fr_example"
+required-features = ["i18n"]
+
+# -----------------------------------------------------------------------------
 # Criterion Benchmark
 # -----------------------------------------------------------------------------
 [[bench]]
