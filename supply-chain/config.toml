@@ -641,7 +641,7 @@ version = "1.2.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.staticdatagen]]
-version = "0.0.21"
+version = "0.0.22"
 criteria = "safe-to-deploy"
 
 [[exemptions.string_cache]]

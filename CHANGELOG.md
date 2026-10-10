@@ -5,6 +5,105 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.22] - 2026-10-09
+
+Moves to `html-generator` 0.0.12 and `metadata-gen` 0.0.8, which take
+`noyalib` from 0.0.37 to 0.0.56 and clear RUSTSEC-2026-0333. The
+metadata-gen release changes the meta tags a page carries, which this
+crate's output-stability guarantee treats as breaking; every change a
+build can see is listed under Changed.
+
+### Security
+
+- **RUSTSEC-2026-0333**: `noyalib` before 0.0.53 did not enforce its
+  resource budgets on the typed deserialization path, so a few hundred
+  bytes of YAML front matter built from nested aliases expanded to
+  megabytes. 0.0.21 reached `noyalib` 0.0.37 through both
+  `html-generator` 0.0.11 and `metadata-gen` 0.0.7; both now pin
+  `=0.0.56`. `cargo audit` and `cargo deny check` fail on 0.0.21's
+  lockfile and pass on this one.
+
+### Changed
+
+What a compiled page carries, inherited from `metadata-gen` 0.0.8 (see
+its `docs/MIGRATION.md`):
+
+- **Open Graph tags use `property=`.** `{{opengraph}}` renders
+  `<meta property="og:title" ...>` instead of `name="og:title"`, as the
+  Open Graph protocol requires; `article:`, `fb:`, `profile:`, `book:`,
+  `music:` and `video:` tags do the same. `{{twitter}}`, `{{primary}}`,
+  `{{apple}}` and `{{microsoft}}` keep `name=`.
+- **Meta tag values escape `&`, `<` and `>` as well as `"`.**
+  `description: Fish & Chips` now renders `content="Fish &amp; Chips"`.
+  A value that already holds an entity is escaped again
+  (`Fish &amp; Chips` becomes `Fish &amp;amp; Chips`): write plain text
+  in front matter. The layout variables taken straight from front matter
+  (`{{title}}` and the rest) are unchanged.
+- **More front matter is recognised.** A page whose front matter follows
+  a UTF-8 BOM, and TOML front matter with no `:` in the document, used to
+  stop the build with "Failed to extract and prepare metadata"; both now
+  compile.
+- **Error messages for broken front matter are more specific.** An
+  opening `---` with no closing fence names the format and its byte
+  offset, and malformed JSON front matter reports the parser's own
+  message and position, instead of "No valid front matter found".
+
+`metadata-gen`'s slug and empty-block changes do not reach this crate:
+it does not derive slugs through `metadata-gen`, and an empty block was
+already rejected before parsing. Across 572 Markdown files (the `ssg`
+repository, this crate's examples and edge cases), 562 produce
+identical metadata and meta tags under both releases.
+
+### Fixed
+
+- **Front matter no longer leaks into the page body.**
+  `split_frontmatter_and_body` only knew `---` fences, so a TOML
+  (`+++`) or JSON page rendered its own front matter as body text, and
+  a page with a UTF-8 BOM would have done the same once `metadata-gen`
+  0.0.8 began to find its front matter. The split now uses
+  `metadata-gen`'s fence detection, so the body starts where the front
+  matter it parsed ends; content with no recognised front matter is
+  split on `---` as before. Over 9,886 Markdown files, 9,880 split
+  identically; the 6 that differ are TOML, JSON and BOM pages, which
+  now have a clean body.
+- **`cargo vet` without `--locked` refused to run**: `html-generator`
+  and `metadata-gen` carried `audit-as-crates-io` policies, which apply
+  only to path dependencies. The stale policies are gone, so
+  `cargo vet certify` and `cargo vet prune` work again.
+- **Waivers nothing matched are gone.** `deny.toml` allowed four
+  licences no dependency uses (`AGPL-3.0-only` among them, since
+  `http-handle` 0.0.7 is Apache-2.0 OR MIT) and ignored four advisories
+  no crate in the tree triggers; `.cargo/audit.toml` ignored seven. The
+  remaining ignores (`bincode` via `syntect`, `proc-macro-error2` via
+  `defmt`) each match a crate in `Cargo.lock`.
+- **`cargo build --no-default-features --all-targets` compiles.** The
+  two locale examples use `staticdatagen::locales`, which only exists
+  with `i18n`; they now declare `required-features = ["i18n"]` and are
+  skipped without it instead of failing the build.
+- **`make miri` runs what CI runs**: the six module filters of the
+  `miri` job in `ci.yml`, with its `-Zmiri-disable-isolation
+  -Zmiri-tree-borrows`, instead of four filters with isolation on.
+- **README and SECURITY.md** said rendered HTML came from `comrak`
+  (it comes from `html-generator`), that there was no `supply-chain/`
+  directory, that every GitHub Action was SHA-pinned, and listed
+  `frontmatter-gen` as a dependency. They now match the repository.
+
+### Dependencies
+
+- `html-generator` 0.0.11 to 0.0.12, `metadata-gen` 0.0.7 to 0.0.8.
+  `comrak` 0.55 joins `Cargo.lock` as `html-generator`'s `wasm32`-only
+  renderer; native builds do not compile it.
+- `ammonia` 4.1.4 to 4.1.5, the release `html-generator` 0.0.12 is
+  tested with: CSS sanitisation now covers stylesheets as well as
+  `style` attributes, and `url()` rewrites apply inside CSS.
+- `thiserror` 2.0.21 and `uuid` 1.26.1 (#140); GitHub Actions (#143).
+  `cargo vet regenerate exemptions` moves each existing exemption to
+  the new version, as SECURITY.md describes, so the count is unchanged.
+- `cargo vet prune`: 20 exemptions go, 18 for crates no longer in the
+  tree and 2 (`pastey`, `shlex`) that imported audits now cover, and
+  two build-time crates (`cc`, `find-msvc-tools`) drop to
+  `safe-to-run`. The ratchet baseline falls from 235 to 215.
+
 ## [0.0.21] — 2026-10-01
 
 Page layouts no longer HTML-escape the pages they wrap.
