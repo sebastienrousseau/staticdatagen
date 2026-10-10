@@ -73,13 +73,15 @@ on each push; see [`DEVELOPMENT.md`](DEVELOPMENT.md).
   exemptions are regenerated on every dependency change and the CI
   ratchet lets the count shrink but never grow.
 - The first-party crates it builds on — `html-generator`,
-  `metadata-gen`, `frontmatter-gen`, `staticweaver`, `langweave`,
-  `sitemap-gen` — are trusted in `cargo-vet` by publisher, and a bump is
+  `metadata-gen`, `staticweaver`, `langweave`, `sitemap-gen` — are
+  trusted in `cargo-vet` by publisher, and a bump is
   a deliberate release of this crate with its own changelog entry.
 - Test-only crates live in `[dev-dependencies]`, so a consumer's build
   does not pull them.
 - `Cargo.lock` committed for deterministic builds; CI builds `--locked`.
-- All GitHub Actions SHA-pinned.
+- Third-party actions in `quality.yml` are SHA-pinned. `ci.yml` and
+  `release.yml` still reference tags and the shared `pipelines`
+  workflows at `@main`.
 - REUSE/SPDX compliance linted in CI.
 
 ### Commit Integrity

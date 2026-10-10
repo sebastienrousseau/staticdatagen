@@ -150,8 +150,8 @@ Three design choices motivate the rewrite from a hand-rolled
 sitemap-plus-RSS pipeline:
 
 1. **One content tree, every artefact.** Frontmatter is parsed once
-   per page (via `metadata-gen`), the rendered HTML is emitted by
-   `comrak` + `staticweaver`, and the same metadata feeds RSS,
+   per page (via `metadata-gen`), `html-generator` renders the Markdown
+   and `staticweaver` the layouts, and the same metadata feeds RSS,
    sitemap, JSON-LD, Open Graph, Twitter Card, manifest, robots,
    humans, security, and CNAME emitters. No duplication, no drift
    between the HTML you publish and the metadata that describes it.
@@ -531,10 +531,9 @@ CI runs on every push:
   `cargo miri test utilities::element`, `utilities::uuid`, `locales`,
   `macros::directory`, `macros::custom`.
 - **Coverage**: `cargo llvm-cov` reported to Codecov.
-- **Supply chain**: `cargo audit`, `cargo deny`. `cargo vet` was
-  slated for v0.0.11 and has not landed — there is no `supply-chain/`
-  directory in this crate
-  ([#76](https://github.com/sebastienrousseau/staticdatagen/issues/76)).
+- **Supply chain**: `cargo audit`, `cargo deny`, and `cargo vet
+  --locked` against `supply-chain/`, with a ratchet that lets the
+  exemption count shrink but never grow.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for signed-commit setup and
 PR guidelines.
@@ -550,7 +549,7 @@ PR guidelines.
 - **Property tests** under `proptest-regressions/` cover the path
   sanitization surface (`utilities::security`).
 - **Audit cadence.** `deny.toml` records a quarterly review schedule
-  (next: 2026-07-17) and lists every transitive exemption with a
+  (next: 2027-01-09) and lists every transitive exemption with a
   justification.
 - **Vulnerability disclosure.** See [SECURITY.md](.github/SECURITY.md).
 - **SBOM** publication was slated for v0.0.11 and has not landed
