@@ -61,15 +61,19 @@ doc:
 coverage:
 	cargo +nightly llvm-cov --all-features --fail-under-lines 98
 
-# Scoped to the modules Miri can verify. This crate writes a site to
-# disk and Miri's isolation forbids `open` and `mkdir`, so an unscoped
-# run fails on the first filesystem test. Mirrors the `miri` job in
-# ci.yml.
+# Scoped to the modules Miri can verify in reasonable time, with
+# isolation off and Tree Borrows on, exactly as the `miri` job in ci.yml
+# runs them: the two macro modules create directories, which Miri's
+# isolation forbids.
+MIRIFLAGS_CI = -Zmiri-disable-isolation -Zmiri-tree-borrows
+
 miri:
-	cargo +nightly miri test models -- --skip proptest
-	cargo +nightly miri test utilities::element
-	cargo +nightly miri test utilities::uuid
-	cargo +nightly miri test locales
+	MIRIFLAGS="$(MIRIFLAGS_CI)" cargo +nightly miri test models -- --skip proptest
+	MIRIFLAGS="$(MIRIFLAGS_CI)" cargo +nightly miri test utilities::element
+	MIRIFLAGS="$(MIRIFLAGS_CI)" cargo +nightly miri test utilities::uuid
+	MIRIFLAGS="$(MIRIFLAGS_CI)" cargo +nightly miri test locales
+	MIRIFLAGS="$(MIRIFLAGS_CI)" cargo +nightly miri test macros::directory
+	MIRIFLAGS="$(MIRIFLAGS_CI)" cargo +nightly miri test macros::custom
 
 # Build every target, then replay the seed corpus and the regression
 # inputs without generating new ones. Mirrors the per-push CI gate.

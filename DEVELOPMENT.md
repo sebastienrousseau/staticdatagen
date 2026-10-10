@@ -55,7 +55,7 @@ repository standard requires that the shared pipeline does not cover.
 | :--- | :--- | :--- |
 | `ci` (fmt, clippy, test, cross-platform) | `make` | |
 | `coverage-gate` | `make coverage` | nightly; 98 % lines, no exclusions |
-| `miri` (in `ci.yml`) | `cargo +nightly miri test models -- --skip proptest` and the other three module filters | scoped: this crate writes a site to disk, and Miri's isolation forbids `open`/`mkdir`, so only the pure modules can be verified |
+| `miri` (in `ci.yml`) | `make miri` | nightly; the same six module filters as CI, with `-Zmiri-disable-isolation -Zmiri-tree-borrows`, since the two macro modules create directories |
 | `fuzz-replay` | `make fuzz` | needs a source-installed cargo-fuzz (see above) |
 | `docs-lint` | `make lint` | British spellings are house style; see `.codespellrc` |
 | `cargo-vet` | `make vet` | after a dep change: `cargo vet regenerate exemptions`; the count must not exceed `supply-chain/exemptions-baseline.txt` |
