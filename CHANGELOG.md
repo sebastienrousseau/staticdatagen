@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.22] - 2026-10-09
 
 Moves to `html-generator` 0.0.12 and `metadata-gen` 0.0.8, which take
-`noyalib` from 0.0.37 to 0.0.56 and clear RUSTSEC-2026-0333. The
-metadata-gen release changes the meta tags a page carries, which this
-crate's output-stability guarantee treats as breaking; every change a
-build can see is listed under Changed.
+`noyalib` from 0.0.37 to 0.0.56 and clear RUSTSEC-2026-0333, and to
+`comrak` 0.55, which clears GHSA-xg9p-p4jc-c46g. The metadata-gen
+release changes the meta tags a page carries, which this crate's
+output-stability guarantee treats as breaking; every change a build can
+see is listed under Changed, as is the change to what
+`create_comrak_options` renders.
 
 ### Security
 
@@ -22,6 +24,14 @@ build can see is listed under Changed.
   `html-generator` 0.0.11 and `metadata-gen` 0.0.7; both now pin
   `=0.0.56`. `cargo audit` and `cargo deny check` fail on 0.0.21's
   lockfile and pass on this one.
+- **GHSA-xg9p-p4jc-c46g** (high): `comrak` 0.54 and earlier had two
+  denial-of-service bugs in the autolink extension, which
+  `create_comrak_options` enables. One recursed once per bare email
+  address in a paragraph, so a few thousand addresses overflowed the
+  stack and aborted the process. This crate's own `comrak` moves to
+  0.55 (#137). `tests/autolink_stack.rs` renders 3,000 addresses
+  through `create_comrak_options` on a 512 KiB stack: the test binary
+  aborts with `comrak` 0.54 and passes with 0.55.
 
 ### Changed
 
@@ -47,6 +57,18 @@ its `docs/MIGRATION.md`):
   opening `---` with no closing fence names the format and its byte
   offset, and malformed JSON front matter reports the parser's own
   message and position, instead of "No valid front matter found".
+
+What `create_comrak_options` renders (the compiler does not use it):
+
+- **Raw HTML is omitted.** `comrak` 0.55 deprecates the `tagfilter`
+  extension the helper enabled ("not fit for any purpose") and 0.56
+  removes it. It escaped nine tags such as `<script>` and `<iframe>`
+  but let `<img onerror=...>` and `javascript:` links through. The
+  helper now renders in comrak's safe mode (`render.r#unsafe` off):
+  raw HTML becomes `<!-- raw HTML omitted -->`, and `javascript:`,
+  `vbscript:`, `file:` and most `data:` link targets are dropped. A
+  caller that wants raw HTML from trusted Markdown sets
+  `render.r#unsafe = true` and sanitises the output itself.
 
 `metadata-gen`'s slug and empty-block changes do not reach this crate:
 it does not derive slugs through `metadata-gen`, and an empty block was
@@ -91,8 +113,7 @@ identical metadata and meta tags under both releases.
 ### Dependencies
 
 - `html-generator` 0.0.11 to 0.0.12, `metadata-gen` 0.0.7 to 0.0.8.
-  `comrak` 0.55 joins `Cargo.lock` as `html-generator`'s `wasm32`-only
-  renderer; native builds do not compile it.
+- `comrak` 0.54 to 0.55 (#137), for GHSA-xg9p-p4jc-c46g.
 - `ammonia` 4.1.4 to 4.1.5, the release `html-generator` 0.0.12 is
   tested with: CSS sanitisation now covers stylesheets as well as
   `style` attributes, and `url()` rewrites apply inside CSS.

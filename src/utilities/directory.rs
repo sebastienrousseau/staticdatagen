@@ -419,6 +419,13 @@ pub fn extract_front_matter(content: &str) -> &str {
 
 /// Creates and returns a `comrak::Options` instance with custom settings.
 ///
+/// Raw HTML is not rendered: with `render.r#unsafe` off, comrak replaces
+/// every raw HTML block or tag with `<!-- raw HTML omitted -->` and drops
+/// `javascript:`, `vbscript:`, `file:` and `data:` link targets (bar PNG,
+/// GIF, JPEG and WebP images). A caller that renders trusted Markdown and
+/// wants its raw HTML can set `render.r#unsafe = true` on the returned
+/// value, and then owns sanitising the output.
+///
 /// # Returns
 ///
 /// A `comrak::Options` instance with non-standard Markdown features enabled.
@@ -431,12 +438,11 @@ pub fn create_comrak_options() -> comrak::Options<'static> {
     options.extension.strikethrough = true;
     options.extension.superscript = true;
     options.extension.table = true;
-    options.extension.tagfilter = true;
     options.extension.tasklist = true;
     options.parse.smart = true;
     options.render.github_pre_lang = true;
     options.render.hardbreaks = false;
-    options.render.r#unsafe = true;
+    options.render.r#unsafe = false;
     options
 }
 
@@ -720,12 +726,44 @@ mod tests {
         assert!(options.extension.strikethrough);
         assert!(options.extension.superscript);
         assert!(options.extension.table);
-        assert!(options.extension.tagfilter);
         assert!(options.extension.tasklist);
         assert!(options.parse.smart);
         assert!(options.render.github_pre_lang);
         assert!(!options.render.hardbreaks);
-        assert!(options.render.r#unsafe);
+        assert!(!options.render.r#unsafe);
+    }
+
+    /// Raw HTML and script-bearing link targets in Markdown do not reach
+    /// the HTML rendered with these options; the Markdown around them
+    /// still renders.
+    #[test]
+    fn test_comrak_options_keep_raw_html_out() {
+        let cases = [
+            ("<script>alert(1)</script>", "<script"),
+            (
+                "<iframe src=\"https://example.com\"></iframe>",
+                "<iframe",
+            ),
+            ("<style>body { display: none }</style>", "<style"),
+            ("Inline <script>alert(1)</script> tag.", "<script"),
+            ("<img src=\"x\" onerror=\"alert(1)\">", "onerror"),
+            ("[link](javascript:alert(1))", "javascript:"),
+        ];
+        let options = create_comrak_options();
+        let mut leaked = Vec::new();
+        for (markdown, forbidden) in cases {
+            let input = format!("Before.\n\n{markdown}\n\nAfter.\n");
+            let html = comrak::markdown_to_html(&input, &options);
+            assert!(html.contains("<p>Before.</p>"), "{html}");
+            assert!(html.contains("<p>After.</p>"), "{html}");
+            if html.contains(forbidden) {
+                leaked.push(format!("{markdown:?} -> {html:?}"));
+            }
+        }
+        assert!(
+            leaked.is_empty(),
+            "raw HTML reached the output: {leaked:#?}"
+        );
     }
 
     /// Tests updating class attributes in a line containing an <img> tag.

@@ -1,7 +1,11 @@
 
 # cargo-vet audits file
 
-[audits]
+[[audits.comrak]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.54.0 -> 0.55.0"
+notes = "Delta 0.54.0 -> 0.55.0 (9 files, +194/-110): autolink parser fixes for GHSA-xg9p-p4jc-c46g (stack overflow and quadratic time) in src/parser/autolink.rs; tagfilter deprecated in options.rs/html.rs; CLI deprecation warning; tests. No new unsafe, build.rs unchanged, no dependency changes."
 
 [[trusted.dtt]]
 criteria = "safe-to-deploy"
