@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.21"                         # Current version of the crate
+version = "0.0.22"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.88.0"                    # Minimum supported Rust version
@@ -65,18 +65,14 @@ path = "src/lib.rs"                         # Path to the library entry point
 
 # `server` is deliberately NOT in the default set.
 #
-# It pulls `http-handle`, which is `license = "AGPL-3.0-only"`. This crate is
-# published as Apache-2.0 OR MIT, so a default build was quietly handing every
-# consumer an AGPL transitive — including `ssg`, which depends on this crate
-# with default features and never references the re-exported `Server` at all.
-#
-# The README promised this exit for v0.0.12 (#83) and it never happened. Taking
-# `server` out of `default` is the part that can be done without replacing the
-# dependency: anyone who wants the preview server opts in, and everyone else
-# stops inheriting a copyleft licence they did not ask for.
+# It left `default` in 0.0.14, when `http-handle` was `AGPL-3.0-only` and a
+# default build handed every consumer (`ssg` included, which never uses the
+# re-exported `Server`) a copyleft transitive. `http-handle` 0.0.7 is
+# Apache-2.0 OR MIT, so that is history: `server` stays opt-in because a
+# preview server is weight most consumers do not need.
 default = ["rss", "sitemap", "i18n"]
 
-# Everything, including the AGPL-transitive preview server.
+# Everything, including the preview server.
 full = ["rss", "sitemap", "i18n", "server"]
 
 # Minimal feature set - core functionality only
@@ -125,9 +121,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Content generation
-comrak = { version = "0.54", default-features = false }
+comrak = { version = "0.55", default-features = false }
 pulldown-cmark = "0.13"
-html-generator = "0.0.11"
+html-generator = "0.0.12"
 
 # Web and networking
 http-handle = { version = "0.0.7", optional = true }
@@ -135,7 +131,7 @@ url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.2", optional = true }
-metadata-gen = "0.0.7"
+metadata-gen = "0.0.8"
 regex = "1.12"
 walkdir = "2.5"                             # Recursive directory walk for nested-locale `_posts/<lang>/` trees
 rss-gen = "0.0.11"
@@ -151,6 +147,20 @@ xml-rs = "1.0"
 # CNAME dependencies
 idna = "1.1"
 rayon = "1.12"
+
+# -----------------------------------------------------------------------------
+# Examples
+# -----------------------------------------------------------------------------
+# The locale examples use `staticdatagen::locales`, which only exists with
+# `i18n`. Without these entries `cargo build --no-default-features
+# --all-targets` fails to compile them instead of skipping them.
+[[example]]
+name = "locales_de_example"
+required-features = ["i18n"]
+
+[[example]]
+name = "locales_fr_example"
+required-features = ["i18n"]
 
 # -----------------------------------------------------------------------------
 # Criterion Benchmark

@@ -10,14 +10,10 @@ allow = [
     "Apache-2.0 WITH LLVM-exception",
     "Unicode-DFS-2016",
     "BSD-2-Clause",           # Used by comrak and other common crates
-    "BSD-3-Clause",           # Common BSD license
     "MPL-2.0",                # Mozilla Public License, used by cssparser
     "ISC",                    # ISC license, similar to MIT
-    "CC0-1.0",                # Public domain dedication
     "Zlib",                   # zlib License, used by foldhash (OSI approved)
-    "AGPL-3.0-only",          # GNU AGPL v3.0, used by http-handle
     "Unicode-3.0",            # Unicode License v3, used by ICU4X crates
-    "MITNFA",                 # MIT +no-false-attribs, used by fmt2io
 ]
 
 # Optional: Deny specific licenses if needed
@@ -45,8 +41,8 @@ skip-tree = []
 # Note: Only ignore advisories after careful consideration
 #
 # QUARTERLY REVIEW SCHEDULE:
-# Last reviewed: 2026-04-17
-# Next review:   2026-07-17
+# Last reviewed: 2026-10-09
+# Next review:   2027-01-09
 #
 # Review checklist:
 #   1. Run `cargo audit` to check for new advisories
@@ -54,16 +50,9 @@ skip-tree = []
 #   3. Update comments with findings and next review date
 #   4. Remove entries where replacements are available
 ignore = [
-    # [Reviewed 2026-02-16] Unmaintained but functional, no drop-in replacement
-    "RUSTSEC-2024-0436",  # paste - still functional, widely used, no alternative
-    # [Reviewed 2026-02-16] Transitive via indicatif/rlg, no action possible
-    "RUSTSEC-2025-0119",  # number_prefix - transitive dep, still functional
-    # [Reviewed 2026-02-16] Transitive via config/rlg, yaml-rust2 exists but not a drop-in
-    "RUSTSEC-2024-0320",  # yaml-rust - transitive dep, still functional
-    # [Reviewed 2026-02-17] Transitive via whatlang, replaced by RUSTSEC-2025-0057
-    "RUSTSEC-2025-0057",  # fxhash - unmaintained, transitive dep via whatlang
-    # [Reviewed 2026-02-17] Transitive via metadata-gen, bincode unmaintained
-    "RUSTSEC-2025-0141",  # bincode - transitive dep via metadata-gen, no action possible
+    # [Reviewed 2026-10-09] Unmaintained; transitive via html-generator ->
+    # mdx-gen -> syntect, so only a syntect release can drop it.
+    "RUSTSEC-2025-0141",  # bincode - transitive via syntect, no action possible here
 ]
 
 # Use v2 configuration (vulnerability/unmaintained/unsound/yanked are deny by default)

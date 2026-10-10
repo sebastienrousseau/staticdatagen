@@ -52,6 +52,13 @@ so the threat model is a mistake rather than an attacker — but the HTML
 post-processor still runs over generated markup with the same escaping
 the rest of the family uses.
 
+Raw HTML in a Markdown body reaches the page unchanged, `<script>`
+included: the compiler renders with `html-generator`'s
+`allow_unsafe_html`, because authors write `<section>`, `<figure>` and
+inline SVG on purpose. Markdown from anyone you do not trust needs
+sanitising before it reaches the compiler. `create_comrak_options` is
+the exception: it renders in comrak's safe mode, which omits raw HTML.
+
 Directory listings are walked with `WalkDir::sort_by_file_name`, so two
 builds of the same content produce byte-identical output on any
 filesystem. That is a correctness property rather than a security one,
@@ -73,13 +80,15 @@ on each push; see [`DEVELOPMENT.md`](DEVELOPMENT.md).
   exemptions are regenerated on every dependency change and the CI
   ratchet lets the count shrink but never grow.
 - The first-party crates it builds on — `html-generator`,
-  `metadata-gen`, `frontmatter-gen`, `staticweaver`, `langweave`,
-  `sitemap-gen` — are trusted in `cargo-vet` by publisher, and a bump is
+  `metadata-gen`, `staticweaver`, `langweave`, `sitemap-gen` — are
+  trusted in `cargo-vet` by publisher, and a bump is
   a deliberate release of this crate with its own changelog entry.
 - Test-only crates live in `[dev-dependencies]`, so a consumer's build
   does not pull them.
 - `Cargo.lock` committed for deterministic builds; CI builds `--locked`.
-- All GitHub Actions SHA-pinned.
+- Third-party actions in `quality.yml` are SHA-pinned. `ci.yml` and
+  `release.yml` still reference tags and the shared `pipelines`
+  workflows at `@main`.
 - REUSE/SPDX compliance linted in CI.
 
 ### Commit Integrity
