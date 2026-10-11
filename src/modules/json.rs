@@ -11,19 +11,20 @@ use crate::models::data::{
     CnameData, HumansData, ManifestData, NewsData, NewsVisitOptions,
     SecurityData, TxtData,
 };
+use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::Writer;
 use serde_json::{json, Map};
 use sitemap_gen::SiteMapData;
 use std::{fs, io, path::Path};
-use xml::writer::{EmitterConfig, XmlEvent};
 
 /// Reusable XML generation utility
 ///
 /// This function generates an XML element with the given tag and content.
-/// It uses the provided `EventWriter` to write the XML element to the output.
+/// It uses the provided `Writer` to write the XML element to the output.
 ///
 /// # Parameters
 ///
-/// * `writer`: A mutable reference to an `EventWriter` that will be used to write the XML element.
+/// * `writer`: A mutable reference to a `Writer` that will be used to write the XML element.
 /// * `tag`: A string representing the tag name of the XML element.
 /// * `content`: A string representing the content of the XML element.
 ///
@@ -31,7 +32,7 @@ use xml::writer::{EmitterConfig, XmlEvent};
 ///
 /// An `io::Result` indicating whether the XML element was successfully written to the output.
 fn generate_xml_element<W: io::Write>(
-    writer: &mut xml::writer::EventWriter<W>,
+    writer: &mut Writer<W>,
     tag: &str,
     content: &str,
 ) -> io::Result<()> {
@@ -42,7 +43,7 @@ fn generate_xml_element<W: io::Write>(
 ///
 /// # Parameters
 ///
-/// * `writer`: A mutable reference to an `xml::writer::EventWriter` for writing the XML.
+/// * `writer`: A mutable reference to a `Writer` for writing the XML.
 /// * `tag`: A string representing the tag name of the XML element.
 /// * `content`: A string representing the content of the XML element.
 /// * `attributes`: A slice of tuples representing the attributes of the XML element. Each tuple contains a key and a value.
@@ -51,20 +52,24 @@ fn generate_xml_element<W: io::Write>(
 ///
 /// An `io::Result` indicating whether the XML element was successfully written.
 fn generate_xml_element_with_attrs<W: io::Write>(
-    writer: &mut xml::writer::EventWriter<W>,
+    writer: &mut Writer<W>,
     tag: &str,
     content: &str,
     attributes: &[(&str, &str)],
 ) -> io::Result<()> {
-    let mut element = XmlEvent::start_element(tag);
+    let mut element = BytesStart::new(tag);
     for (key, value) in attributes {
-        element = element.attr(*key, value);
+        element.push_attribute((*key, *value));
     }
-    writer.write(element).map_err(to_io_error)?;
     writer
-        .write(XmlEvent::characters(content))
+        .write_event(Event::Start(element))
         .map_err(to_io_error)?;
-    writer.write(XmlEvent::end_element()).map_err(to_io_error)?;
+    writer
+        .write_event(Event::Text(BytesText::new(content)))
+        .map_err(to_io_error)?;
+    writer
+        .write_event(Event::End(BytesEnd::new(tag)))
+        .map_err(to_io_error)?;
     Ok(())
 }
 
@@ -376,12 +381,11 @@ fn process_file(
     if let Ok(stripped_path) = file_path.strip_prefix(base_dir) {
         if let Some(url) = stripped_path.to_str() {
             let mut buffer = Vec::new();
-            let mut writer = EmitterConfig::new()
-                .perform_indent(true)
-                .create_writer(&mut buffer);
+            let mut writer =
+                Writer::new_with_indent(&mut buffer, b' ', 2);
 
             writer
-                .write(XmlEvent::start_element("url"))
+                .write_event(Event::Start(BytesStart::new("url")))
                 .map_err(to_io_error)?;
             generate_xml_element(
                 &mut writer,
@@ -395,7 +399,7 @@ fn process_file(
                 &format!("{}/{}", base_url, url),
             )?;
             writer
-                .write(XmlEvent::end_element())
+                .write_event(Event::End(BytesEnd::new("url")))
                 .map_err(to_io_error)?; // close <url>
 
             // Collect the escaped and properly encoded XML string
@@ -407,9 +411,9 @@ fn process_file(
     Ok(())
 }
 
-/// Helper function to convert `xml::writer::Error` to `std::io::Error`
-fn to_io_error(err: xml::writer::Error) -> io::Error {
-    io::Error::other(err)
+/// Helper function to convert errors to `std::io::Error`
+fn to_io_error(err: io::Error) -> io::Error {
+    err
 }
 
 /// Helper function to visit directories for news sitemap generation
@@ -674,9 +678,7 @@ mod tests {
     #[test]
     fn test_generate_xml_element_with_attrs() {
         let mut buffer = Vec::new();
-        let mut writer = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(&mut buffer);
+        let mut writer = Writer::new_with_indent(&mut buffer, b' ', 2);
 
         generate_xml_element_with_attrs(
             &mut writer,
@@ -696,9 +698,7 @@ mod tests {
     #[test]
     fn test_generate_xml_element() {
         let mut buffer = Vec::new();
-        let mut writer = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(&mut buffer);
+        let mut writer = Writer::new_with_indent(&mut buffer, b' ', 2);
 
         generate_xml_element(&mut writer, "tag", "content")
             .expect("XML generation should succeed");
@@ -815,10 +815,9 @@ mod tests {
 
     #[test]
     fn test_to_io_error() {
-        // Create an XML error and convert it
-        let xml_err =
-            xml::writer::Error::Io(io::Error::other("test error"));
-        let io_err = to_io_error(xml_err);
+        // Create an IO error and convert it
+        let err = io::Error::other("test error");
+        let io_err = to_io_error(err);
         assert_eq!(io_err.kind(), io::ErrorKind::Other);
     }
 

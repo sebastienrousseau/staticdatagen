@@ -122,7 +122,6 @@ serde_json = "1.0"
 
 # Content generation
 comrak = { version = "0.55", default-features = false }
-pulldown-cmark = "0.13"
 html-generator = "0.0.12"
 
 # Web and networking
@@ -142,7 +141,6 @@ uuid = { version = "1.23", features = ["v4"] }
 
 # XML processing
 quick-xml = "0.42"
-xml-rs = "1.0"
 
 # CNAME dependencies
 idna = "1.1"

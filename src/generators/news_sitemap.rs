@@ -33,10 +33,10 @@
 use crate::models::data::NewsData;
 use crate::utilities::dates::parse_flexible_date;
 use log::warn;
+use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::Writer;
 use std::collections::HashMap;
 use time::{format_description, OffsetDateTime};
-use xml::writer::events::XmlEvent;
-use xml::writer::EmitterConfig;
 
 /// Configuration for generating a news sitemap.
 #[derive(Debug, Clone)]
@@ -133,53 +133,69 @@ impl NewsSiteMapGenerator {
     ) -> Result<String, Box<dyn std::error::Error>> {
         let news_data = self.config.to_news_data();
         let mut output = Vec::new();
-        let mut writer = EmitterConfig::new()
-            .perform_indent(true)
-            .create_writer(&mut output);
+        let mut writer = Writer::new_with_indent(&mut output, b' ', 2);
 
-        writer.write(
-            XmlEvent::start_element("urlset")
-                .attr(
-                    "xmlns",
-                    "http://www.sitemaps.org/schemas/sitemap/0.9",
-                )
-                .attr(
-                    "xmlns:news",
-                    "http://www.google.com/schemas/sitemap-news/0.9",
-                ),
-        )?;
+        let mut urlset = BytesStart::new("urlset");
+        urlset.push_attribute((
+            "xmlns",
+            "http://www.sitemaps.org/schemas/sitemap/0.9",
+        ));
+        urlset.push_attribute((
+            "xmlns:news",
+            "http://www.google.com/schemas/sitemap-news/0.9",
+        ));
+        writer.write_event(Event::Start(urlset))?;
 
-        writer.write(XmlEvent::start_element("url"))?;
-        writer.write(XmlEvent::start_element("loc"))?;
-        writer.write(XmlEvent::characters(&news_data.news_loc))?;
-        writer.write(XmlEvent::end_element())?;
-
-        writer.write(XmlEvent::start_element("news:news"))?;
-        writer.write(XmlEvent::start_element("news:publication"))?;
-        writer.write(XmlEvent::start_element("news:name"))?;
-        writer.write(XmlEvent::characters(
-            &news_data.news_publication_name,
-        ))?;
-        writer.write(XmlEvent::end_element())?;
-        writer.write(XmlEvent::start_element("news:language"))?;
-        writer.write(XmlEvent::characters(&news_data.news_language))?;
-        writer.write(XmlEvent::end_element())?;
-        writer.write(XmlEvent::end_element())?;
+        writer.write_event(Event::Start(BytesStart::new("url")))?;
+        writer.write_event(Event::Start(BytesStart::new("loc")))?;
+        writer.write_event(Event::Text(BytesText::new(
+            &news_data.news_loc,
+        )))?;
+        writer.write_event(Event::End(BytesEnd::new("loc")))?;
 
         writer
-            .write(XmlEvent::start_element("news:publication_date"))?;
-        writer.write(XmlEvent::characters(
+            .write_event(Event::Start(BytesStart::new("news:news")))?;
+        writer.write_event(Event::Start(BytesStart::new(
+            "news:publication",
+        )))?;
+        writer
+            .write_event(Event::Start(BytesStart::new("news:name")))?;
+        writer.write_event(Event::Text(BytesText::new(
+            &news_data.news_publication_name,
+        )))?;
+        writer.write_event(Event::End(BytesEnd::new("news:name")))?;
+        writer.write_event(Event::Start(BytesStart::new(
+            "news:language",
+        )))?;
+        writer.write_event(Event::Text(BytesText::new(
+            &news_data.news_language,
+        )))?;
+        writer
+            .write_event(Event::End(BytesEnd::new("news:language")))?;
+        writer.write_event(Event::End(BytesEnd::new(
+            "news:publication",
+        )))?;
+
+        writer.write_event(Event::Start(BytesStart::new(
+            "news:publication_date",
+        )))?;
+        writer.write_event(Event::Text(BytesText::new(
             &news_data.news_publication_date,
-        ))?;
-        writer.write(XmlEvent::end_element())?;
+        )))?;
+        writer.write_event(Event::End(BytesEnd::new(
+            "news:publication_date",
+        )))?;
 
-        writer.write(XmlEvent::start_element("news:title"))?;
-        writer.write(XmlEvent::characters(&news_data.news_title))?;
-        writer.write(XmlEvent::end_element())?;
+        writer
+            .write_event(Event::Start(BytesStart::new("news:title")))?;
+        writer.write_event(Event::Text(BytesText::new(
+            &news_data.news_title,
+        )))?;
+        writer.write_event(Event::End(BytesEnd::new("news:title")))?;
 
-        writer.write(XmlEvent::end_element())?;
-        writer.write(XmlEvent::end_element())?;
-        writer.write(XmlEvent::end_element())?;
+        writer.write_event(Event::End(BytesEnd::new("news:news")))?;
+        writer.write_event(Event::End(BytesEnd::new("url")))?;
+        writer.write_event(Event::End(BytesEnd::new("urlset")))?;
 
         Ok(String::from_utf8(output)?)
     }
