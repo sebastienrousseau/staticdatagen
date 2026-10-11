@@ -216,6 +216,7 @@ pub fn compile(
 fn layout_engine(template_path: &str) -> Engine {
     Engine::new(template_path, Duration::from_secs(60))
         .with_html_escape(false)
+        .with_lax_undefined(true)
 }
 
 /// The configuration used to render every Markdown body.
@@ -240,7 +241,12 @@ fn html_config() -> HtmlConfig {
         // fragment. See ssg's metadata plugin.
         generate_structured_data: false,
         generate_toc: false,
-        language: "en".to_string(),
+        // Keep DEFAULT_LANGUAGE ("en-GB") so html-generator does not wrap
+        // Markdown body fragments in `<div lang="en">`, which breaks
+        // WCAG 3.1.1 on non-English pages (overriding `<html lang="...">`)
+        // and breaks theme CSS `.prose > * + *`. Issue #139.
+        language: html_generator::constants::DEFAULT_LANGUAGE
+            .to_string(),
         max_input_size: usize::MAX,
         syntax_theme: None,
         // Spec A1 (ssg-fixes spec / ssg#586): html-generator 0.0.6
@@ -1406,6 +1412,38 @@ Content here"#;
             "raw block HTML must not be escaped, got: {}",
             html
         );
+    }
+
+    #[test]
+    fn test_generate_html_content_does_not_wrap_in_lang_div() {
+        // Issue #139: html-generator wraps fragments in `<div lang="...">`
+        // if the configured language differs from DEFAULT_LANGUAGE ("en-GB").
+        // Hardcoding "en" previously wrapped every page body in `<div lang="en">`,
+        // overriding `<html lang="...">` on French/multilingual pages and breaking
+        // theme CSS `.prose > * + *`.
+        let body = "# Heading\n\nParagraph text.";
+        let html = generate_html_content(body)
+            .expect("body should render to HTML");
+        assert!(
+            !html.contains("<div lang="),
+            "generated fragment must not be wrapped in a lang div, got: {html}"
+        );
+    }
+
+    #[test]
+    fn test_layout_engine_lax_undefined_var() {
+        // Issue #99: Engine must chain .with_lax_undefined(true) so unresolved
+        // template tags emit empty strings instead of aborting the build.
+        let engine = layout_engine("");
+        let mut context = TemplateContext::new();
+        context.set("title".to_string(), "Test Title".to_string());
+        // "author" is not set in context
+        let template = "<h1>{{title}}</h1><p>By: {{author}}</p>";
+        let rendered =
+            engine.render_template(template, &context).expect(
+                "template with missing var should render in lax mode",
+            );
+        assert_eq!(rendered, "<h1>Test Title</h1><p>By: </p>");
     }
 
     #[test]
