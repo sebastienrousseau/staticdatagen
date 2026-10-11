@@ -36,8 +36,11 @@ architectural pipeline diagram (#93).
 
 ### Changed
 
-- **Makefile lint exclusion**: Excluded `.git/**` from `markdownlint-cli2`
-  discovery in `Makefile`.
+- **In-memory HTML minification**: Minified HTML content is now generated directly in memory using `minify_html_string` before disk writes, eliminating redundant read-write roundtrips to the filesystem.
+- **Markdown engine consolidation**: Removed redundant `pulldown-cmark` dependency and consolidated plain text generation on `comrak` AST traversal, shrinking binary footprint and build dependencies.
+- **XML engine consolidation**: Removed redundant `xml-rs` dependency and consolidated XML generation across sitemaps and JSON modules on `quick-xml`.
+- **Supply chain pruning**: Pruned unused exemptions for removed dependencies (`pulldown-cmark`, `unicase`) in `supply-chain/config.toml`.
+- **Makefile lint exclusion**: Excluded `.git/**` from `markdownlint-cli2` discovery in `Makefile`.
 
 ## [0.0.22] - 2026-10-09
 

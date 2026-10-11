@@ -41,8 +41,10 @@
 //! - Unicode character validation
 
 use anyhow::Result;
+use comrak::arena_tree::NodeEdge;
+use comrak::nodes::NodeValue;
+use comrak::{parse_document, Arena, Options};
 use log::{debug, info};
-use pulldown_cmark::{Event, Parser, Tag, TagEnd};
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -172,57 +174,79 @@ fn convert_to_plain_text(content: &str) -> Result<String> {
     let mut buffer = String::with_capacity(256);
     let mut last_was_text = false;
 
-    let parser = Parser::new(content);
+    let arena = Arena::new();
+    let options = Options::default();
+    let root = parse_document(&arena, content, &options);
 
-    for event in parser {
-        match event {
-            Event::Text(text) => {
-                let trimmed_text = text.trim();
-                if !trimmed_text.is_empty() {
-                    if last_was_text {
-                        buffer.push(' ');
+    for edge in root.traverse() {
+        match edge {
+            NodeEdge::Start(node) => {
+                let ast = node.data.borrow();
+                match &ast.value {
+                    NodeValue::Text(text) => {
+                        let trimmed_text = text.trim();
+                        if !trimmed_text.is_empty() {
+                            if last_was_text {
+                                buffer.push(' ');
+                            }
+                            buffer.push_str(trimmed_text);
+                            last_was_text = true;
+                        }
                     }
-                    buffer.push_str(trimmed_text);
-                    last_was_text = true;
+                    NodeValue::Heading(_) => {
+                        if !plain_text.is_empty()
+                            && !buffer.trim().is_empty()
+                        {
+                            plain_text.push_str("\n\n");
+                        }
+                        buffer.clear();
+                        last_was_text = false;
+                    }
+                    NodeValue::Paragraph => {
+                        if !plain_text.is_empty()
+                            && !buffer.trim().is_empty()
+                            && !buffer.ends_with("• ")
+                        {
+                            plain_text.push_str("\n\n");
+                        }
+                        if !buffer.ends_with("• ") {
+                            buffer.clear();
+                        }
+                        last_was_text = false;
+                    }
+                    NodeValue::Item(_) => {
+                        if !plain_text.is_empty()
+                            && !plain_text.ends_with('\n')
+                        {
+                            plain_text.push('\n');
+                        }
+                        buffer.push_str("• ");
+                        last_was_text = false;
+                    }
+                    NodeValue::SoftBreak | NodeValue::LineBreak => {
+                        if !buffer.trim().is_empty() {
+                            buffer.push(' ');
+                        }
+                        last_was_text = false;
+                    }
+                    _ => {}
                 }
             }
-            Event::Start(Tag::Paragraph)
-            | Event::Start(Tag::Heading { .. }) => {
-                if !plain_text.is_empty() && !buffer.trim().is_empty() {
-                    plain_text.push_str("\n\n");
+            NodeEdge::End(node) => {
+                let ast = node.data.borrow();
+                match &ast.value {
+                    NodeValue::Paragraph
+                    | NodeValue::Heading(_)
+                    | NodeValue::Item(_) => {
+                        if !buffer.trim().is_empty() {
+                            plain_text.push_str(&buffer);
+                            buffer.clear();
+                        }
+                        last_was_text = false;
+                    }
+                    _ => {}
                 }
-                buffer.clear();
-                last_was_text = false;
             }
-            Event::End(TagEnd::Paragraph)
-            | Event::End(TagEnd::Heading { .. }) => {
-                if !buffer.trim().is_empty() {
-                    plain_text.push_str(&buffer);
-                    buffer.clear();
-                }
-                last_was_text = false;
-            }
-            Event::Start(Tag::List(_)) | Event::Start(Tag::Item) => {
-                if last_was_text {
-                    buffer.push('\n');
-                }
-                buffer.push_str("• ");
-                last_was_text = false;
-            }
-            Event::End(TagEnd::List(_)) | Event::End(TagEnd::Item) => {
-                if !buffer.trim().is_empty() {
-                    plain_text.push_str(&buffer);
-                    buffer.clear();
-                }
-                last_was_text = false;
-            }
-            Event::SoftBreak | Event::HardBreak => {
-                if !buffer.trim().is_empty() {
-                    buffer.push(' ');
-                }
-                last_was_text = false;
-            }
-            _ => {}
         }
     }
 

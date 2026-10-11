@@ -488,14 +488,6 @@ criteria = "safe-to-deploy"
 version = "1.11.0"
 criteria = "safe-to-run"
 
-[[exemptions.pulldown-cmark]]
-version = "0.13.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.pulldown-cmark-escape]]
-version = "0.11.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.pulldown-latex]]
 version = "0.8.0"
 criteria = "safe-to-deploy"
@@ -722,10 +714,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.typed-arena]]
 version = "2.0.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.unicase]]
-version = "2.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.unicode-ident]]
