@@ -12,20 +12,19 @@
 use std::{fs, path::Path};
 
 /// Compiles one Markdown page through [`staticdatagen::compile`] with a
-/// layout that prints the meta tag groups, and returns the page.
-fn compile_page(markdown: &str) -> String {
+/// Compiles one Markdown page through [`staticdatagen::compile`] with a
+/// custom template, and returns the page.
+fn compile_page_with_template(
+    markdown: &str,
+    template: &str,
+) -> String {
     let build = tempfile::TempDir::new().unwrap();
     let content = tempfile::TempDir::new().unwrap();
     let site = tempfile::TempDir::new().unwrap();
     let templates = tempfile::TempDir::new().unwrap();
 
     fs::write(content.path().join("page.md"), markdown).unwrap();
-    fs::write(
-        templates.path().join("page.html"),
-        "<html><head>{{primary}}\n{{opengraph}}\n{{twitter}}</head>\
-         <body>{{content}}</body></html>",
-    )
-    .unwrap();
+    fs::write(templates.path().join("page.html"), template).unwrap();
     fs::write(templates.path().join("main.js"), "// main").unwrap();
     fs::write(templates.path().join("sw.js"), "// sw").unwrap();
     fs::create_dir_all(build.path().join("tags")).unwrap();
@@ -44,6 +43,16 @@ fn compile_page(markdown: &str) -> String {
     .unwrap();
 
     read_page(site.path())
+}
+
+/// Compiles one Markdown page through [`staticdatagen::compile`] with a
+/// layout that prints the meta tag groups, and returns the page.
+fn compile_page(markdown: &str) -> String {
+    compile_page_with_template(
+        markdown,
+        "<html><head>{{primary}}\n{{opengraph}}\n{{twitter}}</head>\
+         <body>{{content}}</body></html>",
+    )
 }
 
 /// The one `index.html` the page compiled to.
@@ -137,4 +146,64 @@ fn front_matter_never_reaches_the_body() {
             "front matter leaked into the body, got: {html}"
         );
     }
+}
+
+/// Issue #139: every page body was previously wrapped in `<div lang="en">`,
+/// which on non-English pages (such as French) overrode the outer `<html lang="fr-FR">`
+/// for all main content, breaking WCAG 3.1.1 and breaking theme `.prose > * + *` CSS.
+#[test]
+fn body_is_not_wrapped_in_lang_en_div() {
+    let markdown = "---\n\
+title: A propos\n\
+layout: page\n\
+permalink: https://example.com/fr/a-propos/\n\
+description: Page de description\n\
+language: fr-FR\n\
+---\n\
+Texte en francais.\n";
+
+    let template = "<!DOCTYPE html><html lang=\"{{language}}\">\
+<body><div class=\"prose\">{{content}}</div></body></html>";
+
+    let html = compile_page_with_template(markdown, template);
+
+    assert!(
+        html.contains("<html lang=\"fr-FR\">"),
+        "document must retain correct language attribute, got: {html}"
+    );
+    assert!(
+        !html.contains("<div lang="),
+        "body content must not be wrapped in an extraneous <div lang=...>, got: {html}"
+    );
+    assert!(
+        html.contains("Texte en francais."),
+        "rendered content must be present, got: {html}"
+    );
+}
+
+/// Issue #99: Engine renders templates in lax mode (`with_lax_undefined(true)`),
+/// emitting empty strings for unresolved template tags instead of failing.
+#[test]
+fn unresolved_template_tags_emit_empty_in_lax_mode() {
+    let markdown = "---\n\
+title: Lax Test\n\
+layout: page\n\
+permalink: https://example.com/lax\n\
+description: Testing lax undefined tags\n\
+---\n\
+Body content.\n";
+
+    let template = "<html><head><title>{{title}}</title></head>\
+<body><p>Author: {{author}}</p><p>Missing: {{unresolved_key}}</p>{{content}}</body></html>";
+
+    let html = compile_page_with_template(markdown, template);
+
+    assert!(
+        html.contains("<p>Author: </p><p>Missing: </p>"),
+        "unresolved tags must emit empty string without error, got: {html}"
+    );
+    assert!(
+        html.contains("Body content."),
+        "body must be rendered, got: {html}"
+    );
 }

@@ -30,6 +30,18 @@ staticdatagen/
 `compiler::service::compile` is the whole crate in one call. It takes a
 content directory and produces a finished site:
 
+```mermaid
+flowchart TD
+    Content["content/"] --> Add["utilities::file::add<br/>(sorted directory walk)"]
+    Add --> ProcessFile["compiler::service::process_file<br/>(Markdown, metadata, layouts)"]
+    ProcessFile --> FileData["models::data::FileData"]
+    FileData --> TagAggregation["compiler::service::generate_tags_html<br/>(tag index & archives)"]
+    FileData --> AuxFiles["Auxiliary generators<br/>(sitemap, RSS, CNAME, manifest)"]
+    TagAggregation --> Write["utilities::write::write_files_to_build_directory<br/>(sanitized writes)"]
+    AuxFiles --> Write
+    Write --> Site["site/ (finished build)"]
+```
+
 1. **Walk the content directory** with `WalkDir::sort_by_file_name`.
    The sort is not cosmetic: without it, entry order follows the
    filesystem, APFS and ext4 disagree, and two builds of the same

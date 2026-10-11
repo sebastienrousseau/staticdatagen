@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.23] - 2026-10-11
+
+Fixes the Markdown body language wrapper override (#139), opts the
+layout templating engine into lax undefined mode to allow optional
+template variables without downstream shims (#99), and adds an
+architectural pipeline diagram (#93).
+
+### Fixed
+
+- **Body content language wrapper**: The renderer configuration now aligns
+  with `html-generator`'s default language (`en-GB`) instead of setting
+  `"en"`. `html-generator` previously treated `"en"` as a non-default
+  language and wrapped all Markdown body fragments in `<div lang="en">`,
+  overriding `<html lang="...">` on multilingual sites (such as French
+  pages) and violating WCAG 3.1.1. It also broke theme CSS rules targeting
+  adjacent siblings (`.prose > * + *`). Page body fragments are now rendered
+  without extraneous language wrappers (#139).
+
+### Added
+
+- **Lax undefined mode for layouts**: `layout_engine` now configures the
+  `staticweaver` engine with `.with_lax_undefined(true)`. Unresolved
+  `{{ key }}` tags in templates emit empty strings rather than causing build
+  failures. Downstream site generators no longer need preprocessing shims
+  to inject blank defaults for missing keys (#99).
+- **Mermaid pipeline architecture diagram**: Added an architectural
+  flowchart to `docs/ARCHITECTURE.md` illustrating the complete build
+  pipeline from directory walking to sanitized filesystem writes (#93).
+
+### Changed
+
+- **Makefile lint exclusion**: Excluded `.git/**` from `markdownlint-cli2`
+  discovery in `Makefile`.
+
 ## [0.0.22] - 2026-10-09
 
 Moves to `html-generator` 0.0.12 and `metadata-gen` 0.0.8, which take
