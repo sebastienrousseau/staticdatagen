@@ -26,7 +26,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use crate::models::data::FileData;
-use html_generator::performance::minify_html;
+use html_generator::performance::minify_html_string;
 
 /// Constants for auxiliary files that should be copied to the build directory.
 const OTHER_FILES: [&str; 2] = ["main.js", "sw.js"];
@@ -176,15 +176,22 @@ fn write_file(
     let file_path = dir_path.join(file_name);
     debug!("Writing file: '{}'", file_path.display());
 
-    fs::write(&file_path, content).with_context(|| {
+    if minify && file_name == "index.html" {
+        debug!("Minifying HTML content for: '{}'", file_path.display());
+        let minified = match minify_html_string(content) {
+            Ok(min) => min,
+            Err(e) => {
+                debug!("Minification failed, writing original content: {e}");
+                content.to_string()
+            }
+        };
+        fs::write(&file_path, minified)
+    } else {
+        fs::write(&file_path, content)
+    }
+    .with_context(|| {
         format!("Failed to write file at '{}'", file_path.display())
     })?;
-
-    if minify && file_name == "index.html" {
-        debug!("Minifying HTML file: '{}'", file_path.display());
-        minify_file(&file_path)
-            .context("Failed to minify HTML file")?;
-    }
 
     Ok(())
 }
@@ -201,15 +208,17 @@ fn write_file(
 /// # Returns
 ///
 /// Returns `Ok(())` if successful, or an error if minification fails.
+#[cfg(test)]
 fn minify_file(file_path: &Path) -> Result<()> {
     debug!("Minifying file '{}'", file_path.display());
     let minified_content =
-        minify_html(file_path).with_context(|| {
-            format!(
-                "Failed to minify HTML content at '{}'",
-                file_path.display()
-            )
-        })?;
+        html_generator::performance::minify_html(file_path)
+            .with_context(|| {
+                format!(
+                    "Failed to minify HTML content at '{}'",
+                    file_path.display()
+                )
+            })?;
 
     fs::write(file_path, minified_content).with_context(|| {
         format!(
