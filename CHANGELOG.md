@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.24] - 2026-10-12
+
+Consolidates Markdown processing on `comrak` and XML generation on
+`quick-xml`, eliminating redundant `pulldown-cmark` and `xml-rs` dependencies.
+Switches HTML output generation to direct in-memory minification.
+
+### Changed
+
+- **In-memory HTML minification**: Minified HTML content is now generated directly in memory using `minify_html_string` before disk writes, eliminating redundant read-write roundtrips to the filesystem.
+- **Markdown engine consolidation**: Removed redundant `pulldown-cmark` dependency and consolidated plain text generation on `comrak` AST traversal, shrinking binary footprint and build dependencies.
+- **XML engine consolidation**: Removed redundant `xml-rs` dependency and consolidated XML generation across sitemaps and JSON modules on `quick-xml`.
+- **Supply chain pruning**: Pruned unused exemptions for removed dependencies (`pulldown-cmark`, `unicase`) in `supply-chain/config.toml`.
+
 ## [0.0.23] - 2026-10-11
 
 Fixes the Markdown body language wrapper override (#139), opts the
@@ -36,11 +49,8 @@ architectural pipeline diagram (#93).
 
 ### Changed
 
-- **In-memory HTML minification**: Minified HTML content is now generated directly in memory using `minify_html_string` before disk writes, eliminating redundant read-write roundtrips to the filesystem.
-- **Markdown engine consolidation**: Removed redundant `pulldown-cmark` dependency and consolidated plain text generation on `comrak` AST traversal, shrinking binary footprint and build dependencies.
-- **XML engine consolidation**: Removed redundant `xml-rs` dependency and consolidated XML generation across sitemaps and JSON modules on `quick-xml`.
-- **Supply chain pruning**: Pruned unused exemptions for removed dependencies (`pulldown-cmark`, `unicase`) in `supply-chain/config.toml`.
-- **Makefile lint exclusion**: Excluded `.git/**` from `markdownlint-cli2` discovery in `Makefile`.
+- **Makefile lint exclusion**: Excluded `.git/**` from `markdownlint-cli2`
+  discovery in `Makefile`.
 
 ## [0.0.22] - 2026-10-09
 
