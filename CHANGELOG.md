@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.25] - 2026-10-12
+
+Remediates transitive security advisory RUSTSEC-2021-0157 by pinning
+`ammonia` to 4.1.7 and updates supply-chain vetting exemptions.
+
+### Fixed
+
+- **CSS style url escaping (RUSTSEC-2021-0157)**: Updated transitive dependency
+  `ammonia` from 4.1.5 to 4.1.7, resolving incorrect escaping for `url("")`
+  functions in CSS style attributes without pulling in new transitive crates.
+
+### Security
+
+- **Supply chain verification**: Updated `supply-chain/config.toml` exemption
+  for `ammonia` to 4.1.7 and verified `cargo deny check` and `cargo audit`.
+
 ## [0.0.24] - 2026-10-12
 
 Consolidates Markdown processing on `comrak` and XML generation on
