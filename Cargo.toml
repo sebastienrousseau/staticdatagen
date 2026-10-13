@@ -121,7 +121,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Content generation
-comrak = { version = "0.55", default-features = false }
+comrak = { version = "0.56", default-features = false }
 html-generator = "0.0.12"
 
 # Web and networking
