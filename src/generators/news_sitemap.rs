@@ -171,26 +171,23 @@ impl NewsSiteMapGenerator {
     }
 }
 
+/// The sitemap protocol namespace, the root element's default.
+const SITEMAP_NS: &str = "http://www.sitemaps.org/schemas/sitemap/0.9";
+
+/// The Google News extension namespace, bound to the `news` prefix.
+const NEWS_NS: &str = "http://www.google.com/schemas/sitemap-news/0.9";
+
 /// Writes the XML declaration and the opening `<urlset>` element.
 fn write_urlset_start<W: std::io::Write>(
     writer: &mut Writer<W>,
 ) -> std::io::Result<()> {
     // quick-xml, unlike xml-rs, never writes the declaration itself.
-    writer.write_event(Event::Decl(BytesDecl::new(
-        "1.0",
-        Some("UTF-8"),
-        None,
-    )))?;
+    let decl = BytesDecl::new("1.0", Some("UTF-8"), None);
+    writer.write_event(Event::Decl(decl))?;
 
     let mut urlset = BytesStart::new("urlset");
-    urlset.push_attribute((
-        "xmlns",
-        "http://www.sitemaps.org/schemas/sitemap/0.9",
-    ));
-    urlset.push_attribute((
-        "xmlns:news",
-        "http://www.google.com/schemas/sitemap-news/0.9",
-    ));
+    urlset.push_attribute(("xmlns", SITEMAP_NS));
+    urlset.push_attribute(("xmlns:news", NEWS_NS));
     writer.write_event(Event::Start(urlset))?;
     Ok(())
 }
@@ -577,6 +574,16 @@ mod tests {
             "missing XML declaration: {xml}"
         );
         assert!(xml.contains("?>\n<urlset"));
+        // Spelled out rather than built from the constants, so a typo
+        // in either namespace fails here.
+        assert!(
+            xml.contains(concat!(
+                r#"<urlset xmlns="http://www.sitemaps.org/schemas/"#,
+                r#"sitemap/0.9" xmlns:news="http://www.google.com/"#,
+                r#"schemas/sitemap-news/0.9">"#
+            )),
+            "unexpected urlset namespaces: {xml}"
+        );
     }
 
     #[test]
