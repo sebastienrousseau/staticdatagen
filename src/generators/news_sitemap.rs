@@ -33,7 +33,9 @@
 use crate::models::data::NewsData;
 use crate::utilities::dates::parse_flexible_date;
 use log::warn;
-use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::events::{
+    BytesDecl, BytesEnd, BytesStart, BytesText, Event,
+};
 use quick_xml::Writer;
 use std::collections::HashMap;
 use time::{format_description, OffsetDateTime};
@@ -135,63 +137,39 @@ impl NewsSiteMapGenerator {
         let mut output = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output, b' ', 2);
 
-        let mut urlset = BytesStart::new("urlset");
-        urlset.push_attribute((
-            "xmlns",
-            "http://www.sitemaps.org/schemas/sitemap/0.9",
-        ));
-        urlset.push_attribute((
-            "xmlns:news",
-            "http://www.google.com/schemas/sitemap-news/0.9",
-        ));
-        writer.write_event(Event::Start(urlset))?;
-
+        write_urlset_start(&mut writer)?;
         writer.write_event(Event::Start(BytesStart::new("url")))?;
-        writer.write_event(Event::Start(BytesStart::new("loc")))?;
-        writer.write_event(Event::Text(BytesText::new(
-            &news_data.news_loc,
-        )))?;
-        writer.write_event(Event::End(BytesEnd::new("loc")))?;
+        write_text_element(&mut writer, "loc", &news_data.news_loc)?;
 
         writer
             .write_event(Event::Start(BytesStart::new("news:news")))?;
         writer.write_event(Event::Start(BytesStart::new(
             "news:publication",
         )))?;
-        writer
-            .write_event(Event::Start(BytesStart::new("news:name")))?;
-        writer.write_event(Event::Text(BytesText::new(
+        write_text_element(
+            &mut writer,
+            "news:name",
             &news_data.news_publication_name,
-        )))?;
-        writer.write_event(Event::End(BytesEnd::new("news:name")))?;
-        writer.write_event(Event::Start(BytesStart::new(
+        )?;
+        write_text_element(
+            &mut writer,
             "news:language",
-        )))?;
-        writer.write_event(Event::Text(BytesText::new(
             &news_data.news_language,
-        )))?;
-        writer
-            .write_event(Event::End(BytesEnd::new("news:language")))?;
+        )?;
         writer.write_event(Event::End(BytesEnd::new(
             "news:publication",
         )))?;
 
-        writer.write_event(Event::Start(BytesStart::new(
+        write_text_element(
+            &mut writer,
             "news:publication_date",
-        )))?;
-        writer.write_event(Event::Text(BytesText::new(
             &news_data.news_publication_date,
-        )))?;
-        writer.write_event(Event::End(BytesEnd::new(
-            "news:publication_date",
-        )))?;
-
-        writer
-            .write_event(Event::Start(BytesStart::new("news:title")))?;
-        writer.write_event(Event::Text(BytesText::new(
+        )?;
+        write_text_element(
+            &mut writer,
+            "news:title",
             &news_data.news_title,
-        )))?;
-        writer.write_event(Event::End(BytesEnd::new("news:title")))?;
+        )?;
 
         writer.write_event(Event::End(BytesEnd::new("news:news")))?;
         writer.write_event(Event::End(BytesEnd::new("url")))?;
@@ -199,6 +177,42 @@ impl NewsSiteMapGenerator {
 
         Ok(String::from_utf8(output)?)
     }
+}
+
+/// Writes the XML declaration and the opening `<urlset>` element.
+fn write_urlset_start<W: std::io::Write>(
+    writer: &mut Writer<W>,
+) -> std::io::Result<()> {
+    // quick-xml, unlike xml-rs, never writes the declaration itself.
+    writer.write_event(Event::Decl(BytesDecl::new(
+        "1.0",
+        Some("UTF-8"),
+        None,
+    )))?;
+
+    let mut urlset = BytesStart::new("urlset");
+    urlset.push_attribute((
+        "xmlns",
+        "http://www.sitemaps.org/schemas/sitemap/0.9",
+    ));
+    urlset.push_attribute((
+        "xmlns:news",
+        "http://www.google.com/schemas/sitemap-news/0.9",
+    ));
+    writer.write_event(Event::Start(urlset))?;
+    Ok(())
+}
+
+/// Writes `<name>text</name>` as a single leaf element.
+fn write_text_element<W: std::io::Write>(
+    writer: &mut Writer<W>,
+    name: &str,
+    text: &str,
+) -> std::io::Result<()> {
+    writer.write_event(Event::Start(BytesStart::new(name)))?;
+    writer.write_event(Event::Text(BytesText::new(text)))?;
+    writer.write_event(Event::End(BytesEnd::new(name)))?;
+    Ok(())
 }
 
 /// Formats publication dates to ISO 8601 / W3C datetime.
@@ -553,6 +567,24 @@ mod tests {
         xml.contains("<news:publication_date>2024-02-20T15:15:15Z</news:publication_date>")
             || xml.contains("<news:publication_date>2024-02-20T15:15:15+00:00</news:publication_date>")
     );
+    }
+
+    #[test]
+    fn test_generate_xml_starts_with_declaration() {
+        let generator = NewsSiteMapGenerator::new(
+            NewsSiteMapConfig::new(HashMap::new()),
+        );
+
+        let xml = generator.generate_xml();
+
+        // news-sitemap.xml is a standalone document, like sitemap.xml.
+        assert!(
+            xml.starts_with(
+                r#"<?xml version="1.0" encoding="UTF-8"?>"#
+            ),
+            "missing XML declaration: {xml}"
+        );
+        assert!(xml.contains("?>\n<urlset"));
     }
 
     #[test]
