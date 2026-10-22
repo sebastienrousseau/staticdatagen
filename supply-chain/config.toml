@@ -10,6 +10,9 @@ url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/main/supply-c
 [imports.google]
 url = "https://raw.githubusercontent.com/google/supply-chain/main/audits.toml"
 
+[imports.isrg]
+url = "https://raw.githubusercontent.com/divviup/libprio-rs/main/supply-chain/audits.toml"
+
 [imports.mozilla]
 url = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
 
@@ -19,10 +22,6 @@ audit-as-crates-io = true
 [[exemptions.aho-corasick]]
 version = "1.1.4"
 criteria = "safe-to-deploy"
-
-[[exemptions.alloca]]
-version = "0.4.0"
-criteria = "safe-to-run"
 
 [[exemptions.ammonia]]
 version = "4.1.7"
@@ -80,10 +79,6 @@ criteria = "safe-to-deploy"
 version = "1.2.65"
 criteria = "safe-to-run"
 
-[[exemptions.cfg-if]]
-version = "1.0.4"
-criteria = "safe-to-deploy"
-
 [[exemptions.cfg_aliases]]
 version = "0.2.1"
 criteria = "safe-to-deploy"
@@ -117,10 +112,6 @@ version = "1.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.criterion]]
-version = "0.8.2"
-criteria = "safe-to-run"
-
-[[exemptions.criterion-plot]]
 version = "0.8.2"
 criteria = "safe-to-run"
 
@@ -328,10 +319,6 @@ criteria = "safe-to-deploy"
 version = "1.70.2"
 criteria = "safe-to-deploy"
 
-[[exemptions.itertools]]
-version = "0.13.0"
-criteria = "safe-to-run"
-
 [[exemptions.itoa]]
 version = "1.0.18"
 criteria = "safe-to-deploy"
@@ -418,10 +405,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.oorandom]]
 version = "11.1.5"
-criteria = "safe-to-run"
-
-[[exemptions.page_size]]
-version = "0.6.0"
 criteria = "safe-to-run"
 
 [[exemptions.parking_lot]]
@@ -512,28 +495,12 @@ criteria = "safe-to-deploy"
 version = "6.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.rand]]
-version = "0.9.4"
-criteria = "safe-to-run"
-
-[[exemptions.rand_chacha]]
-version = "0.9.0"
-criteria = "safe-to-run"
-
-[[exemptions.rand_core]]
-version = "0.9.5"
-criteria = "safe-to-run"
-
 [[exemptions.rand_xorshift]]
 version = "0.4.0"
 criteria = "safe-to-run"
 
 [[exemptions.rayon]]
 version = "1.12.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.rayon-core]]
-version = "1.13.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.redox_syscall]]

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **comrak 0.56**: Markdown renders through comrak 0.56.0, which fixes
+  several denial-of-service cases (an ineffective table autocomplete
+  cap, quadratic emphasis and autolink scans, deep recursion when
+  collecting text). Its HTML escaping now finds special characters with
+  memchr-n; a new test renders each of `<`, `>`, `&` and `"` at every
+  offset of every length up to 160 to show none is missed.
+  html-generator and mdx-gen still use comrak 0.55, so both are in the
+  build until they move.
+- serde_json 1.0.154, uuid 1.28.0 and proptest 1.12.0 (dev-only).
+
 ### Security
 
 - **ammonia 4.1.8**: fixes RUSTSEC-2026-0373, where CSS `url()` was
