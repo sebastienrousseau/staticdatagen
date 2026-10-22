@@ -56,7 +56,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.25"
+staticdatagen = "0.0.26"
 ```
 
 Or via Cargo:
@@ -69,7 +69,7 @@ cargo add staticdatagen
 
 | Crate | MSRV | Notes |
 |---|---|---|
-| `staticdatagen` | **1.88.0** | Pinned via `rust-version` in `Cargo.toml`; enforced by the dedicated MSRV CI job. |
+| `staticdatagen` | **1.89.0** | Pinned via `rust-version` in `Cargo.toml`; enforced by the dedicated MSRV CI job. |
 
 Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows (x86_64-msvc).
 
@@ -91,11 +91,11 @@ Every feature combination is Apache-2.0 OR MIT as of 0.0.16. `server` remains op
 ```toml
 # Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = "0.0.25"
+staticdatagen = "0.0.26"
 
 # Preview server. Pulls `http-handle` (Apache-2.0 OR MIT since 0.0.7).
 [dependencies]
-staticdatagen = { version = "0.0.25", features = ["server"] }
+staticdatagen = { version = "0.0.26", features = ["server"] }
 ```
 
 ---
@@ -497,7 +497,7 @@ which is written after the fact rather than in advance.
 
 ## Minimum-toolchain policy
 
-The floor is **Rust 1.88.0**, declared as `rust-version` in
+The floor is **Rust 1.89.0**, declared as `rust-version` in
 `Cargo.toml` so Cargo refuses older toolchains with a clear message.
 
 - **When it may rise:** only on a release, never silently, and always
@@ -525,7 +525,7 @@ cargo bench           # Criterion benches under benches/
 
 CI runs on every push:
 
-- **Build matrix**: stable, beta, nightly, MSRV (1.88.0) on Linux,
+- **Build matrix**: stable, beta, nightly, MSRV (1.89.0) on Linux,
   macOS, and Windows.
 - **Miri**: `cargo miri test models -- --skip proptest`,
   `cargo miri test utilities::element`, `utilities::uuid`, `locales`,

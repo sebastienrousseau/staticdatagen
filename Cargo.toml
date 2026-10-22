@@ -5,10 +5,10 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.25"                         # Current version of the crate
+version = "0.0.26"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
-rust-version = "1.88.0"                    # Minimum supported Rust version
+rust-version = "1.89.0"                    # Minimum supported Rust version
 license = "Apache-2.0 OR MIT"              # Dual licensing strategy
 description = """
 A Rust library for generating structured data files and metadata for static sites, including HTML, RSS feeds, sitemaps, and SEO-optimized meta tags.
@@ -121,7 +121,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 # Content generation
-comrak = { version = "0.55", default-features = false }
+comrak = { version = "0.56", default-features = false }
 html-generator = "0.0.12"
 
 # Web and networking

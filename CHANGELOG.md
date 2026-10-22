@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.26] - 2026-10-22
+
+### Changed
+
+- **comrak 0.56**: Markdown renders through comrak 0.56.0, which fixes
+  several denial-of-service cases (an ineffective table autocomplete
+  cap, quadratic emphasis and autolink scans, deep recursion when
+  collecting text). Its HTML escaping now finds special characters with
+  memchr-n; a new test renders each of `<`, `>`, `&` and `"` at every
+  offset of every length up to 160 to show none is missed.
+  html-generator and mdx-gen still use comrak 0.55, so both are in the
+  build until they move.
+- serde_json 1.0.154, uuid 1.28.0 and proptest 1.12.0 (dev-only).
+- **Minimum Rust 1.89**: comrak 0.56 (with memchr-n, fearless_simd and
+  fearless_simd_macros) and uuid 1.28 require Rust 1.89, so the floor
+  rises from 1.88 to 1.89, the same as static-site-generator's.
+
+### Security
+
+- **ammonia 4.1.8**: fixes RUSTSEC-2026-0373, where CSS `url()` was
+  matched case-sensitively, so `Url(...)` slipped past URL filtering in
+  sanitised HTML. `cargo audit` and `cargo deny` failed on 4.1.7.
+
+### Fixed
+
+- **News sitemap XML declaration**: `news-sitemap.xml` again starts with
+  `<?xml version="1.0" encoding="UTF-8"?>`, matching `sitemap.xml`. The
+  move from `xml-rs` to `quick-xml` in 0.0.24 dropped it, because
+  `quick-xml` never writes the declaration on its own.
+
 ## [0.0.25] - 2026-10-12
 
 Remediates transitive security advisory RUSTSEC-2021-0157 by pinning
