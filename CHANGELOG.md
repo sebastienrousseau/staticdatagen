@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   html-generator and mdx-gen still use comrak 0.55, so both are in the
   build until they move.
 - serde_json 1.0.154, uuid 1.28.0 and proptest 1.12.0 (dev-only).
+- **Minimum Rust 1.89**: comrak 0.56 (with memchr-n, fearless_simd and
+  fearless_simd_macros) and uuid 1.28 require Rust 1.89, so the floor
+  rises from 1.88 to 1.89, the same as static-site-generator's.
 
 ### Security
 

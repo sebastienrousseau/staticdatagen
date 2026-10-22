@@ -59,7 +59,7 @@ jobs:
   msrv:
     uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
     with:
-      rust-version: '1.88.0'
+      rust-version: '1.89.0'
       run-fmt: false
       run-clippy: false
       run-audit: false

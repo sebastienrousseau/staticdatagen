@@ -69,7 +69,7 @@ cargo add staticdatagen
 
 | Crate | MSRV | Notes |
 |---|---|---|
-| `staticdatagen` | **1.88.0** | Pinned via `rust-version` in `Cargo.toml`; enforced by the dedicated MSRV CI job. |
+| `staticdatagen` | **1.89.0** | Pinned via `rust-version` in `Cargo.toml`; enforced by the dedicated MSRV CI job. |
 
 Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows (x86_64-msvc).
 
@@ -497,7 +497,7 @@ which is written after the fact rather than in advance.
 
 ## Minimum-toolchain policy
 
-The floor is **Rust 1.88.0**, declared as `rust-version` in
+The floor is **Rust 1.89.0**, declared as `rust-version` in
 `Cargo.toml` so Cargo refuses older toolchains with a clear message.
 
 - **When it may rise:** only on a release, never silently, and always
@@ -525,7 +525,7 @@ cargo bench           # Criterion benches under benches/
 
 CI runs on every push:
 
-- **Build matrix**: stable, beta, nightly, MSRV (1.88.0) on Linux,
+- **Build matrix**: stable, beta, nightly, MSRV (1.89.0) on Linux,
   macOS, and Windows.
 - **Miri**: `cargo miri test models -- --skip proptest`,
   `cargo miri test utilities::element`, `utilities::uuid`, `locales`,
