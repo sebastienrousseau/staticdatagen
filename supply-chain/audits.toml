@@ -1,6 +1,12 @@
 
 # cargo-vet audits file
 
+[[audits.ammonia]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "4.1.7 -> 4.1.8"
+notes = "RUSTSEC-2026-0373 fix: style.rs matches the CSS url() function case-insensitively (eq_ignore_ascii_case), plus a test. No unsafe, I/O, network or build script changes."
+
 [[audits.comrak]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-deploy"

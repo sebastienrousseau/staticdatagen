@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **ammonia 4.1.8**: fixes RUSTSEC-2026-0373, where CSS `url()` was
+  matched case-sensitively, so `Url(...)` slipped past URL filtering in
+  sanitised HTML. `cargo audit` and `cargo deny` failed on 4.1.7.
+
 ### Fixed
 
 - **News sitemap XML declaration**: `news-sitemap.xml` again starts with
