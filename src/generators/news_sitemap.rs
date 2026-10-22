@@ -146,30 +146,22 @@ impl NewsSiteMapGenerator {
         writer.write_event(Event::Start(BytesStart::new(
             "news:publication",
         )))?;
-        write_text_element(
-            &mut writer,
-            "news:name",
-            &news_data.news_publication_name,
-        )?;
-        write_text_element(
-            &mut writer,
-            "news:language",
-            &news_data.news_language,
-        )?;
+        for (name, text) in [
+            ("news:name", &news_data.news_publication_name),
+            ("news:language", &news_data.news_language),
+        ] {
+            write_text_element(&mut writer, name, text)?;
+        }
         writer.write_event(Event::End(BytesEnd::new(
             "news:publication",
         )))?;
 
-        write_text_element(
-            &mut writer,
-            "news:publication_date",
-            &news_data.news_publication_date,
-        )?;
-        write_text_element(
-            &mut writer,
-            "news:title",
-            &news_data.news_title,
-        )?;
+        for (name, text) in [
+            ("news:publication_date", &news_data.news_publication_date),
+            ("news:title", &news_data.news_title),
+        ] {
+            write_text_element(&mut writer, name, text)?;
+        }
 
         writer.write_event(Event::End(BytesEnd::new("news:news")))?;
         writer.write_event(Event::End(BytesEnd::new("url")))?;
