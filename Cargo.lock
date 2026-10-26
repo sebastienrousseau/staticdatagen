@@ -2003,12 +2003,11 @@ dependencies = [
 
 [[package]]
 name = "staticweaver"
-version = "0.0.5"
+version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ebd62b8b572541b19515e389958199de2ccd45534608b59560fc36b3789ba94"
+checksum = "d3f2df1b07224ed8e78e673ad9094aa15ee5ba053b9b6f2d975a559f7a8eb087"
 dependencies = [
  "fnv",
- "tempfile",
  "thiserror",
 ]
 
