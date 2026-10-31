@@ -1130,12 +1130,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
-
-[[package]]
 name = "libc"
 version = "0.2.186"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1231,12 +1225,10 @@ checksum = "fb5778fb3f3cf30a0399e835c9ac23f890483749678ed15439cc15a69e04015f"
 dependencies = [
  "memchr",
  "noyalib",
- "quick-xml 0.42.0",
  "serde",
  "serde_json",
  "thiserror",
  "time",
- "tokio",
  "toml",
 ]
 
@@ -1620,25 +1612,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d01941d82fa2ab50be1e79e6714289dd7cde78eba4c074bc5a4374f650dfe0"
 
 [[package]]
-name = "quick-xml"
-version = "0.41.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e660451e55124f798a69a5af3f49ccfbefbd41910eefd25caf2393e1f3473ec1"
-dependencies = [
- "memchr",
- "serde",
-]
-
-[[package]]
-name = "quick-xml"
-version = "0.42.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1744,12 +1717,12 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rss-gen"
-version = "0.0.11"
+version = "0.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c3b5748fb3d0f3e25d2464c3487f3dcf9add985563f082bdd18d6c1d8ed2f58"
+checksum = "e0250405e85786ea4a054a5fb7883f63183d8fe4e2a95d762eab80dcfe264e79"
 dependencies = [
  "log",
- "quick-xml 0.41.0",
+ "oxml",
  "serde",
  "thiserror",
  "time",
@@ -1939,24 +1912,22 @@ checksum = "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
 
 [[package]]
 name = "sitemap-gen"
-version = "0.0.5"
+version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09395e0cd2a98dc05344aad54e5e2db0447a4312cebc39cd3594105881c6062e"
+checksum = "edd9eddd7409cf1da02b6dbe4ea57185be5e5a26be8b639fe50aa907d1b858e0"
 dependencies = [
  "clap",
  "dtt",
  "env_logger",
  "euxis-commons",
  "indicatif",
- "lazy_static",
  "log",
+ "oxml",
  "regex",
- "tempfile",
  "thiserror",
  "time",
  "url",
  "version_check",
- "xml-rs",
 ]
 
 [[package]]
@@ -1979,7 +1950,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "staticdatagen"
-version = "0.0.27"
+version = "0.0.28"
 dependencies = [
  "anyhow",
  "comrak 0.56.0",
@@ -2205,16 +2176,6 @@ name = "tinyvec_macros"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
-
-[[package]]
-name = "tokio"
-version = "1.54.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b52fd3255258d26fac7264ab5a76b53c13367136dc011d3d6ad4f8ed070396a3"
-dependencies = [
- "bytes",
- "pin-project-lite",
-]
 
 [[package]]
 name = "toml"
@@ -2539,21 +2500,6 @@ name = "writeable"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
-
-[[package]]
-name = "xml"
-version = "1.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "636f85e5ca6488e96401b61eb7de54f4e44755c988af0f52cf90230c312a1a89"
-
-[[package]]
-name = "xml-rs"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3a56132a0d6ecbe77352edc10232f788fc4ceefefff4cab784a98e0e16b6b51"
-dependencies = [
- "xml",
-]
 
 [[package]]
 name = "yoke"
