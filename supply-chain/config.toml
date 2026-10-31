@@ -17,7 +17,7 @@ url = "https://raw.githubusercontent.com/divviup/libprio-rs/main/supply-chain/au
 url = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
 
 [policy.staticdatagen]
-audit-as-crates-io = true
+audit-as-crates-io = false
 
 [[exemptions.aho-corasick]]
 version = "1.1.4"
