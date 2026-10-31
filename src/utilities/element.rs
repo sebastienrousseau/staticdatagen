@@ -103,4 +103,10 @@ mod tests {
 
         Ok(())
     }
+
+    #[test]
+    fn test_write_element_invalid_name() {
+        let mut writer = Cursor::new(Vec::new());
+        assert!(write_element(&mut writer, "", "non-empty").is_err());
+    }
 }

@@ -57,24 +57,24 @@ fn generate_xml_element_with_attrs<W: io::Write>(
     attributes: &[(&str, &str)],
 ) -> io::Result<()> {
     let mut doc = Document::empty();
-    let elem =
-        doc.append_element(doc.root(), None, tag).map_err(|e| {
-            to_io_error(io::Error::new(io::ErrorKind::InvalidInput, e))
-        })?;
+    let elem = doc
+        .append_element(doc.root(), None, tag)
+        .map_err(node_err_to_io)?;
     for (key, value) in attributes {
-        doc.set_attribute(elem, None, key, value).map_err(|e| {
-            to_io_error(io::Error::new(io::ErrorKind::InvalidInput, e))
-        })?;
+        doc.set_attribute(elem, None, key, value)
+            .map_err(node_err_to_io)?;
     }
-    let _ = doc.append_text(elem, content).map_err(|e| {
-        to_io_error(io::Error::new(io::ErrorKind::InvalidInput, e))
-    })?;
+    let _ = doc.append_text(elem, content).map_err(node_err_to_io)?;
     let options = SerialiseOptions {
         indent: None,
         empty_elements: EmptyElement::Expanded,
         newline: Newline::Lf,
     };
     doc.write_xml_to(writer, &options).map_err(to_io_error)
+}
+
+fn node_err_to_io(err: oxml::tree::NodeError) -> io::Error {
+    to_io_error(io::Error::new(io::ErrorKind::InvalidInput, err))
 }
 
 /// Generates CNAME file content.
@@ -396,12 +396,7 @@ fn process_file(
                 buffer.push(b'\n');
             }
             buffer.extend_from_slice(b"</url>");
-            let xml = String::from_utf8(buffer).map_err(|e| {
-                to_io_error(io::Error::new(
-                    io::ErrorKind::InvalidData,
-                    e,
-                ))
-            })?;
+            let xml = String::from_utf8_lossy(&buffer).into_owned();
             urls.push(xml);
         }
     }
@@ -814,6 +809,25 @@ mod tests {
         let err = io::Error::other("test error");
         let io_err = to_io_error(err);
         assert_eq!(io_err.kind(), io::ErrorKind::Other);
+    }
+
+    #[test]
+    fn test_generate_xml_element_with_attrs_and_error() {
+        let mut buf = Vec::new();
+        generate_xml_element_with_attrs(
+            &mut buf,
+            "link",
+            "https://example.com",
+            &[("rel", "self")],
+        )
+        .unwrap();
+        assert_eq!(
+            String::from_utf8(buf).unwrap(),
+            r#"<link rel="self">https://example.com</link>"#
+        );
+
+        let mut err_buf = Vec::new();
+        assert!(generate_xml_element(&mut err_buf, "", "text").is_err());
     }
 
     #[test]

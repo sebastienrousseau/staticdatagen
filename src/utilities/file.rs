@@ -117,11 +117,8 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
 
 fn escape_xml_text(content: &str) -> String {
     let mut doc = oxml::Document::empty();
-    let Ok(elem) = doc.append_element(doc.root(), None, "t") else {
-        return content.to_string();
-    };
-    if doc.append_text(elem, content).is_err() {
-        return content.to_string();
+    if let Ok(elem) = doc.append_element(doc.root(), None, "t") {
+        let _ = doc.append_text(elem, content);
     }
     let xml = doc.to_xml();
     xml.strip_prefix("<t>")

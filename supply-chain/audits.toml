@@ -139,11 +139,23 @@ criteria = "safe-to-deploy"
 delta = "1.0.151 -> 1.0.154"
 notes = "Keeps -0 as a float, returns None for non-finite f32 conversions, reports precise positions for invalid UTF-8 in RawValue, and adds an optional foldhash hasher for no_std preserve_order maps. No unsafe, I/O, network or build script changes."
 
+[[audits.staticweaver]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.0.6"
+notes = "Same-author crate (sebastienrousseau/staticweaver). #![forbid(unsafe_code)]; drops unused tempfile dependency; no build.rs, proc-macro, network, or process access."
+
 [[audits.syn]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 delta = "3.0.3 -> 3.0.9"
 notes = "Parser fixes (interpolated lifetime label at statement start, label vs path disambiguation, rejecting the <- operator), a span on LitStr::parse errors, a safe Punctuated::retain, and safe fn parsing in foreign items; the rest is tests. No unsafe, no build script, no I/O, network, process or env access."
+
+[[audits.tokio]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "1.52.3 -> 1.54.1"
+notes = "RUSTSEC-2026-0386 fix: deprecates safe AsyncFd::new/with_interest/try_new/try_with_interest constructors in favor of unsafe AsyncFd::register/register_with_interest requiring valid owned file descriptors. No build.rs, network, or process changes."
 
 [[audits.uuid]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
@@ -227,6 +239,13 @@ user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
 start = "2024-10-17"
 end = "2027-07-26"
 notes = "Same-author crate."
+
+[[trusted.staticweaver]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:sebastienrousseau/staticweaver"
+start = "2026-09-01"
+end = "2027-07-26"
+notes = "Published through crates.io Trusted Publishing from sebastienrousseau/staticweaver."
 
 [[trusted.toml_edit]]
 criteria = "safe-to-deploy"

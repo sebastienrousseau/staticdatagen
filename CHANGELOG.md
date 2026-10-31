@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Replaced direct `quick-xml` 0.42 dependency with `oxml` 0.0.13 (`default-features = false, features = ["std"]`) across `utilities::element`, `utilities::file`, `generators::news_sitemap`, and `modules::json`.
+- Updated `staticweaver` to 0.0.6, `tokio` to 1.54.1 (`RUSTSEC-2026-0386`), and GitHub Actions workflow pins.
 
 ## [0.0.26] - 2026-10-22
 
