@@ -133,11 +133,23 @@ criteria = "safe-to-run"
 delta = "0.4.0 -> 0.5.0"
 notes = "Port to rand_core 0.10 traits; generator arithmetic unchanged. No unsafe, I/O or build script."
 
+[[audits.rss-gen]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.0.13"
+notes = "Same-author crate (sebastienrousseau/rssgen). #![forbid(unsafe_code)]; replaces quick-xml and xml-rs with oxml 0.0.13; no build.rs, proc-macro, network, or process access."
+
 [[audits.serde_json]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 delta = "1.0.151 -> 1.0.154"
 notes = "Keeps -0 as a float, returns None for non-finite f32 conversions, reports precise positions for invalid UTF-8 in RawValue, and adds an optional foldhash hasher for no_std preserve_order maps. No unsafe, I/O, network or build script changes."
+
+[[audits.sitemap-gen]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.0.7"
+notes = "Same-author crate (sebastienrousseau/sitemap-gen). #![forbid(unsafe_code)]; replaces quick-xml with oxml 0.0.13; no build.rs, proc-macro, network, or process access."
 
 [[audits.staticweaver]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
@@ -226,12 +238,33 @@ start = "2026-10-01"
 end = "2027-10-31"
 notes = "Published through crates.io Trusted Publishing from sebastienrousseau/xmlschema."
 
+[[trusted.rss-gen]]
+criteria = "safe-to-deploy"
+user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
+start = "2024-09-28"
+end = "2027-10-31"
+notes = "Same-author crate."
+
+[[trusted.rss-gen]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:sebastienrousseau/rssgen"
+start = "2026-10-01"
+end = "2027-10-31"
+notes = "Published through crates.io Trusted Publishing from sebastienrousseau/rssgen."
+
 [[trusted.sitemap-gen]]
 criteria = "safe-to-deploy"
 user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
 start = "2024-10-10"
-end = "2027-07-26"
+end = "2027-10-31"
 notes = "Same-author crate."
+
+[[trusted.sitemap-gen]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:sebastienrousseau/sitemap-gen"
+start = "2026-10-01"
+end = "2027-10-31"
+notes = "Published through crates.io Trusted Publishing from sebastienrousseau/sitemap-gen."
 
 [[trusted.staticweaver]]
 criteria = "safe-to-deploy"

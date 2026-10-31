@@ -5,7 +5,7 @@
 [package]
 # General project metadata
 name = "staticdatagen"                     # The name of the library
-version = "0.0.27"                         # Current version of the crate
+version = "0.0.28"                         # Current version of the crate
 authors = ["StaticDataGen Contributors"]   # Library contributors
 edition = "2021"                           # Rust edition being used
 rust-version = "1.89.0"                    # Minimum supported Rust version
@@ -130,11 +130,11 @@ url = "2.5"
 
 # Utilities
 langweave = { version = "0.0.2", optional = true }
-metadata-gen = "0.0.8"
+metadata-gen = { version = "0.0.8", default-features = false, features = ["std", "yaml", "toml", "json"] }
 regex = "1.12"
 walkdir = "2.5"                             # Recursive directory walk for nested-locale `_posts/<lang>/` trees
-rss-gen = "0.0.11"
-sitemap-gen = "0.0.5"
+rss-gen = "0.0.13"
+sitemap-gen = "0.0.7"
 staticweaver = "0.0.6"
 time = { version = "0.3", features = ["formatting", "parsing"] }
 uuid = { version = "1.23", features = ["v4"] }
