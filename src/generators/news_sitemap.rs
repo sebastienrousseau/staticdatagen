@@ -33,10 +33,10 @@
 use crate::models::data::NewsData;
 use crate::utilities::dates::parse_flexible_date;
 use log::warn;
-use quick_xml::events::{
-    BytesDecl, BytesEnd, BytesStart, BytesText, Event,
+use oxml::{
+    tree::NodeId, Document, EmptyElement, Indent, Newline,
+    SerialiseOptions,
 };
-use quick_xml::Writer;
 use std::collections::HashMap;
 use time::{format_description, OffsetDateTime};
 
@@ -134,40 +134,56 @@ impl NewsSiteMapGenerator {
         &self,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let news_data = self.config.to_news_data();
-        let mut output = Vec::new();
-        let mut writer = Writer::new_with_indent(&mut output, b' ', 2);
+        let mut doc = Document::empty();
 
-        write_urlset_start(&mut writer)?;
-        writer.write_event(Event::Start(BytesStart::new("url")))?;
-        write_text_element(&mut writer, "loc", &news_data.news_loc)?;
+        let urlset =
+            doc.append_element(doc.root(), Some(SITEMAP_NS), "urlset")?;
+        let _ = doc.declare_namespace(urlset, None, SITEMAP_NS)?;
+        let _ = doc.declare_namespace(urlset, Some("news"), NEWS_NS)?;
 
-        writer
-            .write_event(Event::Start(BytesStart::new("news:news")))?;
-        writer.write_event(Event::Start(BytesStart::new(
-            "news:publication",
-        )))?;
+        let url =
+            doc.append_element(urlset, Some(SITEMAP_NS), "url")?;
+        write_text_element(
+            &mut doc,
+            url,
+            SITEMAP_NS,
+            "loc",
+            &news_data.news_loc,
+        )?;
+
+        let news = doc.append_element(url, Some(NEWS_NS), "news")?;
+        let publication =
+            doc.append_element(news, Some(NEWS_NS), "publication")?;
         for (name, text) in [
-            ("news:name", &news_data.news_publication_name),
-            ("news:language", &news_data.news_language),
+            ("name", &news_data.news_publication_name),
+            ("language", &news_data.news_language),
         ] {
-            write_text_element(&mut writer, name, text)?;
+            write_text_element(
+                &mut doc,
+                publication,
+                NEWS_NS,
+                name,
+                text,
+            )?;
         }
-        writer.write_event(Event::End(BytesEnd::new(
-            "news:publication",
-        )))?;
 
         for (name, text) in [
-            ("news:publication_date", &news_data.news_publication_date),
-            ("news:title", &news_data.news_title),
+            ("publication_date", &news_data.news_publication_date),
+            ("title", &news_data.news_title),
         ] {
-            write_text_element(&mut writer, name, text)?;
+            write_text_element(&mut doc, news, NEWS_NS, name, text)?;
         }
 
-        writer.write_event(Event::End(BytesEnd::new("news:news")))?;
-        writer.write_event(Event::End(BytesEnd::new("url")))?;
-        writer.write_event(Event::End(BytesEnd::new("urlset")))?;
-
-        Ok(String::from_utf8(output)?)
+        let options = SerialiseOptions {
+            indent: Some(Indent::Spaces(2)),
+            empty_elements: EmptyElement::Expanded,
+            newline: Newline::Lf,
+        };
+        let mut xml = String::from(
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n",
+        );
+        let _ = doc.write_xml_with(&mut xml, options);
+        Ok(xml)
     }
 }
 
@@ -177,30 +193,16 @@ const SITEMAP_NS: &str = "http://www.sitemaps.org/schemas/sitemap/0.9";
 /// The Google News extension namespace, bound to the `news` prefix.
 const NEWS_NS: &str = "http://www.google.com/schemas/sitemap-news/0.9";
 
-/// Writes the XML declaration and the opening `<urlset>` element.
-fn write_urlset_start<W: std::io::Write>(
-    writer: &mut Writer<W>,
-) -> std::io::Result<()> {
-    // quick-xml, unlike xml-rs, never writes the declaration itself.
-    let decl = BytesDecl::new("1.0", Some("UTF-8"), None);
-    writer.write_event(Event::Decl(decl))?;
-
-    let mut urlset = BytesStart::new("urlset");
-    urlset.push_attribute(("xmlns", SITEMAP_NS));
-    urlset.push_attribute(("xmlns:news", NEWS_NS));
-    writer.write_event(Event::Start(urlset))?;
-    Ok(())
-}
-
-/// Writes `<name>text</name>` as a single leaf element.
-fn write_text_element<W: std::io::Write>(
-    writer: &mut Writer<W>,
+/// Writes `<name>text</name>` as a single leaf element in the given namespace.
+fn write_text_element(
+    doc: &mut Document,
+    parent: NodeId,
+    ns: &str,
     name: &str,
     text: &str,
-) -> std::io::Result<()> {
-    writer.write_event(Event::Start(BytesStart::new(name)))?;
-    writer.write_event(Event::Text(BytesText::new(text)))?;
-    writer.write_event(Event::End(BytesEnd::new(name)))?;
+) -> Result<(), oxml::tree::NodeError> {
+    let elem = doc.append_element(parent, Some(ns), name)?;
+    let _ = doc.append_text(elem, text)?;
     Ok(())
 }
 

@@ -3,7 +3,6 @@
 
 use crate::models::data::FileData;
 use log::warn;
-use quick_xml::escape::escape;
 use std::{fs, io, path::Path};
 use walkdir::WalkDir;
 
@@ -98,7 +97,7 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
             }
         };
 
-        let escaped = escape(&content).to_string();
+        let escaped = escape_xml_text(&content);
         out.push(FileData {
             cname: escaped.clone(),
             keyword: escaped.clone(),
@@ -114,6 +113,21 @@ pub fn add(path: &Path) -> io::Result<Vec<FileData>> {
         });
     }
     Ok(out)
+}
+
+fn escape_xml_text(content: &str) -> String {
+    let mut doc = oxml::Document::empty();
+    let Ok(elem) = doc.append_element(doc.root(), None, "t") else {
+        return content.to_string();
+    };
+    if doc.append_text(elem, content).is_err() {
+        return content.to_string();
+    }
+    let xml = doc.to_xml();
+    xml.strip_prefix("<t>")
+        .and_then(|s| s.strip_suffix("</t>"))
+        .unwrap_or(&xml)
+        .to_string()
 }
 
 #[cfg(test)]
