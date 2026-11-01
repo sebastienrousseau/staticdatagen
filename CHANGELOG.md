@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.30] - 2026-11-01
+
+### Changed
+
+- Updated `html-generator` from `0.0.12` to `0.0.15` (incorporating `mdx-gen` `0.0.7`, `noyalib` `0.0.58`, and `comrak` `0.56` across the HTML/MDX pipeline and dropping duplicate `comrak` `0.55`).
+- Updated `http-handle` from `0.0.7` to `0.0.10` (incorporating `euxis-commons` `0.0.6` with trimmed `["error", "time"]` features).
+- Updated `langweave` from `0.0.2` to `0.0.4` and `staticweaver` from `0.0.6` to `0.0.8` (Edition 2024 and MSRV 1.89).
+
 ## [0.0.29] - 2026-11-01
 
 ### Changed

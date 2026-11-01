@@ -56,7 +56,7 @@
 
 ```toml
 [dependencies]
-staticdatagen = "0.0.29"
+staticdatagen = "0.0.30"
 ```
 
 Or via Cargo:
@@ -80,8 +80,8 @@ Tested on macOS (Intel + Apple Silicon), Linux (x86_64 GNU + musl), and Windows 
 | `full` | ❌ | `rss + sitemap + i18n + server` | Everything, including the preview server. | Stable |
 | `rss` | ✅ | — | RSS feed emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
 | `sitemap` | ✅ | — | Sitemap + news-sitemap emission knob. | Currently always-on; per-feature gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) was slated for v0.0.11 and has not landed. |
-| `i18n` | ✅ | `langweave 0.0.2` | Enables the `locales` module for translated string handling. | Active. |
-| `server` | ❌ | `http-handle 0.0.7` | Re-exports `staticdatagen::Server` for serving a built site. | Opt-in since 0.0.14, when `http-handle` was `AGPL-3.0-only`. It was relicensed to Apache-2.0 OR MIT in 0.0.7, so this is no longer a licence matter — it stays opt-in because a preview server is not something every consumer should carry. |
+| `i18n` | ✅ | `langweave 0.0.4` | Enables the `locales` module for translated string handling. | Active. |
+| `server` | ❌ | `http-handle 0.0.10` | Re-exports `staticdatagen::Server` for serving a built site. | Opt-in since 0.0.14, when `http-handle` was `AGPL-3.0-only`. It was relicensed to Apache-2.0 OR MIT in 0.0.7, so this is no longer a licence matter — it stays opt-in because a preview server is not something every consumer should carry. |
 | `minimal` | ❌ | — | Reserved for a smaller surface; currently equivalent to disabling `full`. | Reserved; real gating ([#78](https://github.com/sebastienrousseau/staticdatagen/issues/78)) has not landed. |
 | `async` | ❌ | — | Reserved name; no async surface yet. | Reserved. |
 | `serde` | ❌ | — | Always-on via the unconditional `serde` direct dep. | Reserved. |
@@ -91,11 +91,11 @@ Every feature combination is Apache-2.0 OR MIT as of 0.0.16. `server` remains op
 ```toml
 # Default — Apache-2.0 OR MIT all the way down.
 [dependencies]
-staticdatagen = "0.0.29"
+staticdatagen = "0.0.30"
 
 # Preview server. Pulls `http-handle` (Apache-2.0 OR MIT since 0.0.7).
 [dependencies]
-staticdatagen = { version = "0.0.29", features = ["server"] }
+staticdatagen = { version = "0.0.30", features = ["server"] }
 ```
 
 ---
