@@ -881,7 +881,7 @@ dependencies = [
  "indexmap",
  "log",
  "mdx-gen",
- "noyalib",
+ "noyalib 0.0.56",
  "once_cell",
  "pulldown-latex",
  "regex",
@@ -1219,12 +1219,13 @@ dependencies = [
 
 [[package]]
 name = "metadata-gen"
-version = "0.0.8"
+version = "0.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb5778fb3f3cf30a0399e835c9ac23f890483749678ed15439cc15a69e04015f"
+checksum = "ce21822cfa1ac19023e4b69ee3f4045053c514e5780388dcfc1f3553cdc920f6"
 dependencies = [
  "memchr",
- "noyalib",
+ "noyalib 0.0.58",
+ "oxml",
  "serde",
  "serde_json",
  "thiserror",
@@ -1265,6 +1266,21 @@ name = "noyalib"
 version = "0.0.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17cb8fe21481880d02e866e6678da0ce313735b659edf3dfd4beb7fdaca06e77"
+dependencies = [
+ "hashbrown 0.17.1",
+ "indexmap",
+ "libm",
+ "memchr",
+ "rustc-hash",
+ "serde_core",
+ "smallvec",
+]
+
+[[package]]
+name = "noyalib"
+version = "0.0.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fad8f1a552070f6ba5f60f25e880f7b6daeda8fe138f589345141d31a21a3bb"
 dependencies = [
  "hashbrown 0.17.1",
  "indexmap",
@@ -1950,7 +1966,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "staticdatagen"
-version = "0.0.28"
+version = "0.0.29"
 dependencies = [
  "anyhow",
  "comrak 0.56.0",

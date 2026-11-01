@@ -73,6 +73,18 @@ criteria = "safe-to-deploy"
 version = "0.1.9"
 notes = "Read all non-test source (lib.rs, search.rs, bitset.rs, swar, vector). Unsafe: get_unchecked(scan_offset..) relying on scan_offset <= len, kept by advance_to clamping and the scan contracts; a private union KernelStorage read only through function-pointer tables built from the same kernel type; assert_unchecked hints on returned indices and counts, checked by hand for every tail path; a ZST fearless_simd token rebuilt with transmute_copy (const-asserted size 0, align 1) inside function pointers reachable only after scan_ops received a real token. Relies on fearless_simd masks being 0 or -1 and on to_bitmask width, both checked per backend. No build.rs, no I/O."
 
+[[audits.metadata-gen]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.0.9"
+notes = "Same-author crate (sebastienrousseau/metadata-gen). #![forbid(unsafe_code)]; replaces quick-xml with oxml 0.0.13 and bumps noyalib to 0.0.58; no network or process access."
+
+[[audits.noyalib]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.0.58"
+notes = "Same-author crate (sebastienrousseau/noyalib). #![forbid(unsafe_code)]; pure-Rust YAML 1.2.2 parser with DoS budgets; no build.rs, proc-macro, network, or process access."
+
 [[audits.oxml]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-deploy"
@@ -207,8 +219,15 @@ notes = "Same-author crate."
 criteria = "safe-to-deploy"
 user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
 start = "2024-10-05"
-end = "2027-07-26"
+end = "2027-10-31"
 notes = "Same-author crate."
+
+[[trusted.metadata-gen]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:sebastienrousseau/metadata-gen"
+start = "2026-10-01"
+end = "2027-10-31"
+notes = "Published through crates.io Trusted Publishing from sebastienrousseau/metadata-gen."
 
 [[trusted.noyalib]]
 criteria = "safe-to-deploy"

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.29] - 2026-11-01
+
+### Changed
+
+- Updated `metadata-gen` from `0.0.8` to `0.0.9` with `features = ["std", "yaml", "toml", "json", "html"]`, restoring HTML `<meta>` tag extraction backed by `oxml` `0.0.13` and `noyalib` `0.0.58` without introducing `quick-xml` or `tokio`.
+
 ## [0.0.28] - 2026-10-31
 
 ### Changed
