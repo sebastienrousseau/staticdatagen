@@ -349,6 +349,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "comrak"
+version = "0.59.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3adf553d37681e21753316065ad5a763d9513f81c910e250576c572114a8eb06"
+dependencies = [
+ "caseless",
+ "entities",
+ "finl_unicode",
+ "memchr-n",
+ "phf 0.14.0",
+ "phf_codegen 0.14.0",
+ "rustc-hash",
+ "smallvec",
+ "typed-arena",
+]
+
+[[package]]
 name = "console"
 version = "0.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -876,7 +893,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4327ec2e74af6f30b84751699bc6a3a7a554237fea962ef8c95cb97e820b9997"
 dependencies = [
  "ammonia",
- "comrak",
+ "comrak 0.56.0",
  "getrandom 0.3.4",
  "indexmap",
  "log",
@@ -1207,7 +1224,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "780920585d9fbabf6f378bf7677e6f6919715923edcb5bfc4b93fe3d724abda5"
 dependencies = [
  "ammonia",
- "comrak",
+ "comrak 0.56.0",
  "html-escape",
  "log",
  "regex",
@@ -1969,7 +1986,7 @@ name = "staticdatagen"
 version = "0.0.30"
 dependencies = [
  "anyhow",
- "comrak",
+ "comrak 0.59.0",
  "criterion",
  "html-generator",
  "http-handle",
@@ -2339,9 +2356,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.28.0"
+version = "1.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7cc1186384beb7dd8eedea376413fd654937285ea6c9cfbb928dc3043ea4b606"
+checksum = "4a0e2d11620c50695fe12bbbfde96b3477fe606e7284c22d505c12ce51214514"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
