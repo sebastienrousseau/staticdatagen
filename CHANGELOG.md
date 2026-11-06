@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.31] - 2026-11-06
+
+### Security
+
+- Tag pages and navigation menus now escape quotes in HTML attributes
+  (#165). A `'` in a page title closed the single-quoted `aria-label`
+  on tag links, and a `"` in a tag name, permalink or file name closed
+  the double-quoted `class`, `id`, `href`, `aria-label` and `title`
+  attributes, letting page content inject attributes such as event
+  handlers. Both modules now use `metadata_gen::utils::escape_html`,
+  which escapes `&`, `<`, `>`, `"` and `'`, and tag names are escaped
+  in the `<h3>` and `<li>` attributes and text, where they were
+  written raw before.
+
+### Changed
+
+- Generated tag and navigation HTML differs for titles, tag names,
+  permalinks or file names that contain quotes: `"` is written as
+  `&quot;` and `'` as `&#x27;` in the HTML source. Browsers render the
+  same text; only tooling that compares the raw HTML sees the change.
+- Updated `comrak` from `0.56.0` to `0.59.0` and `uuid` from `1.28.0`
+  to `1.29.0` (#164).
+- Updated the `taiki-e/install-action` and `astral-sh/setup-uv` pins in
+  the Quality workflow (#164).
+
 ## [0.0.30] - 2026-11-01
 
 ### Changed
