@@ -40,6 +40,8 @@ use std::path::{Component, Path};
 
 use crate::models::data::FileData;
 use crate::utilities::directory::to_title_case;
+// Escapes `& < > " '`: names and URLs land in double-quoted attributes.
+use metadata_gen::utils::escape_html as html_escape;
 
 /// A set of supported file extensions for navigation.
 const SUPPORTED_EXTENSIONS: [&str; 3] = ["md", "toml", "json"];
@@ -286,20 +288,6 @@ fn sanitize_and_titlecase(file_stem: &str) -> String {
     }
 
     display_name
-}
-
-/// Escapes `<`, `>`, and `&` in a string to avoid HTML injection.
-fn html_escape(input: &str) -> String {
-    let mut escaped = String::with_capacity(input.len());
-    for c in input.chars() {
-        match c {
-            '<' => escaped.push_str("&lt;"),
-            '>' => escaped.push_str("&gt;"),
-            '&' => escaped.push_str("&amp;"),
-            _ => escaped.push(c),
-        }
-    }
-    escaped
 }
 
 #[cfg(test)]
@@ -760,6 +748,22 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_navigation_quotes_cannot_break_attributes() {
+        // A double quote in a file name must not close the
+        // aria-label, href, title or class attribute.
+        let files = vec![create_test_file(
+            "a\" onmouseover=\"alert(1).md",
+            "x",
+        )];
+        let nav = NavigationGenerator::generate_navigation(&files)
+            .to_lowercase();
+        assert!(
+            !nav.contains("onmouseover=\""),
+            "double quote broke out of an attribute: {nav}"
+        );
+    }
+
+    #[test]
     fn test_html_escape_all_special() {
         // Test all special character escapes
         let result = html_escape("<test>&value</test>");
@@ -768,6 +772,7 @@ mod tests {
         assert!(result.contains("&amp;"));
         assert!(!result.contains('<'));
         assert!(!result.contains('>'));
+        assert_eq!(html_escape("\"'"), "&quot;&#x27;");
     }
 
     #[test]

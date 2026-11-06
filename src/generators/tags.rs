@@ -72,6 +72,9 @@
 use crate::models::data::{FileData, PageData, TagsData};
 use crate::utilities::directory::to_title_case;
 use log::debug;
+// Escapes `& < > " '`, so output is safe in text and in single- or
+// double-quoted attributes alike.
+use metadata_gen::utils::escape_html as html_escape;
 use std::{
     collections::HashMap,
     fs,
@@ -229,10 +232,10 @@ pub fn generate_tags_html(
         // <h3> heading for the tag
         html_content.push_str(&format!(
             "<h3 class=\"{}\" id=\"h3-{}\" tabindex=\"0\" role=\"heading\" aria-level=\"3\" aria-label=\"{}\">{} ({} Posts)</h3>\n",
-            key.replace(' ', "-"),
-            key.replace(' ', "-"),
+            html_escape(&key.replace(' ', "-")),
+            html_escape(&key.replace(' ', "-")),
             html_escape(&heading_label),
-            to_title_case(key),
+            html_escape(&to_title_case(key)),
             count
         ));
 
@@ -241,40 +244,8 @@ pub fn generate_tags_html(
 
         // Each page is an <li> with role="listitem"
         for (i, page) in pages.iter().enumerate() {
-            // Use single quotes around aria-label to allow double quotes inside
-            let link_label =
-                format!("Visit the \"{}\" page", page.title);
-            let item_id = format!(
-                "li-{}-{}-{}",
-                key.replace(' ', "-"),
-                tag_index,
-                i
-            );
-
-            // Example: adjusting descriptive text in <strong>
-            // to provide more unique or useful info:
-            let strong_text = if page.title.contains("Home") {
-                "This is our homepage.".to_string()
-            } else {
-                "Learn more on this page.".to_string()
-            };
-
-            html_content.push_str(&format!(
-                "<li id=\"{item_id}\" role=\"listitem\" class=\"tagged-page-item\">
-                   <span class=\"tag-date\">{date}</span>:
-                   <a href=\"{link}\" aria-label='{label}'>{title}</a>
-                   - <strong>{desc}</strong>
-                 </li>\n",
-                item_id = item_id,
-                date = html_escape(&page.date),
-                link = html_escape(&page.permalink),
-                label = html_escape(&link_label),
-                title = html_escape(&page.title),
-                desc = if !page.description.is_empty() {
-                    html_escape(&page.description)
-                } else {
-                    strong_text
-                }
+            html_content.push_str(&tagged_page_item_html(
+                key, tag_index, i, page,
             ));
         }
 
@@ -286,12 +257,44 @@ pub fn generate_tags_html(
     html_content
 }
 
-/// Minimal escaping for <, >, and & to avoid HTML injection issues.
-fn html_escape(input: &str) -> String {
-    input
-        .replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
+/// Builds the `<li>` for one page listed under a tag. Every interpolated
+/// value is escaped with `html_escape`, which encodes both quote kinds,
+/// so a quote in the tag, title or permalink cannot close an attribute.
+fn tagged_page_item_html(
+    key: &str,
+    tag_index: usize,
+    i: usize,
+    page: &PageData,
+) -> String {
+    let link_label = format!("Visit the \"{}\" page", page.title);
+    let item_id =
+        format!("li-{}-{}-{}", key.replace(' ', "-"), tag_index, i);
+
+    // Example: adjusting descriptive text in <strong>
+    // to provide more unique or useful info:
+    let strong_text = if page.title.contains("Home") {
+        "This is our homepage.".to_string()
+    } else {
+        "Learn more on this page.".to_string()
+    };
+
+    format!(
+        "<li id=\"{item_id}\" role=\"listitem\" class=\"tagged-page-item\">
+                   <span class=\"tag-date\">{date}</span>:
+                   <a href=\"{link}\" aria-label='{label}'>{title}</a>
+                   - <strong>{desc}</strong>
+                 </li>\n",
+        item_id = html_escape(&item_id),
+        date = html_escape(&page.date),
+        link = html_escape(&page.permalink),
+        label = html_escape(&link_label),
+        title = html_escape(&page.title),
+        desc = if !page.description.is_empty() {
+            html_escape(&page.description)
+        } else {
+            strong_text
+        }
+    )
 }
 
 /// ## Write Tags HTML to File
@@ -662,9 +665,36 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_tags_html_quotes_cannot_break_attributes() {
+        // A quote in a tag name, permalink or page title must not
+        // close the attribute it is written into.
+        let mut global_tags: HashMap<String, Vec<PageData>> =
+            HashMap::new();
+        let _ = global_tags.insert(
+            "x\" onclick=\"alert(1)".to_string(),
+            vec![PageData {
+                date: "2024-01-01".to_string(),
+                description: "d".to_string(),
+                permalink: "/p\" onfocus=\"alert(2)".to_string(),
+                title: "T' onmouseover='alert(3)' x=\"y".to_string(),
+            }],
+        );
+
+        let html = generate_tags_html(&global_tags).to_lowercase();
+
+        for payload in ["onclick=\"", "onfocus=\"", "onmouseover='"] {
+            assert!(
+                !html.contains(payload),
+                "{payload} broke out of its attribute: {html}"
+            );
+        }
+    }
+
+    #[test]
     fn test_html_escape() {
         assert_eq!(html_escape("a & b"), "a &amp; b");
         assert_eq!(html_escape("<tag>"), "&lt;tag&gt;");
         assert_eq!(html_escape("clean"), "clean");
+        assert_eq!(html_escape("a\"b'c"), "a&quot;b&#x27;c");
     }
 }
