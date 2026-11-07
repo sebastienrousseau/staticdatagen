@@ -55,6 +55,11 @@ criteria = "safe-to-deploy"
 delta = "0.0.2 -> 0.0.6"
 notes = 'Same-author crate (sebastienrousseau/commons), consumed via http-handle with default-features = false, features = ["error", "time"]. #![forbid(unsafe_code)]; no build.rs, proc-macro, network, or process access.'
 
+[[audits.euxis-commons]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.0.6 -> 0.0.9"
+
 [[audits.fearless_simd]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-deploy"
