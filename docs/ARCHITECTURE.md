@@ -56,8 +56,8 @@ flowchart TD
 6. **Generate the site's other artefacts**: `sitemap.xml`,
    `news_sitemap.xml`, `manifest.json`, `humans.txt`, `CNAME`, tag
    pages, plain-text and JSON views.
-7. **Write everything** through `utilities::security::sanitize_path`,
-   which is the only way a path reaches the filesystem.
+7. **Write everything** under the output directory: each page's
+   path is joined under it with `commons::path::safe_join`.
 
 ## Where the crate sits in the family
 
@@ -87,13 +87,27 @@ insertion-ordered.
 
 ## Path safety
 
-`utilities::security::sanitize_path` rejects empty paths, `..`
-traversal, and paths that escape the directory they resolve against;
-`validate_directory` checks a directory is usable for its stated purpose
-before anything is written. Every write in the compiler goes through
-them. `fuzz_path` pins two properties: an accepted path never contains
-a `..` component, and sanitising an accepted path again returns it
-unchanged.
+Every path built from content, front matter or configuration is joined
+under its trusted root with `euxis-commons`' `path::safe_join`, and
+refused (never rewritten) if it is absolute or climbs above that root.
+`.` is dropped, each `..` removes the component before it, and a name
+such as `a..b.md` is an ordinary name.
+
+| Where | Trusted root | Untrusted part | On refusal |
+|---|---|---|---|
+| `utilities::write::write_files_to_build_directory` | build directory | page name (`FileData::name`) | error, nothing written |
+| `utilities::directory::move_output_directory_to` | `public_dir` | `site_name` | `InvalidInput`, before anything is removed |
+| `modules::navigation` | build directory | page name | page left out of the menu |
+| `models::data::validation::join_under` | caller's root | caller's relative path | `DataError::SecurityValidation` |
+| `utilities::security::sanitize_path` | none (relative check) | whole path | error |
+
+Caller-supplied roots (the build, site and public directories,
+`json::sitemap`'s directory) are trusted: they may be absolute or
+contain `..`. `utilities::security::sanitize_path` also refuses
+characters outside alphanumerics and `/ . - _`; `fuzz_path` pins that
+an accepted path never contains a `..` component and that sanitising it
+again returns it unchanged. `validate_directory` checks a directory is
+usable for its stated purpose.
 
 ## Tests
 

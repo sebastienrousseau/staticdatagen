@@ -6,6 +6,7 @@
 //! This module provides various functions for working with directories,
 //! including creation, cleanup, file discovery, and path manipulation.
 
+use commons::path::safe_join;
 use log::{debug, info};
 use regex::Regex;
 use std::{
@@ -133,7 +134,9 @@ pub fn move_output_directory(
 ///
 /// # Returns
 ///
-/// An `io::Result<()>` indicating success or failure.
+/// An `io::Result<()>` indicating success or failure. A `site_name` that is
+/// absolute or climbs above `public_dir` is refused with
+/// `ErrorKind::InvalidInput` before anything is removed or created.
 ///
 /// # Resulting layout
 ///
@@ -179,6 +182,17 @@ pub fn move_output_directory_to(
         out_dir.display()
     );
 
+    // `site_name` comes from configuration: check it stays under
+    // `public_dir` before anything is removed or created.
+    let site_name = site_name.replace(' ', "_");
+    let new_project_dir =
+        safe_join(public_dir, &site_name).map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                format!("Invalid site name '{site_name}': {e}"),
+            )
+        })?;
+
     if public_dir.exists() {
         debug!(
             "Removing existing public directory '{}'",
@@ -189,9 +203,6 @@ pub fn move_output_directory_to(
 
     fs::create_dir(public_dir)?;
     debug!("Created public directory '{}'", public_dir.display());
-
-    let site_name = site_name.replace(' ', "_");
-    let new_project_dir = public_dir.join(&site_name);
 
     debug!("new_project_dir = '{}'", new_project_dir.display());
     fs::create_dir_all(&new_project_dir)?;
@@ -531,6 +542,42 @@ mod tests {
     use super::*;
     use regex::Regex;
     use std::{error::Error, fs, io::Write, path::Path};
+
+    #[test]
+    fn move_output_refuses_a_site_name_that_climbs_out() {
+        let tmp = tempfile::tempdir().unwrap();
+        let out = tmp.path().join("out");
+        fs::create_dir_all(&out).unwrap();
+        let public = tmp.path().join("public");
+
+        let result =
+            move_output_directory_to("../escape", &out, &public);
+
+        assert!(result.is_err(), "a `..` site name must be refused");
+        assert!(!tmp.path().join("escape").exists());
+        assert!(out.exists(), "out_dir must be left where it was");
+    }
+
+    #[test]
+    fn move_output_refuses_an_absolute_site_name() {
+        let tmp = tempfile::tempdir().unwrap();
+        let out = tmp.path().join("out");
+        fs::create_dir_all(&out).unwrap();
+        let public = tmp.path().join("public");
+        let outside = tmp.path().join("outside");
+
+        let result = move_output_directory_to(
+            outside.to_str().unwrap(),
+            &out,
+            &public,
+        );
+
+        assert!(
+            result.is_err(),
+            "an absolute site name must be refused"
+        );
+        assert!(!outside.exists());
+    }
 
     /// Tests creating a directory that doesn't exist.
     #[test]

@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.32] - 2026-11-07
+
+### Security
+
+- The compiler's write path now keeps every page inside the build
+  directory. `utilities::write::write_files_to_build_directory` joined
+  `FileData::name` with `Path::join`, so a name such as `../x.md` or an
+  absolute path was written outside the build directory. Names from the
+  compiler's own content walk could not take that form; names passed
+  in by a caller could. The name is now joined with `euxis-commons`
+  0.0.9 `path::safe_join` and refused with an error if it would leave.
+- `utilities::directory::move_output_directory_to` refuses a
+  `site_name` that is absolute or climbs above `public_dir`, before
+  anything is removed or created. It used to create and move into the
+  directory outside.
+- `utilities::security::sanitize_path` now refuses a path it cannot
+  accept instead of rewriting it into a different one. Until 0.0.31
+  it dropped a `..` that climbed above the root
+  (`content/../../../etc/passwd` came back as `etc/passwd`), removed a
+  leading `/` (`/etc/passwd` came back as `etc/passwd`) and stripped
+  disallowed characters, then returned the result as safe. Each of
+  these is now an error the caller sees. Names that only contain dots,
+  such as `a..b.md`, stay ordinary names.
+- `FileData::validate` now refuses an absolute `name`; it used to
+  accept one, because it only looked for `..`.
+
+### Added
+
+- `models::data::validation::join_under(root, untrusted)`: joins an
+  untrusted relative path under a trusted root, which may be absolute,
+  and returns `DataError::SecurityValidation` if the result would leave
+  the root.
+
+### Changed
+
+- **Behaviour change** in public API, with no signature change:
+  - `utilities::security::sanitize_path` returns `Err` for absolute
+    paths, paths that climb above their root, and paths with
+    characters outside alphanumerics and `/ . - _`, where it used to
+    return a rewritten path.
+  - `write_files_to_build_directory` and `move_output_directory_to`
+    return `Err` for names that would leave their root.
+  - `FileData::validate` accepts a `..` that stays inside
+    (`fr/../en/post.md`) and refuses absolute names.
+  - `json::sitemap` treats its directory as the caller's trusted root:
+    a `..` in it is no longer an error.
+  - Navigation lists a page whose name has `.` or a contained `..` at
+    its normal URL (`./about.md` is `/about/index.html`), where it used
+    to leave it out. Absolute and escaping names are still left out.
+- Added `euxis-commons` `0.0.9` as a direct dependency with
+  `default-features = false, features = ["path"]` (no transitive
+  dependencies).
+- `docs/ARCHITECTURE.md` and ADR 0003 describe where containment is
+  checked; they used to claim every write went through
+  `sanitize_path`, which no compiler module called.
+
+### Deprecated
+
+- `models::data::validation::sanitize_path`: it refuses any `..`, even
+  one that stays inside, and accepts absolute paths, so it does not
+  prove containment. Its behaviour is unchanged; use
+  `validation::join_under` with the trusted root instead.
+
 ## [0.0.31] - 2026-11-06
 
 ### Security

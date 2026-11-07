@@ -6,7 +6,6 @@
 //! This module provides functions for generating various data files including
 //! CNAME records, humans.txt, manifests, news sitemaps, robots.txt, and RSS feeds.
 
-use crate::models::data::validation::sanitize_path;
 use crate::models::data::{
     CnameData, HumansData, ManifestData, NewsData, NewsVisitOptions,
     SecurityData, TxtData,
@@ -474,22 +473,19 @@ pub fn sitemap(
     options: SiteMapData,
     dir: &Path,
 ) -> Result<String, io::Error> {
-    let dir_str = dir.to_str().ok_or_else(|| {
-        io::Error::new(
+    // `dir` is the caller's output directory, a trusted root that may be
+    // absolute or contain `..`; the URLs below are built from the names
+    // found under it, so it only needs to be valid UTF-8.
+    if dir.to_str().is_none() {
+        return Err(io::Error::new(
             io::ErrorKind::InvalidInput,
             "Directory path is not valid UTF-8",
-        )
-    })?;
-    let base_dir = sanitize_path(dir_str).map_err(|e| {
-        io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("Failed to sanitize path: {}", e),
-        )
-    })?;
+        ));
+    }
     let mut urls = vec![];
     visit_dirs(
-        &base_dir,
-        &base_dir,
+        dir,
+        dir,
         options.loc.as_str(),
         &options.changefreq.to_string(),
         &options.lastmod,
@@ -890,6 +886,27 @@ mod tests {
             PathBuf::from("/nonexistent/path/that/does/not/exist");
         let result = sitemap(options, &dir);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn sitemap_accepts_a_trusted_root_with_a_parent_step() {
+        use sitemap_gen::SiteMapData;
+        use url::Url;
+
+        // The output directory is the caller's, not untrusted input:
+        // `..` in it is a normal path, as is being absolute.
+        let tmp = tempfile::tempdir().unwrap();
+        fs::create_dir_all(tmp.path().join("sub")).unwrap();
+        fs::write(tmp.path().join("index.html"), "<html></html>")
+            .unwrap();
+        let options = SiteMapData {
+            loc: Url::parse("https://example.com").unwrap(),
+            changefreq: sitemap_gen::ChangeFreq::Daily,
+            lastmod: "2024-01-01".to_string(),
+        };
+
+        let result = sitemap(options, &tmp.path().join("sub/.."));
+        assert!(result.is_ok(), "{result:?}");
     }
 
     #[test]

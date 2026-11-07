@@ -35,8 +35,9 @@
 //! assert!(nav.contains("About"));
 //! ```
 
+use commons::path::safe_join;
 use rayon::prelude::*;
-use std::path::{Component, Path};
+use std::path::Path;
 
 use crate::models::data::FileData;
 use crate::utilities::directory::to_title_case;
@@ -184,13 +185,11 @@ impl NavigationGenerator {
             return None;
         }
 
-        // Quick check for suspicious directory references
-        if is_malicious_path(&sanitized_name) {
-            return None;
-        }
-
-        // Now parse it as a path
-        let path = Path::new(&sanitized_name);
+        // Skip, rather than fail on, a name that would not stay inside
+        // the build directory; list the rest at their normal form, which
+        // is where `write_files_to_build_directory` puts them.
+        let page_path = contained_page_path(&sanitized_name)?;
+        let path = Path::new(&page_path);
 
         // Extension check
         let extension = path.extension()?.to_str()?;
@@ -220,28 +219,20 @@ impl NavigationGenerator {
     }
 }
 
-/// Checks if a path is potentially malicious by scanning for
-/// suspicious directory references (e.g., `..`, `.`, absolute paths, etc.).
-fn is_malicious_path(filename: &str) -> bool {
-    let path = Path::new(filename);
-
-    // If a path is absolute, skip it
-    if path.is_absolute() {
-        return true;
-    }
-
-    for comp in path.components() {
-        match comp {
-            // Skip if it has parent directory references (..)
-            Component::ParentDir => return true,
-            // Treat current directory (.) as suspicious for these tests
-            Component::CurDir => return true,
-            // Root directory
-            Component::RootDir => return true,
-            _ => {}
-        }
-    }
-    false
+/// Normalises `filename` as a path under the build directory, joined with
+/// `/` so it can go straight into a URL.
+///
+/// Uses the shared rule in `commons::path::safe_join`: `.` is dropped and
+/// each `..` removes the component before it. Returns `None` for a name
+/// that is absolute or climbs above the build directory, so the caller
+/// skips it rather than failing the build.
+fn contained_page_path(filename: &str) -> Option<String> {
+    let joined = safe_join("", filename).ok()?;
+    let parts: Vec<_> = joined
+        .components()
+        .map(|c| c.as_os_str().to_string_lossy())
+        .collect();
+    Some(parts.join("/"))
 }
 
 /// Filters out null bytes (`\0`), zero-width (`\u{FEFF}`), and *all other* control characters
@@ -626,7 +617,6 @@ mod tests {
     fn malformed_paths() {
         let files = vec![
             create_test_file("../attempt-parent.md", "Invalid Path"),
-            create_test_file("./attempt-current.md", "Invalid Path"),
             create_test_file("//attempt-root.md", "Invalid Path"),
         ];
 
@@ -638,13 +628,25 @@ mod tests {
             "Should sanitize or skip parent directory attempts"
         );
         assert!(
-            !nav.contains("attempt-current"),
-            "Should sanitize or skip current directory attempts"
-        );
-        assert!(
             !nav.contains("attempt-root"),
             "Should sanitize or skip root directory attempts"
         );
+    }
+
+    #[test]
+    fn contained_dot_steps_are_listed_at_their_normal_url() {
+        // Used to be skipped: `.` and any `..` were treated as hostile,
+        // although the page is written inside the build directory.
+        let files = vec![
+            create_test_file("./about.md", "About"),
+            create_test_file("fr/../en/post.md", "Post"),
+        ];
+
+        let nav = NavigationGenerator::generate_navigation(&files);
+
+        assert!(nav.contains("/about/index.html"), "{nav}");
+        assert!(nav.contains("/en/post/index.html"), "{nav}");
+        assert!(!nav.contains(".."), "URLs must be normalised: {nav}");
     }
 
     #[test]
@@ -741,10 +743,9 @@ mod tests {
     }
 
     #[test]
-    fn test_is_malicious_path_root_dir() {
-        // Direct test of is_malicious_path with root dir
-        assert!(is_malicious_path("/etc/passwd"));
-        assert!(is_malicious_path("/absolute/path"));
+    fn contained_page_path_refuses_absolute() {
+        assert_eq!(contained_page_path("/etc/passwd"), None);
+        assert_eq!(contained_page_path("/absolute/path"), None);
     }
 
     #[test]
@@ -787,8 +788,8 @@ mod tests {
     }
 
     #[test]
-    fn test_is_malicious_path_root_only() {
-        assert!(is_malicious_path("/"));
+    fn contained_page_path_refuses_root_only() {
+        assert_eq!(contained_page_path("/"), None);
     }
 
     #[test]
@@ -807,23 +808,32 @@ mod tests {
     }
 
     #[test]
-    fn is_malicious_path_absolute_returns_true() {
-        // Arrange & Act & Assert
-        assert!(is_malicious_path("/etc/passwd"));
+    fn contained_page_path_refuses_etc_passwd() {
+        assert_eq!(contained_page_path("/etc/passwd"), None);
     }
 
     #[test]
-    fn is_malicious_path_parent_dir_returns_true() {
-        assert!(is_malicious_path("../../etc/passwd"));
+    fn contained_page_path_refuses_parent_escape() {
+        assert_eq!(contained_page_path("../../etc/passwd"), None);
     }
 
     #[test]
-    fn is_malicious_path_current_dir_returns_true() {
-        assert!(is_malicious_path("./hidden"));
+    fn contained_page_path_drops_current_dir() {
+        assert_eq!(
+            contained_page_path("./hidden").as_deref(),
+            Some("hidden")
+        );
     }
 
     #[test]
-    fn is_malicious_path_safe_returns_false() {
-        assert!(!is_malicious_path("about.md"));
+    fn contained_page_path_keeps_plain_and_dotted_names() {
+        assert_eq!(
+            contained_page_path("about.md").as_deref(),
+            Some("about.md")
+        );
+        assert_eq!(
+            contained_page_path("fr/a..b.md").as_deref(),
+            Some("fr/a..b.md")
+        );
     }
 }

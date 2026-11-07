@@ -26,6 +26,7 @@ use std::path::Path;
 use std::time::Instant;
 
 use crate::models::data::FileData;
+use commons::path::safe_join;
 use html_generator::performance::minify_html_string;
 
 /// Constants for auxiliary files that should be copied to the build directory.
@@ -55,6 +56,10 @@ const INDEX_FILES: [&str; 9] = [
 /// * `build_dir_path` - The path to the build directory
 /// * `file` - The `FileData` object containing file name, content, and related metadata
 /// * `template_path` - The path to the template directory containing auxiliary files
+///
+/// `file.name` is joined under `build_dir_path` with
+/// `commons::path::safe_join`: a name that is absolute or climbs above the
+/// build directory is refused with an error, and nothing is written.
 ///
 /// # Returns
 ///
@@ -87,7 +92,16 @@ pub fn write_files_to_build_directory(
     let start_time = Instant::now();
     let file_name = get_processed_file_name(&file.name);
     let index_html_minified = file_name == "index";
-    let dir_name = build_dir_path.join(&file_name);
+    // `file.name` comes from the content tree or a caller, so it is
+    // untrusted: it must stay under the build directory.
+    let dir_name =
+        safe_join(build_dir_path, &file_name).with_context(|| {
+            format!(
+                "Refusing to write '{}' outside '{}'",
+                file.name,
+                build_dir_path.display()
+            )
+        })?;
 
     debug!("Processed file name: '{}'", file_name);
     debug!("Index HTML minification: {}", index_html_minified);
@@ -520,6 +534,74 @@ fn print_section_headers(
 mod tests {
     use super::*;
     use tempfile::TempDir;
+
+    fn page_named(name: &str) -> FileData {
+        FileData {
+            name: name.to_string(),
+            content: "<p>page</p>".to_string(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn write_refuses_a_name_that_climbs_out_of_the_build_dir() {
+        let tmp = TempDir::new().unwrap();
+        let build = tmp.path().join("build");
+        fs::create_dir_all(&build).unwrap();
+
+        let result = write_files_to_build_directory(
+            &build,
+            &page_named("../escape.md"),
+            tmp.path(),
+        );
+
+        assert!(result.is_err(), "a `..` name must be refused");
+        assert!(
+            !tmp.path().join("escape").exists(),
+            "nothing may be written outside the build directory"
+        );
+    }
+
+    #[test]
+    fn write_refuses_an_absolute_name() {
+        let tmp = TempDir::new().unwrap();
+        let build = tmp.path().join("build");
+        fs::create_dir_all(&build).unwrap();
+        let outside = tmp.path().join("outside");
+        let name = format!("{}.md", outside.display());
+
+        let result = write_files_to_build_directory(
+            &build,
+            &page_named(&name),
+            tmp.path(),
+        );
+
+        assert!(result.is_err(), "an absolute name must be refused");
+        assert!(
+            !outside.exists(),
+            "absolute name escaped the build dir"
+        );
+    }
+
+    #[test]
+    fn write_keeps_nested_and_dotted_names_inside() {
+        let tmp = TempDir::new().unwrap();
+        let build = tmp.path().join("build");
+        fs::create_dir_all(&build).unwrap();
+
+        for name in ["fr/post.md", "a..b.md", "fr/../en/post.md"] {
+            write_files_to_build_directory(
+                &build,
+                &page_named(name),
+                tmp.path(),
+            )
+            .unwrap();
+        }
+
+        assert!(build.join("fr/post/index.html").exists());
+        assert!(build.join("a..b/index.html").exists());
+        assert!(build.join("en/post/index.html").exists());
+    }
 
     #[test]
     fn test_get_processed_file_name_md() {

@@ -46,6 +46,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
+use std::path::Path;
 use thiserror::Error;
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 use url::Url;
@@ -125,7 +126,10 @@ pub enum DataError {
 
 /// Common validation functions for data models
 pub mod validation {
-    use std::{path::PathBuf, str::FromStr};
+    use std::{
+        path::{Path, PathBuf},
+        str::FromStr,
+    };
 
     use super::*;
 
@@ -300,7 +304,56 @@ pub mod validation {
         Ok(())
     }
 
+    /// Joins an untrusted relative path under a trusted root.
+    ///
+    /// `root` is the caller's own directory (an output or content
+    /// directory) and may be absolute. `untrusted` comes from content,
+    /// front matter or configuration and must stay under `root`: `.` is
+    /// dropped, each `..` removes the component before it, and names
+    /// that merely contain dots (`a..b.md`) are ordinary names. The rule
+    /// is `commons::path::safe_join`; the filesystem is not consulted.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DataError::SecurityValidation`] if `untrusted` is
+    /// absolute, has a drive or share prefix, or climbs above `root`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use staticdatagen::models::data::validation::join_under;
+    ///
+    /// let root = Path::new("/srv/site");
+    /// assert_eq!(
+    ///     join_under(root, "fr/post.md").unwrap(),
+    ///     root.join("fr/post.md")
+    /// );
+    /// assert!(join_under(root, "../etc/passwd").is_err());
+    /// assert!(join_under(root, "/etc/passwd").is_err());
+    /// ```
+    pub fn join_under(
+        root: &Path,
+        untrusted: &str,
+    ) -> Result<PathBuf, DataError> {
+        commons::path::safe_join(root, untrusted).map_err(|e| {
+            DataError::SecurityValidation(format!(
+                "Unsafe path '{untrusted}': {e}"
+            ))
+        })
+    }
+
     /// Sanitizes a file path
+    ///
+    /// Rejects any `..` component, even one that stays inside, and
+    /// accepts absolute paths, so it does not prove containment. Kept
+    /// unchanged for existing callers.
+    #[deprecated(
+        since = "0.0.32",
+        note = "does not check containment and accepts absolute paths; \
+                use `validation::join_under(root, untrusted)` with the \
+                trusted root as `root`"
+    )]
     pub fn sanitize_path(path: &str) -> Result<PathBuf, DataError> {
         let path = PathBuf::from_str(path).map_err(|e| {
             DataError::InvalidFileName(format!(
@@ -593,8 +646,9 @@ impl FileData {
             return Err(DataError::MissingField("name".to_string()));
         }
 
-        // Sanitize and validate the file path
-        let _ = validation::sanitize_path(&self.name)?;
+        // The name must be a relative path that stays inside whatever
+        // directory it is later joined under.
+        let _ = validation::join_under(Path::new(""), &self.name)?;
 
         validation::validate_text_length(
             &self.name,
@@ -1996,9 +2050,6 @@ mod tests {
         assert!(validate_text_length("12345", 5, "test").is_ok());
         assert!(validate_text_length("123456", 5, "test").is_err());
 
-        // sanitize_path error
-        assert!(sanitize_path("path/../traversal").is_err());
-
         // validate_language_code error
         assert!(validate_language_code("english").is_err());
         assert!(validate_language_code("12").is_err());
@@ -2906,6 +2957,8 @@ mod tests {
     }
 
     #[test]
+    // Pins the deprecated function's unchanged contract.
+    #[allow(deprecated)]
     fn test_path_sanitization() {
         // Test directory traversal prevention
         assert!(matches!(
@@ -3774,6 +3827,8 @@ mod tests {
     }
 
     #[test]
+    // Pins the deprecated function's unchanged contract.
+    #[allow(deprecated)]
     fn sanitize_path_traversal_returns_error() {
         let result = validation::sanitize_path("../../../etc/passwd");
         assert!(result.is_err());
@@ -3786,6 +3841,53 @@ mod tests {
     }
 
     #[test]
+    fn join_under_keeps_untrusted_parts_inside_a_trusted_root() {
+        let root = Path::new("/srv/site");
+        assert_eq!(
+            validation::join_under(root, "fr/../en/post.md").unwrap(),
+            root.join("en/post.md")
+        );
+        assert_eq!(
+            validation::join_under(root, "a..b.md").unwrap(),
+            root.join("a..b.md")
+        );
+        for bad in ["../etc/passwd", "a/../../b", "/etc/passwd"] {
+            assert!(
+                matches!(
+                    validation::join_under(root, bad),
+                    Err(DataError::SecurityValidation(_))
+                ),
+                "{bad} must be refused"
+            );
+        }
+    }
+
+    #[test]
+    fn file_data_validate_refuses_an_absolute_name() {
+        // Used to pass: the old rule only looked for `..`.
+        let file = FileData::new(
+            "/etc/passwd.md".to_string(),
+            "content".to_string(),
+        );
+        assert!(matches!(
+            file.validate(),
+            Err(DataError::SecurityValidation(_))
+        ));
+    }
+
+    #[test]
+    fn file_data_validate_accepts_a_contained_parent_step() {
+        // Used to fail: any `..` was refused, even one that stays inside.
+        let file = FileData::new(
+            "fr/../en/post.md".to_string(),
+            "content".to_string(),
+        );
+        assert!(file.validate().is_ok());
+    }
+
+    #[test]
+    // Pins the deprecated function's unchanged contract.
+    #[allow(deprecated)]
     fn sanitize_path_valid_returns_ok() {
         let result = validation::sanitize_path("content/index.md");
         assert!(result.is_ok());
