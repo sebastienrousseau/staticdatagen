@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.32] - Unreleased
+
+### Security
+
+- `utilities::security::sanitize_path` now refuses a path it cannot
+  accept instead of rewriting it into a different one. Until 0.0.31
+  it dropped a `..` that climbed above the root
+  (`content/../../../etc/passwd` came back as `etc/passwd`), removed a
+  leading `/` (`/etc/passwd` came back as `etc/passwd`) and stripped
+  disallowed characters, then returned the result as safe. Each of
+  these is now an error the caller sees. Containment uses the shared
+  rule in `euxis-commons` 0.0.9 (`path::safe_join`), so names that
+  only contain dots, such as `a..b.md`, stay ordinary names.
+
+### Changed
+
+- **Behaviour change** in public API: callers of `sanitize_path` that
+  relied on the rewrite now get `Err` for absolute paths, paths that
+  climb above their root, and paths with characters outside
+  alphanumerics and `/ . - _`. Paths that stay inside their root are
+  returned in the same normal form as before.
+- Added `euxis-commons` `0.0.9` as a direct dependency with
+  `default-features = false, features = ["path"]` (no transitive
+  dependencies).
+- `docs/ARCHITECTURE.md` and ADR 0003 no longer claim the compiler
+  routes every write through `sanitize_path`; no compiler module
+  calls it yet.
+
 ## [0.0.31] - 2026-11-06
 
 ### Security

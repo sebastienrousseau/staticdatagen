@@ -717,6 +717,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "euxis-commons"
+version = "0.0.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fc280f4abcbbb3b453818482c3689639cab5e2a29e827ad8d2d712cf133f3ee"
+
+[[package]]
 name = "fancy-regex"
 version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1988,6 +1994,7 @@ dependencies = [
  "anyhow",
  "comrak 0.59.0",
  "criterion",
+ "euxis-commons 0.0.9",
  "html-generator",
  "http-handle",
  "idna",

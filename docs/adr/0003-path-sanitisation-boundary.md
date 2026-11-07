@@ -27,3 +27,13 @@ to it directly.
   again returns it unchanged.
 - Callers pay a check per write. That is not measurable against the I/O
   it precedes.
+
+## Note (0.0.32)
+
+Until 0.0.31, `sanitize_path` rewrote a path it could not honour
+(dropping a `..` that climbed above the root, stripping disallowed
+characters, removing a leading `/`) and returned the result as if it
+were safe. From 0.0.32 it refuses such paths with an error, and its
+containment rule is `euxis-commons`' `path::safe_join`. The "no module
+builds a path and writes to it directly" part of the decision is not
+yet implemented: no compiler module calls `sanitize_path`.

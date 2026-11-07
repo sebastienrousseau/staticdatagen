@@ -56,8 +56,7 @@ flowchart TD
 6. **Generate the site's other artefacts**: `sitemap.xml`,
    `news_sitemap.xml`, `manifest.json`, `humans.txt`, `CNAME`, tag
    pages, plain-text and JSON views.
-7. **Write everything** through `utilities::security::sanitize_path`,
-   which is the only way a path reaches the filesystem.
+7. **Write everything** under the output directory.
 
 ## Where the crate sits in the family
 
@@ -87,13 +86,18 @@ insertion-ordered.
 
 ## Path safety
 
-`utilities::security::sanitize_path` rejects empty paths, `..`
-traversal, and paths that escape the directory they resolve against;
-`validate_directory` checks a directory is usable for its stated purpose
-before anything is written. Every write in the compiler goes through
-them. `fuzz_path` pins two properties: an accepted path never contains
-a `..` component, and sanitising an accepted path again returns it
-unchanged.
+`utilities::security::sanitize_path` is the public path guard. It
+refuses, never rewrites: empty paths, characters outside alphanumerics
+and `/ . - _`, absolute or drive-prefixed paths, and any `..` that
+climbs above the directory the path resolves against. Containment uses
+the shared rule in `euxis-commons`' `path::safe_join`, so a name such
+as `a..b.md` is an ordinary name. `validate_directory` checks a
+directory is usable for its stated purpose. `fuzz_path` pins two
+properties: an accepted path never contains a `..` component, and
+sanitising an accepted path again returns it unchanged.
+
+The compiler does not yet route its own writes through
+`sanitize_path`; it writes under the output directory it is given.
 
 ## Tests
 

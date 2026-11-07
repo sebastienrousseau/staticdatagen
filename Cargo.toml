@@ -129,6 +129,7 @@ http-handle = { version = "0.0.10", optional = true }
 url = "2.5"
 
 # Utilities
+euxis-commons = { version = "0.0.9", default-features = false, features = ["path"] } # Shared path-containment rule (`commons::path::safe_join`)
 langweave = { version = "0.0.4", optional = true }
 metadata-gen = { version = "0.0.9", default-features = false, features = ["std", "yaml", "toml", "json", "html"] }
 regex = "1.12"

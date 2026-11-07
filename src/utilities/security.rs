@@ -15,80 +15,73 @@
 //! - Input validation
 
 use anyhow::{Context, Result};
+use commons::path::safe_join;
 use log::warn;
 use std::path::{Path, PathBuf};
 
-/// Sanitizes a file path to prevent path traversal attacks.
+/// Checks an untrusted relative path and returns it in normal form, or
+/// refuses it.
 ///
-/// This function:
-/// - Normalizes the path
-/// - Removes any parent directory references (..)
-/// - Ensures the path is relative
-/// - Removes any potentially dangerous characters
+/// The path is accepted only if:
+/// - it is valid UTF-8 and not empty;
+/// - every character is alphanumeric or one of `/`, `.`, `-`, `_`;
+/// - it is relative (no root, drive or share prefix);
+/// - no `..` climbs above the directory it is resolved against, even
+///   transiently (`a/../../b`).
 ///
-/// # Arguments
+/// Containment follows the shared rule in
+/// [`commons::path::safe_join`]: `.` components are dropped, each `..`
+/// removes the component before it, and names that merely contain dots,
+/// such as `a..b.md` or `.well-known`, are ordinary names.
 ///
-/// * `path` - The path to sanitize
+/// # Errors
 ///
-/// # Returns
-///
-/// Returns a sanitized PathBuf if successful, or an error if the path is invalid.
-///
-/// # Security
-///
-/// This function helps prevent path traversal attacks by ensuring paths cannot
-/// access parent directories or use absolute paths.
+/// Returns an error naming the reason for any path that fails a rule
+/// above, or that has no components left once `.` and `..` are resolved.
+/// A bad path is never rewritten into a different one.
 ///
 /// # Examples
 ///
 /// ```
-/// use std::path::Path;
+/// use std::path::{Path, PathBuf};
 /// use staticdatagen::utilities::security::sanitize_path;
 ///
-/// let path = Path::new("content/../sensitive.txt");
-/// let safe_path = sanitize_path(path).unwrap();
-/// assert_eq!(safe_path.to_str().unwrap(), "sensitive.txt");
+/// let path = Path::new("content/./blog/post.md");
+/// assert_eq!(
+///     sanitize_path(path).unwrap(),
+///     PathBuf::from("content/blog/post.md")
+/// );
+///
+/// assert!(sanitize_path(Path::new("content/../../etc/passwd")).is_err());
+/// assert!(sanitize_path(Path::new("/etc/passwd")).is_err());
 /// ```
 pub fn sanitize_path(path: &Path) -> Result<PathBuf> {
     let path_str = path.to_str().context("Invalid path encoding")?;
 
-    // Check for empty path
     if path_str.is_empty() {
         return Err(anyhow::anyhow!("Empty path provided"));
     }
 
-    // Remove potentially dangerous characters
-    let safe_chars: String = path_str
-        .chars()
-        .filter(|&c| {
-            c.is_alphanumeric()
-                || c == '/'
-                || c == '.'
-                || c == '-'
-                || c == '_'
-        })
-        .collect();
-
-    // Resolve path components using a stack to properly handle ".."
-    let mut stack: Vec<&str> = Vec::new();
-    for component in safe_chars.split('/') {
-        match component {
-            "" | "." => continue,
-            ".." => {
-                // Pop the last component (go up one directory)
-                // If stack is empty, just skip (prevents escaping root)
-                let _ = stack.pop();
-            }
-            part => stack.push(part),
-        }
+    if let Some(bad) = path_str.chars().find(|&c| !is_allowed_char(c)) {
+        return Err(anyhow::anyhow!(
+            "Path contains a disallowed character {bad:?}: {path_str}"
+        ));
     }
 
-    let resolved = stack.join("/");
-    if resolved.is_empty() {
-        return Err(anyhow::anyhow!("Invalid path after sanitization"));
+    let resolved = safe_join("", path)
+        .map_err(|e| anyhow::anyhow!("Unsafe path {path_str}: {e}"))?;
+    if resolved.as_os_str().is_empty() {
+        return Err(anyhow::anyhow!(
+            "Path has no components after resolving . and ..: {path_str}"
+        ));
     }
 
-    Ok(PathBuf::from(resolved))
+    Ok(resolved)
+}
+
+/// Characters `sanitize_path` accepts in a path.
+fn is_allowed_char(c: char) -> bool {
+    c.is_alphanumeric() || matches!(c, '/' | '.' | '-' | '_')
 }
 
 /// Validates a directory for security and accessibility.
@@ -161,16 +154,7 @@ mod tests {
     fn test_sanitize_path_basic() {
         let path = Path::new("content/blog/post.md");
         let result = sanitize_path(path).unwrap();
-        assert_eq!(result.to_str().unwrap(), "content/blog/post.md");
-    }
-
-    #[test]
-    fn test_sanitize_path_traversal() {
-        // "content/../../../etc/passwd" resolves as:
-        // content → [content], .. → [], .. → [], .. → [], etc → [etc], passwd → [etc, passwd]
-        let path = Path::new("content/../../../etc/passwd");
-        let result = sanitize_path(path).unwrap();
-        assert_eq!(result.to_str().unwrap(), "etc/passwd");
+        assert_eq!(result, PathBuf::from("content/blog/post.md"));
     }
 
     #[test]
@@ -178,27 +162,44 @@ mod tests {
         // a/b/../c should resolve to a/c (not a/b/c)
         let path = Path::new("a/b/../c");
         let result = sanitize_path(path).unwrap();
-        assert_eq!(result.to_str().unwrap(), "a/c");
+        assert_eq!(result, PathBuf::from("a/c"));
     }
 
     #[test]
-    fn test_sanitize_path_dotdot_at_root_is_noop() {
-        // ../file.txt → just file.txt (can't escape above root)
-        let path = Path::new("../file.txt");
-        let result = sanitize_path(path).unwrap();
-        assert_eq!(result.to_str().unwrap(), "file.txt");
+    fn test_sanitize_path_refuses_traversal_instead_of_rewriting() {
+        // Used to come back as Ok("etc/passwd"): the guard dropped the
+        // `..` it could not honour and handed back a different path.
+        for input in
+            ["content/../../../etc/passwd", "../file.txt", "a/../../b"]
+        {
+            assert!(
+                sanitize_path(Path::new(input)).is_err(),
+                "{input} must be refused"
+            );
+        }
     }
 
     #[test]
-    fn test_sanitize_path_special_chars() {
-        let path =
-            Path::new("content/<script>alert(1)</script>/post.md");
-        let result = sanitize_path(path).unwrap();
-        assert_eq!(
-            result.to_str().unwrap(),
-            "content/scriptalert1/script/post.md"
-        );
-        // Note: Changed expected output to include proper directory structure
+    fn test_sanitize_path_refuses_absolute() {
+        // Used to come back as Ok("etc/passwd").
+        assert!(sanitize_path(Path::new("/etc/passwd")).is_err());
+    }
+
+    #[test]
+    fn test_sanitize_path_refuses_disallowed_characters() {
+        // Used to strip the characters and return a different path.
+        let path = Path::new("content/<script>alert(1)</script>/x.md");
+        assert!(sanitize_path(path).is_err());
+    }
+
+    #[test]
+    fn test_sanitize_path_accepts_dotted_names() {
+        for input in ["a..b.md", "blog/..hidden", ".well-known/x"] {
+            assert_eq!(
+                sanitize_path(Path::new(input)).unwrap(),
+                PathBuf::from(input)
+            );
+        }
     }
 
     #[test]
@@ -229,7 +230,7 @@ mod tests {
 
     #[test]
     fn test_sanitize_path_only_dots_and_slashes() {
-        // Test line 85: path becomes empty after sanitization
+        // `..` climbs above the root on the first component.
         let path = Path::new("../../../");
         let result = sanitize_path(path);
         assert!(
@@ -240,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_sanitize_path_only_dots() {
-        // Test line 85: path with only dot components
+        // Only `.` components: nothing is left to name.
         let path = Path::new("./././.");
         let result = sanitize_path(path);
         assert!(
@@ -251,12 +252,10 @@ mod tests {
 
     #[test]
     fn test_sanitize_path_with_unicode() {
-        // Test path with unicode characters that get filtered
         let path = Path::new("content/日本語/test.md");
         let result = sanitize_path(path).unwrap();
-        // Unicode chars are filtered out, leaving "content//test.md" which becomes "content/test.md"
-        assert!(result.to_str().unwrap().contains("content"));
-        assert!(result.to_str().unwrap().contains("test.md"));
+        // Alphanumeric in any script is allowed, and kept as written.
+        assert_eq!(result, PathBuf::from("content/日本語/test.md"));
     }
 
     #[test]
