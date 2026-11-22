@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.33] - 2026-11-22
+
+### Security
+
+- `ammonia` 4.2.5 (RUSTSEC-2026-0533, mutation XSS through embedded
+  SVG and MathML), `url` 2.5.9 (RUSTSEC-2026-0592, stack overflow in
+  `Url::origin()` on nested `blob:` URLs) and `rustix` 1.1.6
+  (RUSTSEC-2026-0486, xattr functions on a zero-length buffer). All
+  three are transitive and only `Cargo.lock` changes.
+
+### Changed
+
+- `log` 0.4.35 and `uuid` 1.29.2; `taiki-e/install-action` 2.90.2 in
+  CI.
+
 ## [0.0.32] - 2026-11-07
 
 ### Security
