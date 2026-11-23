@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `log` 0.4.35 and `uuid` 1.29.2; `taiki-e/install-action` 2.90.2 in
+- `log` 0.4.35, `regex` 1.13.2 and `uuid` 1.29.3;
+  `taiki-e/install-action` 2.90.6 and `astral-sh/setup-uv` 10.4.0 in
   CI.
 
 ## [0.0.32] - 2026-11-07
