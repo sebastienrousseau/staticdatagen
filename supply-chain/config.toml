@@ -38,10 +38,6 @@ audit-as-crates-io = false
 version = "1.1.4"
 criteria = "safe-to-deploy"
 
-[[exemptions.ammonia]]
-version = "4.1.7"
-criteria = "safe-to-deploy"
-
 [[exemptions.anstream]]
 version = "1.0.0"
 criteria = "safe-to-deploy"
@@ -346,10 +342,6 @@ criteria = "safe-to-deploy"
 version = "0.4.14"
 criteria = "safe-to-deploy"
 
-[[exemptions.log]]
-version = "0.4.34"
-criteria = "safe-to-deploy"
-
 [[exemptions.maplit]]
 version = "1.0.2"
 criteria = "safe-to-deploy"
@@ -470,25 +462,9 @@ criteria = "safe-to-deploy"
 version = "0.5.18"
 criteria = "safe-to-deploy"
 
-[[exemptions.regex]]
-version = "1.13.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.regex-automata]]
-version = "0.4.16"
-criteria = "safe-to-deploy"
-
-[[exemptions.regex-syntax]]
-version = "0.8.11"
-criteria = "safe-to-deploy"
-
 [[exemptions.rustc-hash]]
 version = "2.1.2"
 criteria = "safe-to-deploy"
-
-[[exemptions.rustix]]
-version = "1.1.4"
-criteria = "safe-to-run"
 
 [[exemptions.rusty-fork]]
 version = "0.3.1"
@@ -612,14 +588,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.unit-prefix]]
 version = "0.5.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.url]]
-version = "2.5.8"
-criteria = "safe-to-deploy"
-
-[[exemptions.uuid]]
-version = "1.29.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.version_check]]

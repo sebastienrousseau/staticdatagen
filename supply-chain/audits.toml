@@ -270,12 +270,26 @@ criteria = "safe-to-deploy"
 delta = "0.2.5 -> 0.3.0"
 notes = "Delta 0.2.5 -> 0.3.0 (3 files, +9/-7): unsafe-mentioning lines +0/-0; build.rs unchanged; no dependency added or dropped."
 
+[[trusted.ammonia]]
+criteria = "safe-to-deploy"
+user-id = 2286 # Michael Howell (notriddle)
+start = "2019-04-27"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher notriddle."
+
 [[trusted.dtt]]
 criteria = "safe-to-deploy"
 user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
 start = "2023-02-05"
 end = "2027-07-26"
 notes = "Same-author crate."
+
+[[trusted.form_urlencoded]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-02-19"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher Manishearth."
 
 [[trusted.frontmatter-gen]]
 criteria = "safe-to-deploy"
@@ -297,6 +311,13 @@ user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
 start = "2024-10-19"
 end = "2027-07-26"
 notes = "Same-author crate."
+
+[[trusted.log]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/log"
+start = "2026-10-30"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:rust-lang/log."
 
 [[trusted.metadata-gen]]
 criteria = "safe-to-deploy"
@@ -340,6 +361,27 @@ start = "2026-10-01"
 end = "2027-10-31"
 notes = "Published through crates.io Trusted Publishing from sebastienrousseau/xmlschema."
 
+[[trusted.regex]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-02-27"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher BurntSushi."
+
+[[trusted.regex-automata]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-02-25"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher BurntSushi."
+
+[[trusted.regex-syntax]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-03-30"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher BurntSushi."
+
 [[trusted.rss-gen]]
 criteria = "safe-to-deploy"
 user-id = 186843 # Sebastien Rousseau (sebastienrousseau)
@@ -353,6 +395,13 @@ trusted-publisher = "github:sebastienrousseau/rssgen"
 start = "2026-10-01"
 end = "2027-10-31"
 notes = "Published through crates.io Trusted Publishing from sebastienrousseau/rssgen."
+
+[[trusted.rustix]]
+criteria = "safe-to-run"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2021-10-29"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher sunfishcode."
 
 [[trusted.sitemap-gen]]
 criteria = "safe-to-deploy"
@@ -388,3 +437,17 @@ user-id = 6743 # Ed Page (epage)
 start = "2022-06-01"
 end = "2027-10-15"
 notes = "Trust in epage for toml_edit, as static-site-generator records for toml, toml_datetime, toml_parser, toml_writer and toml_edit."
+
+[[trusted.url]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-02-18"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher Manishearth."
+
+[[trusted.uuid]]
+criteria = "safe-to-deploy"
+user-id = 3204 # Ashley Mannix (KodrAus)
+start = "2019-10-18"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher KodrAus."
